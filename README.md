@@ -85,4 +85,4 @@ ps-games-catalog/
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. 
+Este projeto está sob a licença MIT.
