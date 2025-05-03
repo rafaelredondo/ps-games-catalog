@@ -1,5 +1,6 @@
 import express from 'express';
 import { gamesDb } from '../db/database.js';
+import Game from '../models/Game.js';
 
 const router = express.Router();
 
@@ -8,10 +9,8 @@ async function checkDuplicate(gameName, platform, mediaType) {
   const games = await gamesDb.getAll();
   return games.some(game => 
     game.name === gameName && 
-    game.platforms.some(p => 
-      p.platform === platform && 
-      p.mediaType === mediaType
-    )
+    game.platform === platform && 
+    game.mediaType === mediaType
   );
 }
 
@@ -40,19 +39,8 @@ router.get('/platform/:platform', async (req, res) => {
   try {
     const { platform } = req.params;
     const games = await gamesDb.getAll();
-    
-    // Filtra os jogos que têm a plataforma especificada
-    const gamesByPlatform = games.filter(game => 
-      game.platforms.some(p => p.platform === platform)
-    );
-
-    // Para cada jogo, inclui apenas a plataforma específica
-    const formattedGames = gamesByPlatform.map(game => ({
-      ...game,
-      platforms: game.platforms.filter(p => p.platform === platform)
-    }));
-
-    res.json(formattedGames);
+    const gamesByPlatform = games.filter(game => game.platform === platform);
+    res.json(gamesByPlatform);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar jogos por plataforma' });
   }
@@ -74,45 +62,35 @@ router.get('/:id', async (req, res) => {
 // Criar um novo jogo
 router.post('/', async (req, res) => {
   try {
-    const { name, platforms } = req.body;
+    const { name, platform, mediaType, coverUrl, rating, playtime, priority } = req.body;
     
-    if (!name || !platforms || !Array.isArray(platforms)) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    if (!name || !platform || !mediaType) {
+      return res.status(400).json({ error: 'Nome, plataforma e tipo de mídia são obrigatórios' });
     }
 
-    // Validar cada plataforma
-    for (const platform of platforms) {
-      if (!platform.platform || !platform.mediaType) {
-        return res.status(400).json({ 
-          error: 'Cada plataforma deve ter platform e mediaType definidos' 
-        });
-      }
-
-      // Verificar duplicata para cada plataforma
-      const isDuplicate = await checkDuplicate(
-        name, 
-        platform.platform, 
-        platform.mediaType
-      );
-
-      if (isDuplicate) {
-        return res.status(400).json({ 
-          error: `Jogo "${name}" já existe para ${platform.platform} (${platform.mediaType})` 
-        });
-      }
+    // Verificar duplicata
+    const isDuplicate = await checkDuplicate(name, platform, mediaType);
+    if (isDuplicate) {
+      return res.status(400).json({ 
+        error: `Jogo "${name}" já existe para ${platform} (${mediaType})` 
+      });
     }
 
-    const newGame = {
-      id: Date.now().toString(),
+    const newGame = new Game(
+      Date.now().toString(),
       name,
-      platforms,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      platform,
+      mediaType,
+      coverUrl || '',
+      rating || '',
+      playtime || '',
+      priority || ''
+    );
 
     const createdGame = await gamesDb.create(newGame);
     res.status(201).json(createdGame);
   } catch (error) {
+    console.error('Erro ao criar jogo:', error);
     res.status(500).json({ error: 'Erro ao criar jogo' });
   }
 });
@@ -120,47 +98,37 @@ router.post('/', async (req, res) => {
 // Atualizar um jogo
 router.put('/:id', async (req, res) => {
   try {
-    const { name, platforms } = req.body;
+    const { name, platform, mediaType, coverUrl, rating, playtime, priority } = req.body;
     
-    if (!name || !platforms || !Array.isArray(platforms)) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    if (!name || !platform || !mediaType) {
+      return res.status(400).json({ error: 'Nome, plataforma e tipo de mídia são obrigatórios' });
     }
 
-    // Validar cada plataforma
-    for (const platform of platforms) {
-      if (!platform.platform || !platform.mediaType) {
-        return res.status(400).json({ 
-          error: 'Cada plataforma deve ter platform e mediaType definidos' 
-        });
-      }
+    // Verificar duplicata, excluindo o jogo atual
+    const games = await gamesDb.getAll();
+    const isDuplicate = games.some(game => 
+      game.id !== req.params.id && 
+      game.name === name && 
+      game.platform === platform && 
+      game.mediaType === mediaType
+    );
 
-      // Verificar duplicata para cada plataforma, excluindo o jogo atual
-      const games = await gamesDb.getAll();
-      const currentGame = games.find(g => g.id === req.params.id);
-      
-      if (currentGame) {
-        const isDuplicate = games.some(game => 
-          game.id !== req.params.id && 
-          game.name === name && 
-          game.platforms.some(p => 
-            p.platform === platform.platform && 
-            p.mediaType === platform.mediaType
-          )
-        );
-
-        if (isDuplicate) {
-          return res.status(400).json({ 
-            error: `Jogo "${name}" já existe para ${platform.platform} (${platform.mediaType})` 
-          });
-        }
-      }
+    if (isDuplicate) {
+      return res.status(400).json({ 
+        error: `Jogo "${name}" já existe para ${platform} (${mediaType})` 
+      });
     }
 
-    const updatedGame = {
+    const updatedGame = new Game(
+      req.params.id,
       name,
-      platforms,
-      updatedAt: new Date().toISOString()
-    };
+      platform,
+      mediaType,
+      coverUrl || '',
+      rating || '',
+      playtime || '',
+      priority || ''
+    );
 
     const game = await gamesDb.update(req.params.id, updatedGame);
     if (!game) {
