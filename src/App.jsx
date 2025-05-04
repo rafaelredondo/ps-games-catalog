@@ -8,12 +8,12 @@ import EditGame from './pages/EditGame';
 import GameDetails from './pages/GameDetails';
 import Navbar from './components/Navbar';
 
-// Criando um tema personalizado
+// Creating a custom theme
 const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#0070cc', // Cor do PlayStation
+      main: '#0070cc', // PlayStation color
     },
     secondary: {
       main: '#ffffff',
@@ -22,27 +22,31 @@ const theme = createTheme({
       default: '#121212',
       paper: '#1e1e1e',
     },
+    text: {
+      primary: '#ffffff',
+      secondary: 'rgba(255, 255, 255, 0.7)',
+    }
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontSize: '2.5rem',
+    h4: {
+      fontSize: '1.6rem',
       fontWeight: 500,
     },
-    h2: {
-      fontSize: '2rem',
-      fontWeight: 500,
+    h6: {
+      fontSize: '1rem',
+      fontWeight: 600,
+      lineHeight: 1.3,
     },
-    h3: {
-      fontSize: '1.75rem',
-      fontWeight: 500,
-    },
+    body2: {
+      fontSize: '0.85rem',
+    }
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 4,
           textTransform: 'none',
           fontWeight: 500,
         },
@@ -51,8 +55,51 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          borderRadius: 8,
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      },
+    },
+    MuiCardContent: {
+      styleOverrides: {
+        root: {
+          padding: '16px',
+          '&:last-child': {
+            paddingBottom: 8,
+          },
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      },
+    },
+    MuiCardActionArea: {
+      styleOverrides: {
+        root: {
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+          borderRadius: 4,
+          height: 24,
+          fontSize: '0.84rem'
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          borderRadius: 4,
         },
       },
     },

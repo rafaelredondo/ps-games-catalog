@@ -13,7 +13,8 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Autocomplete
+  Autocomplete,
+  Chip
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
 import { searchGame } from '../services/rawgApi';
@@ -23,17 +24,22 @@ const AddGame = () => {
   const { addGame } = useGames();
   const [formData, setFormData] = useState({
     name: '',
-    platform: '',
-    mediaType: '',
+    platforms: [],
+    mediaTypes: [],
     coverUrl: '',
-    rating: '',
-    playtime: '',
-    priority: ''
+    released: '',
+    metacritic: null,
+    genres: [],
+    publishers: [],
+    description: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  const platformOptions = ["PlayStation 4", "PlayStation 5", "Nintendo Switch"];
+  const mediaTypeOptions = ["Físico", "Digital"];
 
   const handleSearch = async (searchTerm) => {
     if (!searchTerm) {
@@ -66,12 +72,12 @@ const AddGame = () => {
         setFormData(prev => ({
           ...prev,
           name: gameData.name,
-          platform: gameData.platforms.find(p => 
-            ['PlayStation 4', 'PlayStation 5', 'Nintendo Switch'].includes(p)
-          ) || '',
           coverUrl: gameData.coverUrl,
-          rating: gameData.rating.toString(),
-          playtime: gameData.playtime.toString()
+          released: gameData.released || '',
+          metacritic: gameData.metacritic || null,
+          genres: gameData.genres || [],
+          publishers: gameData.publishers || [],
+          description: gameData.description || ''
         }));
       }
     } catch (error) {
@@ -89,10 +95,31 @@ const AddGame = () => {
     }));
   };
 
+  const handlePlatformsChange = (event) => {
+    setFormData(prev => ({
+      ...prev,
+      platforms: event.target.value
+    }));
+  };
+
+  const handleMediaTypesChange = (event) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaTypes: event.target.value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validar campos obrigatórios
+    if (!formData.name || !formData.platforms.length || !formData.mediaTypes.length) {
+      setError('Nome, plataformas e tipos de mídia são obrigatórios');
+      setLoading(false);
+      return;
+    }
 
     try {
       await addGame(formData);
@@ -149,77 +176,53 @@ const AddGame = () => {
             )}
           />
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Plataforma</InputLabel>
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Plataformas</InputLabel>
             <Select
-              name="platform"
-              value={formData.platform}
-              onChange={handleChange}
-              required
-              label="Plataforma"
+              multiple
+              name="platforms"
+              value={formData.platforms}
+              onChange={handlePlatformsChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              label="Plataformas"
             >
-              <MenuItem value="PlayStation 4">PlayStation 4</MenuItem>
-              <MenuItem value="PlayStation 5">PlayStation 5</MenuItem>
-              <MenuItem value="Nintendo Switch">Nintendo Switch</MenuItem>
+              {platformOptions.map((platform) => (
+                <MenuItem key={platform} value={platform}>
+                  {platform}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Tipo de Mídia</InputLabel>
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Tipos de Mídia</InputLabel>
             <Select
-              name="mediaType"
-              value={formData.mediaType}
-              onChange={handleChange}
-              required
-              label="Tipo de Mídia"
+              multiple
+              name="mediaTypes"
+              value={formData.mediaTypes}
+              onChange={handleMediaTypesChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              label="Tipos de Mídia"
             >
-              <MenuItem value="Físico">Físico</MenuItem>
-              <MenuItem value="Digital">Digital</MenuItem>
+              {mediaTypeOptions.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
-
-          <TextField
-            name="coverUrl"
-            label="URL da Capa"
-            value={formData.coverUrl}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-          />
-
-          <TextField
-            name="rating"
-            label="Avaliação"
-            type="number"
-            value={formData.rating}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            inputProps={{ min: 0, max: 5, step: 0.1 }}
-          />
-
-          <TextField
-            name="playtime"
-            label="Tempo de Jogo (horas)"
-            type="number"
-            value={formData.playtime}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            inputProps={{ min: 0 }}
-          />
-
-          <TextField
-            name="priority"
-            label="Prioridade (1-10)"
-            type="number"
-            value={formData.priority}
-            onChange={handleChange}
-            fullWidth
-            margin="normal"
-            inputProps={{ min: 1, max: 10 }}
-            helperText="Campo opcional"
-          />
 
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button

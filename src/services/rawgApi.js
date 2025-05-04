@@ -12,6 +12,7 @@ const rawgApi = axios.create({
 
 export const searchGame = async (gameName) => {
   try {
+    // Buscar informações básicas do jogo
     const response = await rawgApi.get('/games', {
       params: {
         search: gameName,
@@ -21,14 +22,19 @@ export const searchGame = async (gameName) => {
 
     if (response.data.results.length > 0) {
       const game = response.data.results[0];
+      
+      // Buscar detalhes mais específicos do jogo por ID
+      const detailsResponse = await rawgApi.get(`/games/${game.id}`);
+      const gameDetails = detailsResponse.data;
+      
       return {
         name: game.name,
         coverUrl: game.background_image,
-        rating: game.rating,
-        playtime: game.playtime,
-        description: game.description,
-        released: game.released,
-        platforms: game.platforms.map(p => p.platform.name)
+        released: game.released || '',
+        metacritic: game.metacritic || null,
+        genres: game.genres ? game.genres.map(g => g.name) : [],
+        publishers: gameDetails.publishers ? gameDetails.publishers.map(p => p.name) : [],
+        description: gameDetails.description_raw || ''
       };
     }
     return null;

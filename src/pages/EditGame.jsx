@@ -13,6 +13,7 @@ import {
   Box,
   Alert,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
 
@@ -23,12 +24,19 @@ function EditGame() {
   const [game, setGame] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    platform: '',
-    mediaType: '',
-    condition: '',
+    platforms: [],
+    mediaTypes: [],
     coverUrl: '',
+    released: '',
+    metacritic: null,
+    genres: [],
+    publishers: [],
+    description: '',
   });
   const [updateError, setUpdateError] = useState(null);
+
+  const platformOptions = ["PlayStation 4", "PlayStation 5", "Nintendo Switch"];
+  const mediaTypeOptions = ["Físico", "Digital"];
 
   useEffect(() => {
     const foundGame = games.find(g => g.id === id);
@@ -36,10 +44,14 @@ function EditGame() {
       setGame(foundGame);
       setFormData({
         name: foundGame.name,
-        platform: foundGame.platform,
-        mediaType: foundGame.mediaType,
-        condition: foundGame.condition,
+        platforms: foundGame.platforms || [],
+        mediaTypes: foundGame.mediaTypes || [],
         coverUrl: foundGame.coverUrl || '',
+        released: foundGame.released || '',
+        metacritic: foundGame.metacritic || null,
+        genres: foundGame.genres || [],
+        publishers: foundGame.publishers || [],
+        description: foundGame.description || '',
       });
     }
   }, [games, id]);
@@ -49,6 +61,20 @@ function EditGame() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handlePlatformsChange = (event) => {
+    setFormData(prev => ({
+      ...prev,
+      platforms: event.target.value
+    }));
+  };
+
+  const handleMediaTypesChange = (event) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaTypes: event.target.value
     }));
   };
 
@@ -114,49 +140,51 @@ function EditGame() {
             margin="normal"
           />
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Plataforma</InputLabel>
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Plataformas</InputLabel>
             <Select
-              name="platform"
-              value={formData.platform}
-              onChange={handleChange}
-              required
-              label="Plataforma"
+              multiple
+              name="platforms"
+              value={formData.platforms}
+              onChange={handlePlatformsChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              label="Plataformas"
             >
-              <MenuItem value="PS4">PlayStation 4</MenuItem>
-              <MenuItem value="PS5">PlayStation 5</MenuItem>
-              <MenuItem value="Switch">Nintendo Switch</MenuItem>
+              {platformOptions.map((platform) => (
+                <MenuItem key={platform} value={platform}>
+                  {platform}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Tipo de Mídia</InputLabel>
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Tipos de Mídia</InputLabel>
             <Select
-              name="mediaType"
-              value={formData.mediaType}
-              onChange={handleChange}
-              required
-              label="Tipo de Mídia"
+              multiple
+              name="mediaTypes"
+              value={formData.mediaTypes}
+              onChange={handleMediaTypesChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              label="Tipos de Mídia"
             >
-              <MenuItem value="Físico">Físico</MenuItem>
-              <MenuItem value="Digital">Digital</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Estado</InputLabel>
-            <Select
-              name="condition"
-              value={formData.condition}
-              onChange={handleChange}
-              required
-              label="Estado"
-            >
-              <MenuItem value="Novo">Novo</MenuItem>
-              <MenuItem value="Como Novo">Como Novo</MenuItem>
-              <MenuItem value="Bom">Bom</MenuItem>
-              <MenuItem value="Regular">Regular</MenuItem>
-              <MenuItem value="Ruim">Ruim</MenuItem>
+              {mediaTypeOptions.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -168,6 +196,28 @@ function EditGame() {
             onChange={handleChange}
             margin="normal"
             helperText="URL da imagem da capa do jogo (opcional)"
+          />
+
+          <TextField
+            fullWidth
+            label="Data de Lançamento"
+            name="released"
+            type="date"
+            value={formData.released ? formData.released.substring(0, 10) : ''}
+            onChange={handleChange}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            fullWidth
+            label="Pontuação Metacritic"
+            name="metacritic"
+            type="number"
+            value={formData.metacritic || ''}
+            onChange={handleChange}
+            margin="normal"
+            inputProps={{ min: 0, max: 100 }}
           />
 
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
