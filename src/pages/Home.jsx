@@ -25,12 +25,23 @@ import {
   CardActionArea,
   TextField,
   InputAdornment,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import { useGames } from '../contexts/GamesContext';
 
 function Home() {
@@ -47,6 +58,7 @@ function Home() {
   const [availablePublishers, setAvailablePublishers] = useState([]);
   const [availableGenres, setAvailableGenres] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
+  const [viewMode, setViewMode] = useState('card'); // 'card' ou 'table'
 
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
@@ -150,6 +162,12 @@ function Home() {
     navigate(`/game/${gameId}`);
   };
 
+  const handleViewModeChange = (event, newViewMode) => {
+    if (newViewMode !== null) {
+      setViewMode(newViewMode);
+    }
+  };
+
   const getMetacriticColor = (score) => {
     if (!score) return '#888';
     if (score >= 75) return '#6c3';
@@ -180,105 +198,9 @@ function Home() {
     );
   }
 
-  return (
-    <Container maxWidth={false} sx={{ py: 3, px: { xs: 2, sm: 3, md: 4 }, maxWidth: '1800px', mx: 'auto' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          Catálogo de Jogos
-        </Typography>
-      </Box>
-
-      {/* Barra de filtros */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="platform-select-label">Plataforma</InputLabel>
-            <Select
-              labelId="platform-select-label"
-              value={platform}
-              label="Plataforma"
-              onChange={handlePlatformChange}
-            >
-              <MenuItem value="all">Todas as Plataformas</MenuItem>
-              {availablePlatforms.map(platform => (
-                <MenuItem key={platform} value={platform}>
-                  {platform}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={2.4}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Buscar por nome"
-            variant="outlined"
-            value={searchTerm}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={2.4}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Metacritic mínimo"
-            variant="outlined"
-            value={minMetacritic}
-            onChange={handleMinMetacriticChange}
-            type="number"
-            inputProps={{ min: 0, max: 100 }}
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="genre-select-label">Gênero</InputLabel>
-            <Select
-              labelId="genre-select-label"
-              value={selectedGenre}
-              label="Gênero"
-              onChange={handleGenreChange}
-            >
-              <MenuItem value="all">Todos os Gêneros</MenuItem>
-              {availableGenres.map(genre => (
-                <MenuItem key={genre} value={genre}>
-                  {genre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={2.4}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="publisher-select-label">Publisher</InputLabel>
-            <Select
-              labelId="publisher-select-label"
-              value={selectedPublisher}
-              label="Publisher"
-              onChange={handlePublisherChange}
-            >
-              <MenuItem value="all">Todos os Publishers</MenuItem>
-              {availablePublishers.map(publisher => (
-                <MenuItem key={publisher} value={publisher}>
-                  {publisher}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-      </Grid>
-
+  // Renderização dos cards
+  const renderCardView = () => {
+    return (
       <Grid container spacing={2} justifyContent="center">
         {filteredGames.map((game) => (
           <Grid item key={game.id} xs={12} sm={6} md="auto">
@@ -398,6 +320,212 @@ function Home() {
           </Grid>
         ))}
       </Grid>
+    );
+  };
+
+  // Renderização da tabela
+  const renderTableView = () => {
+    return (
+      <TableContainer component={Paper} sx={{ bgcolor: '#222', color: 'white', boxShadow: '0 4px 8px rgba(0,0,0,0.3)' }}>
+        <Table sx={{ minWidth: 650 }} aria-label="tabela de jogos">
+          <TableHead>
+            <TableRow sx={{ '& th': { fontWeight: 'bold', bgcolor: '#333' } }}>
+              <TableCell sx={{ color: 'white' }}>Nome</TableCell>
+              <TableCell sx={{ color: 'white' }}>Plataformas</TableCell>
+              <TableCell sx={{ color: 'white' }}>Gêneros</TableCell>
+              <TableCell align="center" sx={{ color: 'white' }}>Ano</TableCell>
+              <TableCell align="center" sx={{ color: 'white' }}>Metacritic</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredGames.map((game) => (
+              <TableRow 
+                key={game.id}
+                hover
+                onClick={() => handleCardClick(game.id)}
+                sx={{ 
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
+                  cursor: 'pointer',
+                  '& td': { color: 'rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.1)' }
+                }}
+              >
+                <TableCell component="th" scope="row" sx={{ color: 'white', fontWeight: 'medium' }}>
+                  {game.name}
+                </TableCell>
+                <TableCell>
+                  {game.platforms ? game.platforms.join(', ') : ''}
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {game.genres && game.genres.map(genre => (
+                      <Chip
+                        key={genre}
+                        label={genre}
+                        size="small"
+                        sx={{ 
+                          mb: 0.3,
+                          bgcolor: 'rgba(100, 100, 100, 0.5)', 
+                          color: 'white',
+                          height: '22px',
+                          fontSize: '0.7rem',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </TableCell>
+                <TableCell align="center">
+                  {game.released ? new Date(game.released).getFullYear() : ''}
+                </TableCell>
+                <TableCell align="center">
+                  {game.metacritic ? (
+                    <Chip
+                      label={game.metacritic}
+                      size="small"
+                      sx={{ 
+                        bgcolor: getMetacriticColor(game.metacritic),
+                        color: 'white',
+                        fontWeight: 'bold',
+                        minWidth: '36px',
+                      }}
+                    />
+                  ) : ''}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
+  return (
+    <Container maxWidth={false} sx={{ py: 3, px: { xs: 2, sm: 3, md: 4 }, maxWidth: '1800px', mx: 'auto' }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" component="h1">
+          Catálogo de Jogos
+        </Typography>
+        <ToggleButtonGroup
+          value={viewMode}
+          exclusive
+          onChange={handleViewModeChange}
+          aria-label="modo de visualização"
+          size="small"
+          sx={{ 
+            bgcolor: '#333',
+            '& .MuiToggleButton-root': { 
+              color: 'rgba(255,255,255,0.7)',
+              '&.Mui-selected': {
+                bgcolor: '#0096FF',
+                color: 'white',
+                '&:hover': {
+                  bgcolor: '#0077cc',
+                }
+              } 
+            }
+          }}
+        >
+          <ToggleButton value="card" aria-label="modo card">
+            <ViewModuleIcon />
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="modo tabela">
+            <ViewListIcon />
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      {/* Barra de filtros */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={2.4}>
+          <FormControl fullWidth variant="outlined" size="small">
+            <InputLabel id="platform-select-label">Plataforma</InputLabel>
+            <Select
+              labelId="platform-select-label"
+              value={platform}
+              label="Plataforma"
+              onChange={handlePlatformChange}
+            >
+              <MenuItem value="all">Todas as Plataformas</MenuItem>
+              {availablePlatforms.map(platform => (
+                <MenuItem key={platform} value={platform}>
+                  {platform}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={2.4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Buscar por nome"
+            variant="outlined"
+            value={searchTerm}
+            onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={2.4}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Metacritic mínimo"
+            variant="outlined"
+            value={minMetacritic}
+            onChange={handleMinMetacriticChange}
+            type="number"
+            inputProps={{ min: 0, max: 100 }}
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={2.4}>
+          <FormControl fullWidth variant="outlined" size="small">
+            <InputLabel id="genre-select-label">Gênero</InputLabel>
+            <Select
+              labelId="genre-select-label"
+              value={selectedGenre}
+              label="Gênero"
+              onChange={handleGenreChange}
+            >
+              <MenuItem value="all">Todos os Gêneros</MenuItem>
+              {availableGenres.map(genre => (
+                <MenuItem key={genre} value={genre}>
+                  {genre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={2.4}>
+          <FormControl fullWidth variant="outlined" size="small">
+            <InputLabel id="publisher-select-label">Publisher</InputLabel>
+            <Select
+              labelId="publisher-select-label"
+              value={selectedPublisher}
+              label="Publisher"
+              onChange={handlePublisherChange}
+            >
+              <MenuItem value="all">Todos os Publishers</MenuItem>
+              {availablePublishers.map(publisher => (
+                <MenuItem key={publisher} value={publisher}>
+                  {publisher}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+
+      {/* Renderizar a visualização selecionada */}
+      {viewMode === 'card' ? renderCardView() : renderTableView()}
     </Container>
   );
 }
