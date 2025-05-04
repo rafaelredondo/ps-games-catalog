@@ -1,5 +1,6 @@
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import AddIcon from '@mui/icons-material/Add';
 
 function Navbar() {
   return (
@@ -31,10 +32,24 @@ function Navbar() {
             Início
           </Button>
           <Button
-            color="inherit"
+            variant="contained"
+            color="primary"
             component={RouterLink}
             to="/add"
-            sx={{ opacity: 0.85, textTransform: 'none', fontWeight: 400, ml: 1 }}
+            startIcon={<AddIcon />}
+            sx={{ 
+              ml: 1.5,
+              bgcolor: '#0096FF',
+              textTransform: 'none', 
+              fontWeight: 500,
+              borderRadius: '6px',
+              px: 2,
+              '&:hover': { 
+                bgcolor: '#0077cc',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+              },
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}
           >
             Adicionar Jogo
           </Button>

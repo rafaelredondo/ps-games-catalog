@@ -186,18 +186,6 @@ function Home() {
         <Typography variant="h4" component="h1">
           Catálogo de Jogos
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/add')}
-          sx={{ 
-            bgcolor: '#0096FF',
-            '&:hover': { bgcolor: '#0077cc' }
-          }}
-        >
-          Adicionar Jogo
-        </Button>
       </Box>
 
       {/* Barra de filtros */}
