@@ -58,7 +58,10 @@ function Home() {
   const [availablePublishers, setAvailablePublishers] = useState([]);
   const [availableGenres, setAvailableGenres] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
-  const [viewMode, setViewMode] = useState('card'); // 'card' ou 'table'
+  const [viewMode, setViewMode] = useState(() => {
+    // Recuperar o modo de visualização do localStorage ou usar 'card' como padrão
+    return localStorage.getItem('viewMode') || 'card';
+  });
 
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
@@ -165,6 +168,8 @@ function Home() {
   const handleViewModeChange = (event, newViewMode) => {
     if (newViewMode !== null) {
       setViewMode(newViewMode);
+      // Salvar o modo de visualização escolhido no localStorage
+      localStorage.setItem('viewMode', newViewMode);
     }
   };
 
