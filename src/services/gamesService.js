@@ -19,6 +19,17 @@ export const gamesService = {
     return response.data;
   },
 
+  // Verificar se um jogo já existe pelo nome
+  async checkDuplicate(name) {
+    try {
+      const games = await this.getAll();
+      return games.some(game => game.name.toLowerCase() === name.toLowerCase());
+    } catch (error) {
+      console.error('Erro ao verificar duplicatas:', error);
+      throw error;
+    }
+  },
+
   // Criar um novo jogo
   async create(game) {
     const response = await api.post('/games', game);

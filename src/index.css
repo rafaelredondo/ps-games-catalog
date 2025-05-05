@@ -72,6 +72,23 @@ button:focus-visible {
   flex-direction: column;
 }
 
+/* Garantir que elementos interativos tenham cursor pointer */
+.MuiButtonBase-root,
+.MuiCardActionArea-root,
+.MuiIconButton-root,
+.MuiChip-root[onClick],
+.MuiMenuItem-root,
+.MuiToggleButton-root,
+a,
+button,
+input[type="submit"],
+input[type="button"],
+label[for],
+[role="button"],
+.clickable {
+  cursor: pointer !important;
+}
+
 /* Estilização da barra de rolagem */
 ::-webkit-scrollbar {
   width: 8px;

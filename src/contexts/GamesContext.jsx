@@ -41,11 +41,17 @@ export function GamesProvider({ children }) {
   // Adicionar um novo jogo
   const addGame = async (game) => {
     try {
+      // Verificar se o jogo já existe
+      const isDuplicate = await gamesService.checkDuplicate(game.name);
+      if (isDuplicate) {
+        throw new Error(`Jogo "${game.name}" já existe no catálogo`);
+      }
+      
       const newGame = await gamesService.create(game);
       setGames(prevGames => [...prevGames, newGame]);
       return newGame;
     } catch (err) {
-      setError('Erro ao adicionar jogo');
+      setError(err.message || 'Erro ao adicionar jogo');
       throw err;
     }
   };
@@ -53,13 +59,24 @@ export function GamesProvider({ children }) {
   // Atualizar um jogo
   const updateGame = async (id, game) => {
     try {
+      // Verificar se já existe outro jogo com o mesmo nome
+      const currentGames = await gamesService.getAll();
+      const isDuplicate = currentGames.some(g => 
+        g.id !== id && 
+        g.name.toLowerCase() === game.name.toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        throw new Error(`Já existe outro jogo com o nome "${game.name}" no catálogo`);
+      }
+      
       const updatedGame = await gamesService.update(id, game);
       setGames(prevGames => 
         prevGames.map(g => g.id === id ? updatedGame : g)
       );
       return updatedGame;
     } catch (err) {
-      setError('Erro ao atualizar jogo');
+      setError(err.message || 'Erro ao atualizar jogo');
       throw err;
     }
   };

@@ -98,6 +98,7 @@ function Navbar() {
             alignItems: 'center',
             fontSize: '1.1rem',
             fontWeight: 500,
+            cursor: 'pointer',
           }}
         >
           <Box 
@@ -105,6 +106,7 @@ function Navbar() {
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
+              cursor: 'pointer',
               '&:hover': {
                 '& .game-logo': {
                   transform: 'scale(1.1)',
