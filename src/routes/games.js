@@ -8,9 +8,7 @@ const router = express.Router();
 async function checkDuplicate(gameName, platforms, mediaTypes) {
   const games = await gamesDb.getAll();
   return games.some(game => 
-    game.name === gameName && 
-    JSON.stringify(game.platforms) === JSON.stringify(platforms) && 
-    JSON.stringify(game.mediaTypes) === JSON.stringify(mediaTypes)
+    game.name.toLowerCase() === gameName.toLowerCase()
   );
 }
 
@@ -86,7 +84,7 @@ router.post('/', async (req, res) => {
     const isDuplicate = await checkDuplicate(name, platforms, mediaTypes);
     if (isDuplicate) {
       return res.status(400).json({ 
-        error: `Jogo "${name}" já existe para as plataformas especificadas` 
+        error: `Jogo com o nome "${name}" já existe no catálogo` 
       });
     }
 
@@ -138,14 +136,12 @@ router.put('/:id', async (req, res) => {
     const games = await gamesDb.getAll();
     const isDuplicate = games.some(game => 
       game.id !== req.params.id && 
-      game.name === name && 
-      JSON.stringify(game.platforms) === JSON.stringify(platforms) && 
-      JSON.stringify(game.mediaTypes) === JSON.stringify(mediaTypes)
+      game.name.toLowerCase() === name.toLowerCase()
     );
 
     if (isDuplicate) {
       return res.status(400).json({ 
-        error: `Jogo "${name}" já existe para as plataformas especificadas` 
+        error: `Jogo com o nome "${name}" já existe no catálogo` 
       });
     }
 
