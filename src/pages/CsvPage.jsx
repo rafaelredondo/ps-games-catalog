@@ -114,7 +114,7 @@ function CsvPage() {
       console.log(`Buscando jogo na API RAWG: ${gameName}`);
       
       // Log da URL completa para debug
-      const searchUrl = `${API_URL}/games?key=${API_KEY}&search=${encodeURIComponent(gameName)}&search_precise=true&search_exact=true&page_size=5`;
+      const searchUrl = `${API_URL}/games?key=${API_KEY}&search=${encodeURIComponent(gameName)}&search_precise=true&search_exact=false&page_size=5`;
       console.log(`URL de busca: ${searchUrl.replace(API_KEY, 'API_KEY_HIDDEN')}`);
       
       try {
