@@ -359,6 +359,14 @@ function GameDetails() {
                 {game.completed ? "Completado" : "Não completado"}
               </CategoryValue>
             </Grid>
+            
+            {/* Tempo de Jogo */}
+            <Grid item xs={12} sm={6}>
+              <CategoryTitle>Tempo de Jogo</CategoryTitle>
+              <CategoryValue>
+                {game.playTime ? `${game.playTime} horas` : "Não informado"}
+              </CategoryValue>
+            </Grid>
           </Grid>
           
           {/* Descrição - span completo */}
