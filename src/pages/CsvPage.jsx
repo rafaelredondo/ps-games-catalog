@@ -210,99 +210,116 @@ function CsvPage() {
   
   // Função para mapear campos do CSV para o formato do jogo
   const mapCsvToGameData = (csvRow, rawgData) => {
-    // Primeiro, construa o objeto base com os dados do RAWG
+    // Construir o objeto base com os dados que vêm da API RAWG
     const gameData = {
-      name: rawgData.name,
-      completed: false,
+      name: '',
+      platforms: [],
       mediaTypes: [],
-      platforms: rawgData.platforms || [],
+      coverUrl: rawgData.coverUrl || '',
+      released: rawgData.released || null,
+      metacritic: rawgData.metacritic || null,
       genres: rawgData.genres || [],
       publishers: rawgData.publishers || [],
       description: rawgData.description || '',
-      released: rawgData.released || null,
-      metacritic: rawgData.metacritic || null,
-      coverUrl: rawgData.coverUrl || ''
+      completed: false,
+      playTime: null
     };
     
-    // Agora, vamos substituir alguns campos com os dados do CSV, se existirem
-    if (headers.includes('name') && csvRow.name) {
-      gameData.name = csvRow.name;
-    }
+    // Agora, preenchemos os dados que vêm do CSV
+    // name: sempre vem do CSV
+    gameData.name = csvRow.name;
     
+    // completed: vem do CSV
     if (headers.includes('completed')) {
       gameData.completed = csvRow.completed === 'true' || csvRow.completed === 'sim' || csvRow.completed === '1';
     }
     
-    if (headers.includes('platforms') && csvRow.platforms) {
-      // Normalizar plataformas PlayStation
-      let platforms = csvRow.platforms.split(',').map(p => {
-        const platform = p.trim();
+    // playTime: vem do CSV
+    if (headers.includes('playtime') || headers.includes('playTime')) {
+      const playTimeField = headers.includes('playtime') ? 'playtime' : 'playTime';
+      const playTimeValue = csvRow[playTimeField];
+      gameData.playTime = playTimeValue ? parseInt(playTimeValue) : null;
+    }
+    
+    // platforms: vem do CSV
+    if (headers.includes('platform') || headers.includes('platforms')) {
+      const platformField = headers.includes('platform') ? 'platform' : 'platforms';
+      if (csvRow[platformField]) {
+        // Normalizar plataformas PlayStation
+        let platforms = csvRow[platformField].split(',').map(p => {
+          const platform = p.trim();
+          
+          // Normalização específica para PlayStation
+          if (platform === 'PS4') return 'PlayStation 4';
+          if (platform === 'PS5') return 'PlayStation 5';
+          if (platform === 'PS4/PS5' || platform === 'PS5/PS4') {
+            // Este caso será tratado separadamente para retornar um array com ambas plataformas
+            return null; // Marcamos como null para filtrar depois
+          }
+          
+          return platform;
+        }).filter(Boolean); // Remove valores null
         
-        // Normalização específica para PlayStation
-        if (platform === 'PS4') return 'PlayStation 4';
-        if (platform === 'PS5') return 'PlayStation 5';
-        if (platform === 'PS4/PS5' || platform === 'PS5/PS4') {
-          // Este caso será tratado separadamente para retornar um array com ambas plataformas
-          return null; // Marcamos como null para filtrar depois
+        // Verifica se temos PS4/PS5 no texto original e adiciona ambas plataformas
+        if (csvRow[platformField].includes('PS4/PS5') || csvRow[platformField].includes('PS5/PS4')) {
+          if (!platforms.includes('PlayStation 4')) {
+            platforms.push('PlayStation 4');
+          }
+          if (!platforms.includes('PlayStation 5')) {
+            platforms.push('PlayStation 5');
+          }
         }
         
-        return platform;
-      }).filter(Boolean); // Remove valores null
-      
-      // Verifica se temos PS4/PS5 no texto original e adiciona ambas plataformas
-      if (csvRow.platforms.includes('PS4/PS5') || csvRow.platforms.includes('PS5/PS4')) {
-        if (!platforms.includes('PlayStation 4')) {
-          platforms.push('PlayStation 4');
+        gameData.platforms = platforms;
+      }
+    }
+    
+    // mediaTypes: vem do CSV
+    if (headers.includes('mediaType') || headers.includes('mediaTypes')) {
+      const mediaTypeField = headers.includes('mediaType') ? 'mediaType' : 'mediaTypes';
+      if (csvRow[mediaTypeField]) {
+        // Primeiro verificamos se há separação por vírgula
+        if (csvRow[mediaTypeField].includes(',')) {
+          gameData.mediaTypes = csvRow[mediaTypeField].split(',').map(mt => mt.trim());
+        } 
+        // Verificamos se há padrão "Digital/Físico" ou "Físico/Digital"
+        else if (csvRow[mediaTypeField].includes('Digital/Físico') || csvRow[mediaTypeField].includes('Físico/Digital')) {
+          gameData.mediaTypes = ['Digital', 'Físico'];
         }
-        if (!platforms.includes('PlayStation 5')) {
-          platforms.push('PlayStation 5');
+        // Verificamos se há qualquer outro separador com "/"
+        else if (csvRow[mediaTypeField].includes('/')) {
+          gameData.mediaTypes = csvRow[mediaTypeField].split('/').map(mt => mt.trim());
+        }
+        // Caso contrário, consideramos como um único valor
+        else {
+          gameData.mediaTypes = [csvRow[mediaTypeField].trim()];
         }
       }
-      
-      gameData.platforms = platforms;
-    }
-    
-    if (headers.includes('mediaTypes') && csvRow.mediaTypes) {
-      gameData.mediaTypes = csvRow.mediaTypes.split(',').map(mt => mt.trim());
-    }
-    
-    if (headers.includes('metacritic') && csvRow.metacritic) {
-      gameData.metacritic = parseInt(csvRow.metacritic);
-    }
-    
-    if (headers.includes('released') && csvRow.released) {
-      gameData.released = csvRow.released;
-    }
-    
-    // Adicionar tratamento para campos adicionais do CSV que podem substituir dados do RAWG
-    if (headers.includes('genres') && csvRow.genres) {
-      gameData.genres = csvRow.genres.split(',').map(g => g.trim());
-    }
-    
-    if (headers.includes('publishers') && csvRow.publishers) {
-      gameData.publishers = csvRow.publishers.split(',').map(p => p.trim());
-    }
-    
-    if (headers.includes('description') && csvRow.description) {
-      gameData.description = csvRow.description;
-    }
-    
-    if (headers.includes('coverUrl') && csvRow.coverUrl) {
-      gameData.coverUrl = csvRow.coverUrl;
     }
     
     // Log detalhado dos dados mesclados para debug
     console.log(`Dados mesclados para ${gameData.name}:`, {
       rawgId: rawgData.rawgId,
       platforms: gameData.platforms,
+      mediaTypes: gameData.mediaTypes,
       metacritic: gameData.metacritic,
       coverUrl: gameData.coverUrl ? 'Presente' : 'Ausente',
+      playTime: gameData.playTime,
+      completed: gameData.completed,
       fromCSV: {
-        name: headers.includes('name') && csvRow.name ? true : false,
-        platforms: headers.includes('platforms') && csvRow.platforms ? true : false,
-        metacritic: headers.includes('metacritic') && csvRow.metacritic ? true : false,
-        genres: headers.includes('genres') && csvRow.genres ? true : false,
-        publishers: headers.includes('publishers') && csvRow.publishers ? true : false
+        name: true,
+        platforms: headers.includes('platform') || headers.includes('platforms') ? true : false,
+        mediaTypes: headers.includes('mediaType') || headers.includes('mediaTypes') ? true : false,
+        playTime: headers.includes('playtime') || headers.includes('playTime') ? true : false,
+        completed: headers.includes('completed') ? true : false
+      },
+      fromAPI: {
+        coverUrl: true,
+        released: true,
+        metacritic: true, 
+        genres: true,
+        publishers: true,
+        description: true
       }
     });
     
