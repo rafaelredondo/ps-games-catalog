@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import AddGame from './pages/AddGame';
 import EditGame from './pages/EditGame';
 import GameDetails from './pages/GameDetails';
+import CsvPage from './pages/CsvPage';
 import Navbar from './components/Navbar';
 
 // Creating a custom theme
@@ -118,6 +119,7 @@ function App() {
             <Route path="/add" element={<AddGame />} />
             <Route path="/edit/:id" element={<EditGame />} />
             <Route path="/game/:id" element={<GameDetails />} />
+            <Route path="/csv" element={<CsvPage />} />
           </Routes>
         </Router>
       </GamesProvider>
