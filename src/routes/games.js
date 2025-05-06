@@ -5,12 +5,10 @@ import Game from '../models/Game.js';
 const router = express.Router();
 
 // Função auxiliar para verificar duplicatas
-async function checkDuplicate(gameName, platform, mediaType) {
+async function checkDuplicate(gameName, platforms, mediaTypes) {
   const games = await gamesDb.getAll();
   return games.some(game => 
-    game.name === gameName && 
-    game.platform === platform && 
-    game.mediaType === mediaType
+    game.name.toLowerCase() === gameName.toLowerCase()
   );
 }
 
@@ -39,7 +37,9 @@ router.get('/platform/:platform', async (req, res) => {
   try {
     const { platform } = req.params;
     const games = await gamesDb.getAll();
-    const gamesByPlatform = games.filter(game => game.platform === platform);
+    const gamesByPlatform = games.filter(game => 
+      game.platforms && game.platforms.includes(platform)
+    );
     res.json(gamesByPlatform);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar jogos por plataforma' });
@@ -62,29 +62,45 @@ router.get('/:id', async (req, res) => {
 // Criar um novo jogo
 router.post('/', async (req, res) => {
   try {
-    const { name, platform, mediaType, coverUrl, rating, playtime, priority } = req.body;
+    const { 
+      name, 
+      platforms, 
+      mediaTypes, 
+      coverUrl, 
+      released, 
+      metacritic,
+      genres,
+      publishers,
+      description,
+      completed,
+      playTime
+    } = req.body;
     
-    if (!name || !platform || !mediaType) {
-      return res.status(400).json({ error: 'Nome, plataforma e tipo de mídia são obrigatórios' });
+    if (!name || !platforms || !mediaTypes) {
+      return res.status(400).json({ error: 'Nome, plataformas e tipos de mídia são obrigatórios' });
     }
 
     // Verificar duplicata
-    const isDuplicate = await checkDuplicate(name, platform, mediaType);
+    const isDuplicate = await checkDuplicate(name, platforms, mediaTypes);
     if (isDuplicate) {
       return res.status(400).json({ 
-        error: `Jogo "${name}" já existe para ${platform} (${mediaType})` 
+        error: `Jogo com o nome "${name}" já existe no catálogo` 
       });
     }
 
     const newGame = new Game(
       Date.now().toString(),
       name,
-      platform,
-      mediaType,
+      platforms,
+      mediaTypes,
       coverUrl || '',
-      rating || '',
-      playtime || '',
-      priority || ''
+      released || '',
+      metacritic || null,
+      genres || [],
+      publishers || [],
+      description || '',
+      completed || false,
+      playTime || null
     );
 
     const createdGame = await gamesDb.create(newGame);
@@ -98,36 +114,50 @@ router.post('/', async (req, res) => {
 // Atualizar um jogo
 router.put('/:id', async (req, res) => {
   try {
-    const { name, platform, mediaType, coverUrl, rating, playtime, priority } = req.body;
+    const { 
+      name, 
+      platforms, 
+      mediaTypes, 
+      coverUrl, 
+      released, 
+      metacritic,
+      genres,
+      publishers,
+      description,
+      completed,
+      playTime 
+    } = req.body;
     
-    if (!name || !platform || !mediaType) {
-      return res.status(400).json({ error: 'Nome, plataforma e tipo de mídia são obrigatórios' });
+    if (!name || !platforms || !mediaTypes) {
+      return res.status(400).json({ error: 'Nome, plataformas e tipos de mídia são obrigatórios' });
     }
 
     // Verificar duplicata, excluindo o jogo atual
     const games = await gamesDb.getAll();
     const isDuplicate = games.some(game => 
       game.id !== req.params.id && 
-      game.name === name && 
-      game.platform === platform && 
-      game.mediaType === mediaType
+      game.name.toLowerCase() === name.toLowerCase()
     );
 
     if (isDuplicate) {
       return res.status(400).json({ 
-        error: `Jogo "${name}" já existe para ${platform} (${mediaType})` 
+        error: `Jogo com o nome "${name}" já existe no catálogo` 
       });
     }
 
     const updatedGame = new Game(
       req.params.id,
       name,
-      platform,
-      mediaType,
+      platforms,
+      mediaTypes,
       coverUrl || '',
-      rating || '',
-      playtime || '',
-      priority || ''
+      released || '',
+      metacritic || null,
+      genres || [],
+      publishers || [],
+      description || '',
+      completed !== undefined ? completed : false,
+      playTime || null
     );
 
     const game = await gamesDb.update(req.params.id, updatedGame);
