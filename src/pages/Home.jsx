@@ -34,7 +34,8 @@ import {
   Paper,
   ToggleButtonGroup,
   ToggleButton,
-  TableSortLabel
+  TableSortLabel,
+  Tooltip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -43,6 +44,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import { useGames } from '../contexts/GamesContext';
 
 function Home() {
@@ -258,6 +260,23 @@ function Home() {
       return scoreB - scoreA;
     }
     return 0;
+  };
+
+  // Função para limpar todos os filtros
+  const handleClearFilters = () => {
+    // Redefine todos os estados para valores padrão
+    setPlatform('all');
+    setSearchTerm('');
+    setMinMetacritic('');
+    setSelectedGenre('all');
+    setSelectedPublisher('all');
+    
+    // Limpa os valores armazenados no localStorage
+    localStorage.removeItem('filter_platform');
+    localStorage.removeItem('filter_search');
+    localStorage.removeItem('filter_metacritic');
+    localStorage.removeItem('filter_genre');
+    localStorage.removeItem('filter_publisher');
   };
 
   if (loading) {
@@ -602,8 +621,8 @@ function Home() {
       </Box>
 
       {/* Barra de filtros */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
+      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+        <Grid item xs={12} sm={6} md={2}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="platform-select-label">Plataforma</InputLabel>
             <Select
@@ -622,7 +641,7 @@ function Home() {
           </FormControl>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={2}>
           <TextField
             fullWidth
             size="small"
@@ -640,7 +659,7 @@ function Home() {
           />
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={2}>
           <TextField
             fullWidth
             size="small"
@@ -653,7 +672,7 @@ function Home() {
           />
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={2}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="genre-select-label">Gênero</InputLabel>
             <Select
@@ -672,7 +691,7 @@ function Home() {
           </FormControl>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid item xs={12} sm={6} md={2}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="publisher-select-label">Publisher</InputLabel>
             <Select
@@ -689,6 +708,21 @@ function Home() {
               ))}
             </Select>
           </FormControl>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={2}>
+          <Tooltip title="Limpar todos os filtros">
+            <Button 
+              variant="outlined" 
+              color="error" 
+              fullWidth
+              onClick={handleClearFilters}
+              startIcon={<FilterAltOffIcon />}
+              sx={{ height: '40px' }}
+            >
+              Limpar Filtros
+            </Button>
+          </Tooltip>
         </Grid>
       </Grid>
 
