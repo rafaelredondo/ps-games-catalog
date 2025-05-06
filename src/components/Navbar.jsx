@@ -2,6 +2,7 @@ import { AppBar, Toolbar, Typography, Button, Box, SvgIcon } from '@mui/material
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import InsightsIcon from '@mui/icons-material/Insights';
 
 // Componente de logotipo inspirado no PlayStation
 const PlayStationLogo = (props) => (
@@ -129,7 +130,7 @@ function Navbar() {
               WebkitTextFillColor: 'transparent',
               fontWeight: 600
             }}>
-              PlayStation Games Catalog
+              Games Catalog
             </span>
           </Box>
         </Typography>
@@ -169,16 +170,44 @@ function Navbar() {
             component={RouterLink}
             to="/csv"
             sx={{ 
-              ml: 1.5, 
-              opacity: 0.7, 
+              ml: 1.5,
+              bgcolor: '#0096FF',
               textTransform: 'none', 
-              fontWeight: 400,
-              fontSize: '0.9rem',
-              '&:hover': { opacity: 1 }
+              fontWeight: 500,
+              borderRadius: '6px',
+              px: 2,
+              '&:hover': { 
+                bgcolor: '#0077cc',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+              },
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
             startIcon={<UploadFileIcon fontSize="small" />}
           >
             CSV
+          </Button>
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to="/wrapped"
+            sx={{ 
+              ml: 1.5,
+              opacity: 0.85, 
+              textTransform: 'none', 
+              fontWeight: 400,
+              fontSize: '0.9rem',
+              background: 'linear-gradient(45deg, #FF6AD5 0%, #C774E8 50%, #AD8CFF 100%)',
+              color: 'white',
+              borderRadius: '6px',
+              px: 2,
+              '&:hover': { 
+                opacity: 1,
+                boxShadow: '0 2px 8px rgba(173, 140, 255, 0.5)'
+              }
+            }}
+            startIcon={<InsightsIcon fontSize="small" />}
+          >
+            GameWrapped
           </Button>
         </Box>
       </Toolbar>
