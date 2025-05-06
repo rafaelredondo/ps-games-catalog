@@ -48,11 +48,21 @@ import { useGames } from '../contexts/GamesContext';
 function Home() {
   const navigate = useNavigate();
   const { games: allGames, loading, error, loadGames, loadGamesByPlatform, deleteGame } = useGames();
-  const [platform, setPlatform] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [minMetacritic, setMinMetacritic] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('all');
-  const [selectedPublisher, setSelectedPublisher] = useState('all');
+  const [platform, setPlatform] = useState(() => {
+    return localStorage.getItem('filter_platform') || 'all';
+  });
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return localStorage.getItem('filter_search') || '';
+  });
+  const [minMetacritic, setMinMetacritic] = useState(() => {
+    return localStorage.getItem('filter_metacritic') || '';
+  });
+  const [selectedGenre, setSelectedGenre] = useState(() => {
+    return localStorage.getItem('filter_genre') || 'all';
+  });
+  const [selectedPublisher, setSelectedPublisher] = useState(() => {
+    return localStorage.getItem('filter_publisher') || 'all';
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [filteredGames, setFilteredGames] = useState([]);
@@ -151,23 +161,33 @@ function Home() {
 
   // Funções de manipulação dos filtros
   const handlePlatformChange = (event) => {
-    setPlatform(event.target.value);
+    const value = event.target.value;
+    setPlatform(value);
+    localStorage.setItem('filter_platform', value);
   };
 
   const handleSearch = (event) => {
-    setSearchTerm(event.target.value);
+    const value = event.target.value;
+    setSearchTerm(value);
+    localStorage.setItem('filter_search', value);
   };
 
   const handleMinMetacriticChange = (event) => {
-    setMinMetacritic(event.target.value);
+    const value = event.target.value;
+    setMinMetacritic(value);
+    localStorage.setItem('filter_metacritic', value);
   };
 
   const handleGenreChange = (event) => {
-    setSelectedGenre(event.target.value);
+    const value = event.target.value;
+    setSelectedGenre(value);
+    localStorage.setItem('filter_genre', value);
   };
 
   const handlePublisherChange = (event) => {
-    setSelectedPublisher(event.target.value);
+    const value = event.target.value;
+    setSelectedPublisher(value);
+    localStorage.setItem('filter_publisher', value);
   };
 
   const handleCardClick = (gameId) => {
