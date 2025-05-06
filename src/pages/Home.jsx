@@ -63,8 +63,14 @@ function Home() {
     // Recuperar o modo de visualização do localStorage ou usar 'card' como padrão
     return localStorage.getItem('viewMode') || 'card';
   });
-  const [orderBy, setOrderBy] = useState('name');
-  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState(() => {
+    // Recuperar a coluna de ordenação do localStorage ou usar 'name' como padrão
+    return localStorage.getItem('orderBy') || 'name';
+  });
+  const [order, setOrder] = useState(() => {
+    // Recuperar a direção de ordenação do localStorage ou usar 'asc' como padrão
+    return localStorage.getItem('order') || 'asc';
+  });
 
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
@@ -191,8 +197,13 @@ function Home() {
   // Funções de ordenação de tabela
   const handleRequestSort = (property) => {
     const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
+    const newOrder = isAsc ? 'desc' : 'asc';
+    setOrder(newOrder);
     setOrderBy(property);
+    
+    // Salvar as configurações de ordenação no localStorage
+    localStorage.setItem('orderBy', property);
+    localStorage.setItem('order', newOrder);
   };
 
   const getComparator = (order, orderBy) => {
