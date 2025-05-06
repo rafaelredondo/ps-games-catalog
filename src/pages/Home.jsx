@@ -34,6 +34,7 @@ import {
   Paper,
   ToggleButtonGroup,
   ToggleButton,
+  TableSortLabel
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -62,6 +63,8 @@ function Home() {
     // Recuperar o modo de visualização do localStorage ou usar 'card' como padrão
     return localStorage.getItem('viewMode') || 'card';
   });
+  const [orderBy, setOrderBy] = useState('name');
+  const [order, setOrder] = useState('asc');
 
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
@@ -184,6 +187,47 @@ function Home() {
   useEffect(() => {
     loadGames();
   }, []);
+
+  // Funções de ordenação de tabela
+  const handleRequestSort = (property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const getComparator = (order, orderBy) => {
+    return order === 'desc'
+      ? (a, b) => descendingComparator(a, b, orderBy)
+      : (a, b) => -descendingComparator(a, b, orderBy);
+  };
+
+  const descendingComparator = (a, b, orderBy) => {
+    // Tratamento especial para diferentes tipos de campos
+    if (orderBy === 'name') {
+      return b.name.localeCompare(a.name);
+    } 
+    else if (orderBy === 'platforms') {
+      const platformsA = a.platforms ? a.platforms.join(', ') : '';
+      const platformsB = b.platforms ? b.platforms.join(', ') : '';
+      return platformsB.localeCompare(platformsA);
+    }
+    else if (orderBy === 'genres') {
+      const genresA = a.genres ? a.genres.join(', ') : '';
+      const genresB = b.genres ? b.genres.join(', ') : '';
+      return genresB.localeCompare(genresA);
+    }
+    else if (orderBy === 'year') {
+      const yearA = a.released ? new Date(a.released).getFullYear() : 0;
+      const yearB = b.released ? new Date(b.released).getFullYear() : 0;
+      return yearB - yearA;
+    }
+    else if (orderBy === 'metacritic') {
+      const scoreA = a.metacritic || 0;
+      const scoreB = b.metacritic || 0;
+      return scoreB - scoreA;
+    }
+    return 0;
+  };
 
   if (loading) {
     return (
@@ -330,20 +374,108 @@ function Home() {
 
   // Renderização da tabela
   const renderTableView = () => {
+    // Ordenar os jogos filtrados
+    const sortedGames = [...filteredGames].sort(getComparator(order, orderBy));
+    
     return (
       <TableContainer component={Paper} sx={{ bgcolor: '#222', color: 'white', boxShadow: '0 4px 8px rgba(0,0,0,0.3)' }}>
         <Table sx={{ minWidth: 650 }} aria-label="tabela de jogos">
           <TableHead>
             <TableRow sx={{ '& th': { fontWeight: 'bold', bgcolor: '#333' } }}>
-              <TableCell sx={{ color: 'white' }}>Nome</TableCell>
-              <TableCell sx={{ color: 'white' }}>Plataformas</TableCell>
-              <TableCell sx={{ color: 'white' }}>Gêneros</TableCell>
-              <TableCell align="center" sx={{ color: 'white' }}>Ano</TableCell>
-              <TableCell align="center" sx={{ color: 'white' }}>Metacritic</TableCell>
+              <TableCell sx={{ color: 'white' }}>
+                <TableSortLabel
+                  active={orderBy === 'name'}
+                  direction={orderBy === 'name' ? order : 'asc'}
+                  onClick={() => handleRequestSort('name')}
+                  sx={{
+                    color: 'white !important',
+                    '&.MuiTableSortLabel-active': {
+                      color: 'white !important',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                      color: 'white !important',
+                    },
+                  }}
+                >
+                  Nome
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ color: 'white' }}>
+                <TableSortLabel
+                  active={orderBy === 'platforms'}
+                  direction={orderBy === 'platforms' ? order : 'asc'}
+                  onClick={() => handleRequestSort('platforms')}
+                  sx={{
+                    color: 'white !important',
+                    '&.MuiTableSortLabel-active': {
+                      color: 'white !important',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                      color: 'white !important',
+                    },
+                  }}
+                >
+                  Plataformas
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ color: 'white' }}>
+                <TableSortLabel
+                  active={orderBy === 'genres'}
+                  direction={orderBy === 'genres' ? order : 'asc'}
+                  onClick={() => handleRequestSort('genres')}
+                  sx={{
+                    color: 'white !important',
+                    '&.MuiTableSortLabel-active': {
+                      color: 'white !important',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                      color: 'white !important',
+                    },
+                  }}
+                >
+                  Gêneros
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center" sx={{ color: 'white' }}>
+                <TableSortLabel
+                  active={orderBy === 'year'}
+                  direction={orderBy === 'year' ? order : 'asc'}
+                  onClick={() => handleRequestSort('year')}
+                  sx={{
+                    color: 'white !important',
+                    '&.MuiTableSortLabel-active': {
+                      color: 'white !important',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                      color: 'white !important',
+                    },
+                  }}
+                >
+                  Ano
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center" sx={{ color: 'white' }}>
+                <TableSortLabel
+                  active={orderBy === 'metacritic'}
+                  direction={orderBy === 'metacritic' ? order : 'asc'}
+                  onClick={() => handleRequestSort('metacritic')}
+                  sx={{
+                    color: 'white !important',
+                    '&.MuiTableSortLabel-active': {
+                      color: 'white !important',
+                    },
+                    '& .MuiTableSortLabel-icon': {
+                      color: 'white !important',
+                    },
+                  }}
+                >
+                  Metacritic
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredGames.map((game) => (
+            {sortedGames.map((game) => (
               <TableRow 
                 key={game.id}
                 hover
