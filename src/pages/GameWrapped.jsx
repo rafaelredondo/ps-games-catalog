@@ -90,7 +90,7 @@ export default function GameWrapped() {
       genres: count(gamesData, 'genres').slice(0, 4),
       longestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => b.playTime - a.playTime).slice(0, 4),
       shortestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => a.playTime - b.playTime).slice(0, 4),
-      topRatedGames: [...gamesData].filter(g => g.metacritic != null).sort((a, b) => b.metacritic - a.metacritic).slice(0, 4),
+      topRatedGames: [...gamesData].filter(g => g.metacritic != null).sort((a, b) => b.metacritic - a.metacritic).slice(0, 16),
       publishers: count(gamesData, 'publishers').slice(0, 4),
       platforms: count(gamesData, 'platforms'),
       format: { physical, digital }
@@ -157,8 +157,135 @@ export default function GameWrapped() {
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, mx: 'auto' }}>
         <Header />
         <Grid container spacing={3} justifyContent="center">
-          {/* Mais Longos, Mais Curtos e Top Metacritic lado a lado */}
-          <Grid item xs={12} md={4}>
+          {/* Top Metacritic sozinho na primeira linha */}
+          <Grid item xs={12}>
+            <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
+              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                {/* Primeira coluna - jogos 1-4 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(0, 4).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 1}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
+                              <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
+                                {game.metacritic}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+                
+                {/* Segunda coluna - jogos 5-8 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(4, 8).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 5}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
+                              <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
+                                {game.metacritic}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+                
+                {/* Terceira coluna - jogos 9-12 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(8, 12).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 9}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
+                              <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
+                                {game.metacritic}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+                
+                {/* Quarta coluna - jogos 13-16 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(12, 16).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 13}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
+                              <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
+                                {game.metacritic}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </Box>
+            </CleanCard>
+          </Grid>
+
+          {/* Mais Longos e Mais Curtos ocupando toda a segunda linha */}
+          <Grid item xs={12} md={6}>
             <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]}>
               <List disablePadding>
                 {stats.longestGames.map((game, idx) => (
@@ -182,7 +309,7 @@ export default function GameWrapped() {
               </List>
             </CleanCard>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={6}>
             <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]}>
               <List disablePadding>
                 {stats.shortestGames.map((game, idx) => (
@@ -200,36 +327,6 @@ export default function GameWrapped() {
                       }
                       secondary={formatPlayTime(game.playTime)} 
                       secondaryTypographyProps={{ color: 'text.secondary', fontWeight: 'medium' }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </CleanCard>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
-              <List disablePadding>
-                {stats.topRatedGames.map((game, idx) => (
-                  <ListItem key={game.id} divider={idx < stats.topRatedGames.length-1} disablePadding sx={{ py: 1.5 }}>
-                    <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1.5, fontSize: '1.1rem', width: 24, textAlign: 'center' }}>
-                      {idx + 1}
-                    </Typography>
-                    <ListItemText 
-                      primary={
-                        <Tooltip title={game.name}>
-                          <Typography noWrap sx={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                            {game.name}
-                          </Typography>
-                        </Tooltip>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <StarIcon sx={{ fontSize: 16, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                          <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                            {game.metacritic}
-                          </Typography>
-                        </Box>
-                      }
                     />
                   </ListItem>
                 ))}
