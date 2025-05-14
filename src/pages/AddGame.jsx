@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -22,10 +22,11 @@ import { searchGame } from '../services/rawgApi';
 const AddGame = () => {
   const navigate = useNavigate();
   const { addGame } = useGames();
+  const autocompleteRef = useRef(null);
   const [formData, setFormData] = useState({
     name: '',
-    platforms: [],
-    mediaTypes: [],
+    platforms: ['PlayStation 4'],
+    mediaTypes: ['Digital'],
     coverUrl: '',
     released: '',
     metacritic: null,
@@ -37,6 +38,21 @@ const AddGame = () => {
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  // Efeito para focar no campo de nome do jogo quando o componente é montado
+  useEffect(() => {
+    // Pequeno timeout para garantir que o componente esteja completamente renderizado
+    const timer = setTimeout(() => {
+      if (autocompleteRef.current) {
+        const input = autocompleteRef.current.querySelector('input');
+        if (input) {
+          input.focus();
+        }
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const platformOptions = ["PlayStation 4", "PlayStation 5", "Nintendo Switch"];
   const mediaTypeOptions = ["Físico", "Digital"];
@@ -125,7 +141,12 @@ const AddGame = () => {
       await addGame(formData);
       navigate('/');
     } catch (error) {
-      setError('Erro ao adicionar jogo. Tente novamente.');
+      // Capturar a mensagem de erro específica do contexto
+      if (error.message && error.message.includes('já existe')) {
+        setError(error.message);
+      } else {
+        setError('Erro ao adicionar jogo. Tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
@@ -154,6 +175,7 @@ const AddGame = () => {
             loading={searchLoading}
             onInputChange={(_, value) => handleSearch(value)}
             onChange={(_, value) => handleGameSelect(value)}
+            ref={autocompleteRef}
             renderInput={(params) => (
               <TextField
                 {...params}

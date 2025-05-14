@@ -227,7 +227,7 @@ function CsvPage() {
     
     // Agora, preenchemos os dados que vêm do CSV
     // name: sempre vem do CSV
-    gameData.name = csvRow.name;
+      gameData.name = csvRow.name;
     
     // completed: vem do CSV
     if (headers.includes('completed')) {
@@ -245,33 +245,33 @@ function CsvPage() {
     if (headers.includes('platform') || headers.includes('platforms')) {
       const platformField = headers.includes('platform') ? 'platform' : 'platforms';
       if (csvRow[platformField]) {
-        // Normalizar plataformas PlayStation
+      // Normalizar plataformas PlayStation
         let platforms = csvRow[platformField].split(',').map(p => {
-          const platform = p.trim();
-          
-          // Normalização específica para PlayStation
-          if (platform === 'PS4') return 'PlayStation 4';
-          if (platform === 'PS5') return 'PlayStation 5';
-          if (platform === 'PS4/PS5' || platform === 'PS5/PS4') {
-            // Este caso será tratado separadamente para retornar um array com ambas plataformas
-            return null; // Marcamos como null para filtrar depois
-          }
-          
-          return platform;
-        }).filter(Boolean); // Remove valores null
+        const platform = p.trim();
         
-        // Verifica se temos PS4/PS5 no texto original e adiciona ambas plataformas
-        if (csvRow[platformField].includes('PS4/PS5') || csvRow[platformField].includes('PS5/PS4')) {
-          if (!platforms.includes('PlayStation 4')) {
-            platforms.push('PlayStation 4');
-          }
-          if (!platforms.includes('PlayStation 5')) {
-            platforms.push('PlayStation 5');
-          }
+        // Normalização específica para PlayStation
+        if (platform === 'PS4') return 'PlayStation 4';
+        if (platform === 'PS5') return 'PlayStation 5';
+        if (platform === 'PS4/PS5' || platform === 'PS5/PS4') {
+          // Este caso será tratado separadamente para retornar um array com ambas plataformas
+          return null; // Marcamos como null para filtrar depois
         }
         
-        gameData.platforms = platforms;
+        return platform;
+      }).filter(Boolean); // Remove valores null
+      
+      // Verifica se temos PS4/PS5 no texto original e adiciona ambas plataformas
+        if (csvRow[platformField].includes('PS4/PS5') || csvRow[platformField].includes('PS5/PS4')) {
+        if (!platforms.includes('PlayStation 4')) {
+          platforms.push('PlayStation 4');
+        }
+        if (!platforms.includes('PlayStation 5')) {
+          platforms.push('PlayStation 5');
+        }
       }
+      
+      gameData.platforms = platforms;
+    }
     }
     
     // mediaTypes: vem do CSV
@@ -281,15 +281,15 @@ function CsvPage() {
         // Primeiro verificamos se há separação por vírgula
         if (csvRow[mediaTypeField].includes(',')) {
           gameData.mediaTypes = csvRow[mediaTypeField].split(',').map(mt => mt.trim());
-        } 
+    }
         // Verificamos se há padrão "Digital/Físico" ou "Físico/Digital"
         else if (csvRow[mediaTypeField].includes('Digital/Físico') || csvRow[mediaTypeField].includes('Físico/Digital')) {
           gameData.mediaTypes = ['Digital', 'Físico'];
-        }
+    }
         // Verificamos se há qualquer outro separador com "/"
         else if (csvRow[mediaTypeField].includes('/')) {
           gameData.mediaTypes = csvRow[mediaTypeField].split('/').map(mt => mt.trim());
-        }
+    }
         // Caso contrário, consideramos como um único valor
         else {
           gameData.mediaTypes = [csvRow[mediaTypeField].trim()];
