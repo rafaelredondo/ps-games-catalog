@@ -45,6 +45,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { useGames } from '../contexts/GamesContext';
 
 function Home() {
@@ -293,6 +294,71 @@ function Home() {
           setGameToDelete(null);
         });
     }
+  };
+
+  // Função para exportar os jogos filtrados para CSV
+  const handleExportCsv = () => {
+    // Converter os dados dos jogos para o formato CSV
+    const headers = [
+      'ID',
+      'Nome',
+      'Plataformas',
+      'Tipos de Mídia',
+      'URL da Capa',
+      'Data de Lançamento',
+      'Pontuação Metacritic',
+      'Gêneros',
+      'Publishers',
+      'Descrição',
+      'Completado',
+      'Tempo de Jogo'
+    ];
+
+    // Converter os dados para formato CSV (linhas)
+    const dataRows = filteredGames.map(game => [
+      game.id,
+      game.name,
+      (game.platforms || []).join(', '),
+      (game.mediaTypes || []).join(', '),
+      game.coverUrl || '',
+      game.released || '',
+      game.metacritic || '',
+      (game.genres || []).join(', '),
+      (game.publishers || []).join(', '),
+      (game.description || '').replace(/[\r\n]+/g, ' '), // Remover quebras de linha
+      game.completed ? 'Sim' : 'Não',
+      game.playTime || ''
+    ]);
+
+    // Juntar cabeçalhos e linhas de dados
+    const csvContent = [
+      headers.join(','),
+      ...dataRows.map(row => row.map(cell => 
+        // Coloca aspas em células que contêm vírgulas ou aspas
+        typeof cell === 'string' && (cell.includes(',') || cell.includes('"')) 
+          ? `"${cell.replace(/"/g, '""')}"` 
+          : cell
+      ).join(','))
+    ].join('\n');
+
+    // Criar um blob do conteúdo CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Criar URL para o blob
+    const url = URL.createObjectURL(blob);
+    
+    // Criar um link para download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `jogos-filtrados-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    
+    // Trigger do download
+    link.click();
+    
+    // Limpeza
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   if (loading) {
@@ -632,33 +698,38 @@ function Home() {
         <Typography variant="h4" component="h1">
           Catálogo de Jogos
         </Typography>
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={handleViewModeChange}
-          aria-label="modo de visualização"
-          size="small"
-          sx={{ 
-            bgcolor: '#333',
-            '& .MuiToggleButton-root': { 
-              color: 'rgba(255,255,255,0.7)',
-              '&.Mui-selected': {
-                bgcolor: '#0096FF',
-                color: 'white',
-                '&:hover': {
-                  bgcolor: '#0077cc',
-                }
-              } 
-            }
-          }}
-        >
-          <ToggleButton value="card" aria-label="modo card">
-            <ViewModuleIcon />
-          </ToggleButton>
-          <ToggleButton value="table" aria-label="modo tabela">
-            <ViewListIcon />
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+            {filteredGames.length} {filteredGames.length === 1 ? 'jogo encontrado' : 'jogos encontrados'}
+          </Typography>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={handleViewModeChange}
+            aria-label="modo de visualização"
+            size="small"
+            sx={{ 
+              bgcolor: '#333',
+              '& .MuiToggleButton-root': { 
+                color: 'rgba(255,255,255,0.7)',
+                '&.Mui-selected': {
+                  bgcolor: '#0096FF',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: '#0077cc',
+                  }
+                } 
+              }
+            }}
+          >
+            <ToggleButton value="card" aria-label="modo card">
+              <ViewModuleIcon />
+            </ToggleButton>
+            <ToggleButton value="table" aria-label="modo tabela">
+              <ViewListIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       {/* Barra de filtros */}
@@ -751,7 +822,7 @@ function Home() {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={12} sm={3} md={1}>
           <Tooltip title="Limpar todos os filtros">
             <Button 
               variant="outlined" 
@@ -761,7 +832,23 @@ function Home() {
               startIcon={<FilterAltOffIcon />}
               sx={{ height: '40px' }}
             >
-              Limpar Filtros
+              Limpar
+            </Button>
+          </Tooltip>
+        </Grid>
+
+        <Grid item xs={12} sm={3} md={1}>
+          <Tooltip title="Exportar jogos para CSV">
+            <Button 
+              variant="outlined" 
+              color="info" 
+              fullWidth
+              onClick={handleExportCsv}
+              startIcon={<FileDownloadIcon />}
+              sx={{ height: '40px' }}
+              disabled={filteredGames.length === 0}
+            >
+              CSV
             </Button>
           </Tooltip>
         </Grid>
