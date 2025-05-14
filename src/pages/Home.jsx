@@ -279,6 +279,22 @@ function Home() {
     localStorage.removeItem('filter_publisher');
   };
 
+  // Função para lidar com a confirmação de exclusão
+  const handleDeleteConfirm = () => {
+    if (gameToDelete) {
+      deleteGame(gameToDelete.id)
+        .then(() => {
+          setDeleteDialogOpen(false);
+          setGameToDelete(null);
+        })
+        .catch((err) => {
+          console.error('Erro ao excluir jogo:', err);
+          setDeleteDialogOpen(false);
+          setGameToDelete(null);
+        });
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
@@ -522,6 +538,9 @@ function Home() {
                   Metacritic
                 </TableSortLabel>
               </TableCell>
+              <TableCell align="center" sx={{ color: 'white', width: '80px' }}>
+                Ações
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -529,20 +548,23 @@ function Home() {
               <TableRow 
                 key={game.id}
                 hover
-                onClick={() => handleCardClick(game.id)}
                 sx={{ 
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
-                  cursor: 'pointer',
                   '& td': { color: 'rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.1)' }
                 }}
               >
-                <TableCell component="th" scope="row" sx={{ color: 'white', fontWeight: 'medium' }}>
+                <TableCell 
+                  component="th" 
+                  scope="row" 
+                  sx={{ color: 'white', fontWeight: 'medium', cursor: 'pointer' }}
+                  onClick={() => handleCardClick(game.id)}
+                >
                   {game.name}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
                   {game.platforms ? game.platforms.join(', ') : ''}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {game.genres && game.genres.map(genre => (
                       <Chip
@@ -560,10 +582,10 @@ function Home() {
                     ))}
                   </Box>
                 </TableCell>
-                <TableCell align="center">
+                <TableCell align="center" onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
                   {game.released ? new Date(game.released).getFullYear() : ''}
                 </TableCell>
-                <TableCell align="center">
+                <TableCell align="center" onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
                   {game.metacritic ? (
                     <Chip
                       label={game.metacritic}
@@ -576,6 +598,25 @@ function Home() {
                       }}
                     />
                   ) : ''}
+                </TableCell>
+                <TableCell align="center">
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGameToDelete(game);
+                      setDeleteDialogOpen(true);
+                    }}
+                    sx={{ 
+                      '&:hover': { 
+                        bgcolor: 'rgba(211, 47, 47, 0.1)' 
+                      }
+                    }}
+                    aria-label="excluir jogo"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -728,6 +769,31 @@ function Home() {
 
       {/* Renderizar a visualização selecionada */}
       {viewMode === 'card' ? renderCardView() : renderTableView()}
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirmar exclusão
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Tem certeza que deseja excluir o jogo "{gameToDelete?.name}"? Esta ação não pode ser desfeita.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
