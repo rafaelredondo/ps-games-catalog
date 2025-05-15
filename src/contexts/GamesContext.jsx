@@ -59,6 +59,9 @@ export function GamesProvider({ children }) {
   // Atualizar um jogo
   const updateGame = async (id, game) => {
     try {
+      console.log('GamesContext - Atualizando jogo ID:', id);
+      console.log('GamesContext - Dados enviados para atualização:', game);
+      
       // Verificar se já existe outro jogo com o mesmo nome
       const currentGames = await gamesService.getAll();
       const isDuplicate = currentGames.some(g => 
@@ -71,11 +74,16 @@ export function GamesProvider({ children }) {
       }
       
       const updatedGame = await gamesService.update(id, game);
+      console.log('GamesContext - Jogo atualizado com sucesso:', updatedGame);
+      
+      // Atualizar o estado com o jogo modificado
       setGames(prevGames => 
         prevGames.map(g => g.id === id ? updatedGame : g)
       );
+      
       return updatedGame;
     } catch (err) {
+      console.error('GamesContext - Erro ao atualizar jogo:', err);
       setError(err.message || 'Erro ao atualizar jogo');
       throw err;
     }

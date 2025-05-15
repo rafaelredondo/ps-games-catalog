@@ -40,10 +40,37 @@ export const gamesService = {
 
   // Atualizar um jogo
   async update(id, game) {
-    console.log('Serviço - Dados completos sendo enviados para atualização:', game);
-    console.log('Serviço - Campo status sendo enviado:', game.status);
-    const response = await api.put(`/games/${id}`, game);
-    return response.data;
+    try {
+      console.log('gamesService - Atualizando jogo ID:', id);
+      
+      // Garantir que os campos obrigatórios estejam presentes
+      const dataToSend = {
+        ...game,
+        id,
+        name: game.name,
+        platforms: Array.isArray(game.platforms) ? game.platforms : [],
+        mediaTypes: Array.isArray(game.mediaTypes) ? game.mediaTypes : [],
+        // Campos opcionais com valores padrão
+        coverUrl: game.coverUrl || '',
+        released: game.released || '',
+        metacritic: game.metacritic || null,
+        genres: Array.isArray(game.genres) ? game.genres : [],
+        publishers: Array.isArray(game.publishers) ? game.publishers : [],
+        description: game.description || '',
+        completed: game.completed === true,
+        playTime: game.playTime || null,
+        status: game.status || (game.completed ? 'Concluído' : 'Não iniciado')
+      };
+      
+      console.log('gamesService - Dados completos enviados para API:', dataToSend);
+      
+      const response = await api.put(`/games/${id}`, dataToSend);
+      console.log('gamesService - Resposta da API:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('gamesService - Erro na chamada à API:', error);
+      throw error;
+    }
   },
 
   // Remover um jogo

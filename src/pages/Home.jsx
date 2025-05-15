@@ -35,7 +35,8 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   TableSortLabel,
-  Tooltip
+  Tooltip,
+  Checkbox
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -46,11 +47,12 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import DoneIcon from '@mui/icons-material/Done';
 import { useGames } from '../contexts/GamesContext';
 
 function Home() {
   const navigate = useNavigate();
-  const { games: allGames, loading, error, loadGames, loadGamesByPlatform, deleteGame } = useGames();
+  const { games: allGames, loading, error, loadGames, loadGamesByPlatform, deleteGame, updateGame } = useGames();
   const [platform, setPlatform] = useState(() => {
     return localStorage.getItem('filter_platform') || 'all';
   });
@@ -87,6 +89,8 @@ function Home() {
     // Recuperar a direção de ordenação do localStorage ou usar 'asc' como padrão
     return localStorage.getItem('order') || 'asc';
   });
+  const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
+  const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
 
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
@@ -378,6 +382,53 @@ function Home() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
+  // Função para marcar um jogo como concluído
+  const handleMarkCompleted = async () => {
+    if (gameToMarkCompleted) {
+      try {
+        console.log('Marcando jogo como concluído:', gameToMarkCompleted);
+        
+        // Importante: garantir que todos os campos obrigatórios estejam presentes
+        // O backend espera name, platforms e mediaTypes como obrigatórios
+        const updatedGame = { 
+          ...gameToMarkCompleted, 
+          completed: true,
+          status: 'Concluído' // Campo status usado pelo backend
+        };
+        
+        // Verificar campos obrigatórios
+        if (!updatedGame.platforms) updatedGame.platforms = [];
+        if (!updatedGame.mediaTypes) updatedGame.mediaTypes = [];
+        
+        console.log('Dados atualizados a serem enviados:', updatedGame);
+        
+        // Usar await para garantir que a operação seja concluída
+        const result = await updateGame(gameToMarkCompleted.id, updatedGame);
+        console.log('Resultado da atualização:', result);
+        
+        // Atualizar a lista de jogos localmente
+        setFilteredGames(prevGames => 
+          prevGames.map(game => 
+            game.id === gameToMarkCompleted.id 
+              ? { ...game, completed: true, status: 'Concluído' } 
+              : game
+          )
+        );
+        
+        // Fechar o diálogo e limpar o estado
+        setCompletedDialogOpen(false);
+        setGameToMarkCompleted(null);
+        
+        // Recarregar a lista de jogos para garantir sincronização com o backend
+        loadGames();
+      } catch (err) {
+        console.error('Erro ao marcar jogo como concluído:', err);
+        setCompletedDialogOpen(false);
+        setGameToMarkCompleted(null);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
@@ -621,7 +672,10 @@ function Home() {
                   Metacritic
                 </TableSortLabel>
               </TableCell>
-              <TableCell align="center" sx={{ color: 'white', width: '80px' }}>
+              <TableCell align="center" sx={{ color: 'white' }}>
+                Status
+              </TableCell>
+              <TableCell align="center" sx={{ color: 'white', width: '120px' }}>
                 Ações
               </TableCell>
             </TableRow>
@@ -683,23 +737,60 @@ function Home() {
                   ) : ''}
                 </TableCell>
                 <TableCell align="center">
-                  <IconButton
-                    color="error"
+                  <Chip
+                    label={game.completed ? "Concluído" : "Não Concluído"}
                     size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGameToDelete(game);
-                      setDeleteDialogOpen(true);
-                    }}
                     sx={{ 
-                      '&:hover': { 
-                        bgcolor: 'rgba(211, 47, 47, 0.1)' 
-                      }
+                      bgcolor: game.completed ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)', 
+                      color: game.completed ? '#4caf50' : '#ff9800',
+                      fontWeight: 'bold',
+                      fontSize: '0.7rem',
                     }}
-                    aria-label="excluir jogo"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                    {!game.completed && (
+                      <Tooltip title="Marcar como concluído">
+                        <IconButton
+                          color="success"
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setGameToMarkCompleted(game);
+                            setCompletedDialogOpen(true);
+                          }}
+                          sx={{ 
+                            '&:hover': { 
+                              bgcolor: 'rgba(76, 175, 80, 0.1)' 
+                            }
+                          }}
+                          aria-label="marcar como concluído"
+                        >
+                          <DoneIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Excluir jogo">
+                      <IconButton
+                        color="error"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setGameToDelete(game);
+                          setDeleteDialogOpen(true);
+                        }}
+                        sx={{ 
+                          '&:hover': { 
+                            bgcolor: 'rgba(211, 47, 47, 0.1)' 
+                          }
+                        }}
+                        aria-label="excluir jogo"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -911,6 +1002,31 @@ function Home() {
           </Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
             Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de confirmação para marcar como concluído */}
+      <Dialog
+        open={completedDialogOpen}
+        onClose={() => setCompletedDialogOpen(false)}
+        aria-labelledby="completed-dialog-title"
+        aria-describedby="completed-dialog-description"
+      >
+        <DialogTitle id="completed-dialog-title">
+          Marcar como concluído
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="completed-dialog-description">
+            Deseja marcar o jogo "{gameToMarkCompleted?.name}" como concluído?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCompletedDialogOpen(false)} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleMarkCompleted} color="success" variant="contained" autoFocus>
+            Confirmar
           </Button>
         </DialogActions>
       </Dialog>
