@@ -11,7 +11,8 @@ class Game {
     publishers = [],
     description = '',
     completed = false,
-    playTime = null
+    playTime = null,
+    status = 'Não iniciado'
   ) {
     this.id = id;
     this.name = name;
@@ -25,6 +26,7 @@ class Game {
     this.description = description;
     this.completed = completed;
     this.playTime = playTime;
+    this.status = status;
   }
 }
 

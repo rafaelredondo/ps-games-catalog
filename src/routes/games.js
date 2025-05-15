@@ -73,7 +73,8 @@ router.post('/', async (req, res) => {
       publishers,
       description,
       completed,
-      playTime
+      playTime,
+      status
     } = req.body;
     
     if (!name || !platforms || !mediaTypes) {
@@ -88,6 +89,14 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Definir completed com base no status
+    let gameCompleted = completed;
+    if (status === 'Concluído') {
+      gameCompleted = true;
+    } else {
+      gameCompleted = false;
+    }
+
     const newGame = new Game(
       Date.now().toString(),
       name,
@@ -99,8 +108,9 @@ router.post('/', async (req, res) => {
       genres || [],
       publishers || [],
       description || '',
-      completed || false,
-      playTime || null
+      gameCompleted,
+      playTime || null,
+      status || 'Não iniciado'
     );
 
     const createdGame = await gamesDb.create(newGame);
@@ -125,7 +135,8 @@ router.put('/:id', async (req, res) => {
       publishers,
       description,
       completed,
-      playTime 
+      playTime,
+      status
     } = req.body;
     
     if (!name || !platforms || !mediaTypes) {
@@ -145,6 +156,14 @@ router.put('/:id', async (req, res) => {
       });
     }
 
+    // Definir completed com base no status
+    let gameCompleted = completed;
+    if (status === 'Concluído') {
+      gameCompleted = true;
+    } else {
+      gameCompleted = false;
+    }
+
     const updatedGame = new Game(
       req.params.id,
       name,
@@ -156,8 +175,9 @@ router.put('/:id', async (req, res) => {
       genres || [],
       publishers || [],
       description || '',
-      completed !== undefined ? completed : false,
-      playTime || null
+      gameCompleted,
+      playTime || null,
+      status || 'Não iniciado'
     );
 
     const game = await gamesDb.update(req.params.id, updatedGame);
