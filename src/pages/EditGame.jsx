@@ -14,6 +14,7 @@ import {
   Alert,
   CircularProgress,
   Chip,
+  Autocomplete,
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
 
@@ -36,6 +37,8 @@ function EditGame() {
     playTime: 0,
   });
   const [updateError, setUpdateError] = useState(null);
+  const [availablePublishers, setAvailablePublishers] = useState([]);
+  const [inputPublishers, setInputPublishers] = useState([]);
 
   const platformOptions = ["PlayStation 4", "PlayStation 5", "Nintendo Switch"];
   const mediaTypeOptions = ["Físico", "Digital"];
@@ -63,8 +66,26 @@ function EditGame() {
         status: gameStatus,
         playTime: foundGame.playTime || 0,
       });
+      setInputPublishers(foundGame.publishers || []);
     }
   }, [games, id]);
+
+  // Extrair publishers disponíveis do catálogo
+  useEffect(() => {
+    if (games && games.length > 0) {
+      const publishersSet = new Set();
+
+      games.forEach(game => {
+        if (game.publishers && Array.isArray(game.publishers)) {
+          game.publishers.forEach(publisher => {
+            publishersSet.add(publisher);
+          });
+        }
+      });
+
+      setAvailablePublishers(Array.from(publishersSet).sort());
+    }
+  }, [games]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -85,6 +106,22 @@ function EditGame() {
     setFormData(prev => ({
       ...prev,
       mediaTypes: event.target.value
+    }));
+  };
+
+  const handlePublishersChange = (event, newValue) => {
+    // Garantir que mesmo valores digitados diretamente sejam salvos como array
+    const publishers = newValue ? 
+      (Array.isArray(newValue) ? newValue : [newValue]) : 
+      [];
+    
+    // Atualizar o estado de rastreamento de publishers
+    setInputPublishers(publishers);
+    
+    // Atualizar o formData com os publishers
+    setFormData(prev => ({
+      ...prev,
+      publishers: publishers
     }));
   };
 
@@ -218,6 +255,35 @@ function EditGame() {
               ))}
             </Select>
           </FormControl>
+
+          <Autocomplete
+            multiple
+            freeSolo
+            options={availablePublishers}
+            value={inputPublishers}
+            onChange={handlePublishersChange}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Publishers"
+                placeholder="Adicione publishers"
+                margin="normal"
+                helperText="Selecione da lista ou digite um novo e pressione Enter"
+              />
+            )}
+            onBlur={() => {
+              // Atualizar formData quando o campo perde o foco
+              setFormData(prev => ({
+                ...prev,
+                publishers: inputPublishers
+              }));
+            }}
+          />
 
           <TextField
             fullWidth
