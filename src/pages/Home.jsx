@@ -66,6 +66,9 @@ function Home() {
   const [selectedPublisher, setSelectedPublisher] = useState(() => {
     return localStorage.getItem('filter_publisher') || 'all';
   });
+  const [selectedStatus, setSelectedStatus] = useState(() => {
+    return localStorage.getItem('filter_status') || 'all';
+  });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [filteredGames, setFilteredGames] = useState([]);
@@ -159,8 +162,14 @@ function Home() {
       );
     }
     
+    // Filtro de status
+    if (selectedStatus !== 'all') {
+      const isCompleted = selectedStatus === 'completed';
+      result = result.filter(game => game.completed === isCompleted);
+    }
+    
     setFilteredGames(result);
-  }, [allGames, platform, searchTerm, minMetacritic, selectedGenre, selectedPublisher]);
+  }, [allGames, platform, searchTerm, minMetacritic, selectedGenre, selectedPublisher, selectedStatus]);
 
   // Funções de manipulação dos filtros
   const handlePlatformChange = (event) => {
@@ -191,6 +200,12 @@ function Home() {
     const value = event.target.value;
     setSelectedPublisher(value);
     localStorage.setItem('filter_publisher', value);
+  };
+
+  const handleStatusChange = (event) => {
+    const value = event.target.value;
+    setSelectedStatus(value);
+    localStorage.setItem('filter_status', value);
   };
 
   const handleCardClick = (gameId) => {
@@ -271,6 +286,7 @@ function Home() {
     setMinMetacritic('');
     setSelectedGenre('all');
     setSelectedPublisher('all');
+    setSelectedStatus('all');
     
     // Limpa os valores armazenados no localStorage
     localStorage.removeItem('filter_platform');
@@ -278,6 +294,7 @@ function Home() {
     localStorage.removeItem('filter_metacritic');
     localStorage.removeItem('filter_genre');
     localStorage.removeItem('filter_publisher');
+    localStorage.removeItem('filter_status');
   };
 
   // Função para lidar com a confirmação de exclusão
@@ -784,7 +801,7 @@ function Home() {
           />
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={12} sm={6} md={1.5}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="genre-select-label">Gênero</InputLabel>
             <Select
@@ -803,7 +820,7 @@ function Home() {
           </FormControl>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={12} sm={6} md={1.5}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="publisher-select-label">Publisher</InputLabel>
             <Select
@@ -818,6 +835,22 @@ function Home() {
                   {publisher}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={1}>
+          <FormControl fullWidth variant="outlined" size="small">
+            <InputLabel id="status-select-label">Status</InputLabel>
+            <Select
+              labelId="status-select-label"
+              value={selectedStatus}
+              label="Status"
+              onChange={handleStatusChange}
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="completed">Completado</MenuItem>
+              <MenuItem value="not_completed">Não Completado</MenuItem>
             </Select>
           </FormControl>
         </Grid>
