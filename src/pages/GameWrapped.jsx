@@ -83,8 +83,8 @@ export default function GameWrapped() {
     };
 
     // Count physical vs digital games
-    const physical = gamesData.filter(game => game.physical).length;
-    const digital = gamesData.filter(game => !game.physical).length;
+    const physical = gamesData.filter(game => game.mediaTypes && game.mediaTypes.includes("Físico")).length;
+    const digital = gamesData.filter(game => game.mediaTypes && game.mediaTypes.includes("Digital")).length;
 
     setStats({
       genres: count(gamesData, 'genres').slice(0, 4),
