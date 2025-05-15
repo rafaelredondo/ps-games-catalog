@@ -32,12 +32,16 @@ export const gamesService = {
 
   // Criar um novo jogo
   async create(game) {
+    console.log('Serviço - Dados completos sendo enviados para criação:', game);
+    console.log('Serviço - Campo status sendo enviado:', game.status);
     const response = await api.post('/games', game);
     return response.data;
   },
 
   // Atualizar um jogo
   async update(id, game) {
+    console.log('Serviço - Dados completos sendo enviados para atualização:', game);
+    console.log('Serviço - Campo status sendo enviado:', game.status);
     const response = await api.put(`/games/${id}`, game);
     return response.data;
   },

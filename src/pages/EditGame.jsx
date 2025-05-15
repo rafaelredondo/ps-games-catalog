@@ -32,15 +32,23 @@ function EditGame() {
     genres: [],
     publishers: [],
     description: '',
+    status: 'Não iniciado',
+    playTime: 0,
   });
   const [updateError, setUpdateError] = useState(null);
 
   const platformOptions = ["PlayStation 4", "PlayStation 5", "Nintendo Switch"];
   const mediaTypeOptions = ["Físico", "Digital"];
+  const statusOptions = ["Não iniciado", "Jogando", "Concluído", "Abandonado", "Na fila"];
 
   useEffect(() => {
     const foundGame = games.find(g => g.id === id);
     if (foundGame) {
+      let gameStatus = foundGame.status;
+      if (!gameStatus) {
+        gameStatus = foundGame.completed ? 'Concluído' : 'Não iniciado';
+      }
+      
       setGame(foundGame);
       setFormData({
         name: foundGame.name,
@@ -52,6 +60,8 @@ function EditGame() {
         genres: foundGame.genres || [],
         publishers: foundGame.publishers || [],
         description: foundGame.description || '',
+        status: gameStatus,
+        playTime: foundGame.playTime || 0,
       });
     }
   }, [games, id]);
@@ -81,6 +91,8 @@ function EditGame() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      console.log('Dados sendo enviados para atualização:', formData);
+      console.log('Status do jogo sendo atualizado:', formData.status);
       await updateGame(id, formData);
       navigate(`/game/${id}`);
     } catch (err) {
@@ -187,6 +199,37 @@ function EditGame() {
               ))}
             </Select>
           </FormControl>
+
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Status do Jogo</InputLabel>
+            <Select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              label="Status do Jogo"
+            >
+              <MenuItem value="">
+                <em>Nenhum</em>
+              </MenuItem>
+              {statusOptions.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            fullWidth
+            label="Tempo de Jogo (horas)"
+            name="playTime"
+            type="number"
+            value={formData.playTime || ''}
+            onChange={handleChange}
+            margin="normal"
+            inputProps={{ min: 0 }}
+            helperText="Quanto tempo você jogou este jogo (em horas)"
+          />
 
           <TextField
             fullWidth

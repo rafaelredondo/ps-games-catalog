@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
 import { Edit as EditIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { VideogameAsset as VideogameAssetIcon, Save as SaveIcon, CalendarMonth as CalendarIcon } from '@mui/icons-material';
+import { VideogameAsset as VideogameAssetIcon, Save as SaveIcon, CalendarMonth as CalendarIcon, Timer as TimerIcon, Flag as FlagIcon } from '@mui/icons-material';
 
 function GameDetails() {
   const { id } = useParams();
@@ -356,7 +356,32 @@ function GameDetails() {
             <Grid item xs={12} sm={6}>
               <CategoryTitle>Status</CategoryTitle>
               <CategoryValue>
-                {game.completed ? "Completado" : "Não completado"}
+                {game.status ? (
+                  <Chip
+                    label={game.status}
+                    size="small"
+                    icon={<FlagIcon fontSize="small" />}
+                    sx={{ 
+                      bgcolor: 
+                        game.status === 'Concluído' ? '#2e7d32' : 
+                        game.status === 'Jogando' ? '#1976d2' :
+                        game.status === 'Na fila' ? '#ed6c02' :
+                        game.status === 'Abandonado' ? '#d32f2f' : 
+                        '#333',
+                      color: 'white'
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label={game.completed ? "Concluído" : "Não iniciado"}
+                    size="small"
+                    icon={<FlagIcon fontSize="small" />}
+                    sx={{ 
+                      bgcolor: game.completed ? '#2e7d32' : '#333',
+                      color: 'white'
+                    }}
+                  />
+                )}
               </CategoryValue>
             </Grid>
             
@@ -364,7 +389,16 @@ function GameDetails() {
             <Grid item xs={12} sm={6}>
               <CategoryTitle>Tempo de Jogo</CategoryTitle>
               <CategoryValue>
-                {game.playTime ? `${game.playTime} horas` : "Não informado"}
+                {game.playTime > 0 ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <TimerIcon fontSize="small" />
+                    <Typography>
+                      {game.playTime} {game.playTime === 1 ? 'hora' : 'horas'}
+                    </Typography>
+                  </Box>
+                ) : (
+                  "Não registrado"
+                )}
               </CategoryValue>
             </Grid>
           </Grid>
