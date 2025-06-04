@@ -2,6 +2,34 @@
 
 Um catálogo de jogos para PlayStation e Nintendo Switch, com integração com a RAWG Video Games Database API.
 
+## 🔐 Autenticação e Segurança
+
+### Configuração de Credenciais
+1. No diretório `backend`, copie o arquivo `env.example` para `.env`:
+   ```bash
+   cd backend
+   cp env.example .env
+   ```
+
+2. Edite o arquivo `.env` com suas credenciais:
+   ```env
+   AUTH_USERNAME=seu_email@gmail.com
+   AUTH_PASSWORD=suaSenhaSegura123
+   PORT=3000
+   NODE_ENV=development
+   ```
+
+### Como Funciona
+- **Primeira visita**: Tela de login elegante
+- **Sessões**: Credenciais ficam salvas no navegador
+- **Segurança**: API completamente protegida
+- **Logout**: Botão discreto na navbar (ícone de sair)
+
+### Acesso
+- Apenas você consegue acessar com suas credenciais
+- Visitantes não autorizados veem apenas a tela de login
+- Todas as funcionalidades permanecem iguais após o login
+
 ## 🎮 Funcionalidades
 
 ### Principais
@@ -38,6 +66,7 @@ Um catálogo de jogos para PlayStation e Nintendo Switch, com integração com a
 - Node.js
 - Express
 - JSON Server (banco de dados)
+- Autenticação HTTP Basic
 
 ### Frontend
 - React
@@ -52,6 +81,7 @@ Um catálogo de jogos para PlayStation e Nintendo Switch, com integração com a
 ### Backend
 ```bash
 cd backend
+cp env.example .env  # Configure suas credenciais
 npm install
 npm start
 ```
@@ -66,19 +96,24 @@ npm run dev
 ## 🔧 Configuração
 
 1. Clone o repositório
-2. Instale as dependências do backend e frontend
-3. Inicie o backend (porta 3000)
-4. Inicie o frontend (porta 5173)
+2. **Configure autenticação**: Copie `backend/env.example` para `backend/.env` e defina suas credenciais
+3. Instale as dependências do backend e frontend
+4. Inicie o backend (porta 3000)
+5. Inicie o frontend (porta 5173)
 
 ## 🚀 Uso
 
-### Catálogo Principal
+### Primeiro Acesso
 1. Acesse `http://localhost:5173`
-2. Use o botão "Adicionar Jogo" para incluir novos jogos
-3. Digite o nome do jogo para buscar automaticamente informações
-4. Selecione a plataforma e o tipo de mídia
-5. Opcionalmente, defina uma prioridade (1-10)
-6. Salve o jogo
+2. **Faça login** com as credenciais definidas no arquivo `.env`
+3. Suas credenciais serão salvas automaticamente para próximos acessos
+
+### Catálogo Principal
+1. Use o botão "Adicionar Jogo" para incluir novos jogos
+2. Digite o nome do jogo para buscar automaticamente informações
+3. Selecione a plataforma e o tipo de mídia
+4. Opcionalmente, defina uma prioridade (1-10)
+5. Salve o jogo
 
 ### Visualização e Ordenação
 - Alterne entre visualização em cards ou tabela usando os botões no topo
@@ -95,6 +130,10 @@ npm run dev
 3. Mapeie as colunas do CSV para os campos do sistema
 4. Inicie a importação e acompanhe o progresso
 
+### Logout
+- Clique no ícone de sair (🚪) na navbar para fazer logout
+- Você precisará fazer login novamente na próxima visita
+
 ## 📝 Estrutura do Projeto
 
 ```
@@ -103,7 +142,9 @@ ps-games-catalog/
 │   ├── src/
 │   │   ├── models/    # Modelos de dados
 │   │   ├── routes/    # Rotas da API
+│   │   ├── middleware/# Autenticação
 │   │   └── db/        # Banco de dados
+│   ├── .env          # Credenciais (não commitar!)
 │   └── package.json
 │
 └── frontend/          # Interface React
@@ -111,7 +152,7 @@ ps-games-catalog/
     │   ├── components/    # Componentes React
     │   ├── pages/         # Páginas da aplicação
     │   ├── services/      # Serviços e APIs
-    │   └── contexts/      # Contextos React
+    │   └── contexts/      # Contextos React + Auth
     └── package.json
 ```
 
@@ -119,6 +160,14 @@ ps-games-catalog/
 
 - `main`: Código do backend
 - `frontend`: Código do frontend
+
+## 🛡️ Deploy Seguro
+
+Para hospedar na AWS de forma segura:
+1. Use HTTPS obrigatoriamente
+2. Configure as variáveis de ambiente no serviço de hospedagem
+3. Nunca commite o arquivo `.env` no Git
+4. Considere usar CloudFront + WAF para restrição adicional por IP
 
 ## 📄 Licença
 
