@@ -124,8 +124,15 @@ if [ "$FRONTEND_CHANGED" = "true" ]; then
     sudo chown -R nginx:nginx "$NGINX_ROOT"
     sudo chmod -R 755 "$NGINX_ROOT"
     
-    # Recarregar nginx
-    sudo systemctl reload nginx
+    # Atualizar configuração do nginx se necessário
+    if [ -f "$REPO_DIR/deployment/nginx.conf" ]; then
+        sudo cp "$REPO_DIR/deployment/nginx.conf" /etc/nginx/sites-available/ps-games-catalog
+        sudo ln -sf /etc/nginx/sites-available/ps-games-catalog /etc/nginx/sites-enabled/ps-games-catalog
+    fi
+    
+    # Limpar cache do nginx e recarregar
+    sudo nginx -t && sudo systemctl reload nginx
+    log_info "Cache do nginx limpo"
     
     log "✅ Frontend atualizado"
 else
