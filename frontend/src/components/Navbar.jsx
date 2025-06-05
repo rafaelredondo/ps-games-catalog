@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box, SvgIcon, IconButton, Tooltip } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, SvgIcon, IconButton, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -80,11 +80,9 @@ const RetroPixelLogo = (props) => (
 );
 
 function Navbar() {
-  // Escolha qual logotipo usar:
-  // Opção 1: PlayStationLogo - inspirado no PlayStation clássico
-  // Opção 2: ModernGameLogo - design moderno e minimalista
-  // Opção 3: RetroPixelLogo - estilo pixel art retrô
-  const Logo = RetroPixelLogo; // Mude para a opção desejada
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const Logo = RetroPixelLogo;
   const { logout } = useAuth();
 
   const handleLogout = () => {
@@ -93,7 +91,11 @@ function Navbar() {
   
   return (
     <AppBar position="static" sx={{ backgroundColor: '#1a1a1a', boxShadow: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-      <Toolbar sx={{ height: 64, px: 3 }}>
+      <Toolbar sx={{ 
+        height: 64, 
+        px: { xs: 1, sm: 3 },
+        minHeight: { xs: '56px', sm: '64px' }
+      }}>
         <Typography
           variant="h6"
           component={RouterLink}
@@ -104,7 +106,7 @@ function Navbar() {
             color: 'inherit',
             display: 'flex',
             alignItems: 'center',
-            fontSize: '1.1rem',
+            fontSize: { xs: '1rem', sm: '1.1rem' },
             fontWeight: 500,
             cursor: 'pointer',
           }}
@@ -113,7 +115,7 @@ function Navbar() {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 1.5,
+              gap: { xs: 1, sm: 1.5 },
               cursor: 'pointer',
               '&:hover': {
                 '& .game-logo': {
@@ -126,7 +128,7 @@ function Navbar() {
             <Logo 
               className="game-logo"
               sx={{ 
-                fontSize: 40,
+                fontSize: { xs: 32, sm: 40 },
                 transition: 'all 0.3s ease',
                 filter: 'drop-shadow(0 0 4px rgba(0, 150, 255, 0.5))'
               }} 
@@ -135,34 +137,30 @@ function Navbar() {
               background: 'linear-gradient(90deg, #fff, #0096FF)', 
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              fontWeight: 600
+              fontWeight: 600,
+              display: isMobile ? 'none' : 'inline' // Esconder texto em mobile muito pequeno
             }}>
               Games Catalog
             </span>
           </Box>
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Button
-            color="inherit"
-            component={RouterLink}
-            to="/"
-            sx={{ opacity: 0.85, textTransform: 'none', fontWeight: 400 }}
-          >
-            Início
-          </Button>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5 } }}>
+          {/* Botão Adicionar - sempre visível mas compacto em mobile */}
           <Button
             variant="contained"
             color="primary"
             component={RouterLink}
             to="/add"
-            startIcon={<AddIcon />}
+            startIcon={isMobile ? null : <AddIcon />}
             sx={{ 
-              ml: 1.5,
               bgcolor: '#0096FF',
               textTransform: 'none', 
               fontWeight: 500,
               borderRadius: '6px',
-              px: 2,
+              px: { xs: 1, sm: 2 },
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              minWidth: { xs: '40px', sm: 'auto' },
               '&:hover': { 
                 bgcolor: '#0077cc',
                 boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
@@ -170,66 +168,73 @@ function Navbar() {
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
           >
-            Adicionar Jogo
+            {isMobile ? <AddIcon fontSize="small" /> : 'Adicionar'}
           </Button>
-          <Button
-            color="inherit"
-            component={RouterLink}
-            to="/csv"
-            sx={{ 
-              ml: 1.5,
-              bgcolor: '#0096FF',
-              textTransform: 'none', 
-              fontWeight: 500,
-              borderRadius: '6px',
-              px: 2,
-              '&:hover': { 
-                bgcolor: '#0077cc',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-              },
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-            startIcon={<UploadFileIcon fontSize="small" />}
-          >
-            CSV
-          </Button>
+
+          {/* Botão CSV - escondido em mobile */}
+          {!isMobile && (
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/csv"
+              sx={{ 
+                bgcolor: '#0096FF',
+                textTransform: 'none', 
+                fontWeight: 500,
+                borderRadius: '6px',
+                px: 2,
+                fontSize: '0.875rem',
+                '&:hover': { 
+                  bgcolor: '#0077cc',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                },
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}
+              startIcon={<UploadFileIcon fontSize="small" />}
+            >
+              CSV
+            </Button>
+          )}
+
+          {/* Botão GameWrapped */}
           <Button
             color="inherit"
             component={RouterLink}
             to="/wrapped"
             sx={{ 
-              ml: 1.5,
               opacity: 0.85, 
               textTransform: 'none', 
               fontWeight: 400,
-              fontSize: '0.9rem',
+              fontSize: { xs: '0.8rem', sm: '0.9rem' },
               background: 'linear-gradient(45deg, #FF6AD5 0%, #C774E8 50%, #AD8CFF 100%)',
               color: 'white',
               borderRadius: '6px',
-              px: 2,
+              px: { xs: 1, sm: 2 },
+              minWidth: { xs: '40px', sm: 'auto' },
               '&:hover': { 
                 opacity: 1,
                 boxShadow: '0 2px 8px rgba(173, 140, 255, 0.5)'
               }
             }}
-            startIcon={<InsightsIcon fontSize="small" />}
+            startIcon={isMobile ? null : <InsightsIcon fontSize="small" />}
           >
-            GameWrapped
+            {isMobile ? <InsightsIcon fontSize="small" /> : 'Wrapped'}
           </Button>
           
           <Tooltip title="Sair">
             <IconButton
               onClick={handleLogout}
               sx={{ 
-                ml: 2,
+                ml: { xs: 0.5, sm: 2 },
                 color: 'rgba(255, 255, 255, 0.7)',
+                p: { xs: 1, sm: 1 },
                 '&:hover': { 
                   color: '#ff5252',
                   backgroundColor: 'rgba(255, 82, 82, 0.1)'
                 }
               }}
             >
-              <LogoutIcon />
+              <LogoutIcon fontSize={isMobile ? 'small' : 'medium'} />
             </IconButton>
           </Tooltip>
         </Box>

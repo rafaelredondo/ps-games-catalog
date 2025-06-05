@@ -158,7 +158,7 @@ export default function GameWrapped() {
         <Header />
         <Grid container spacing={3} justifyContent="center">
           {/* Top Metacritic sozinho na primeira linha */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
               <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                 {/* Primeira coluna - jogos 1-4 */}
@@ -285,7 +285,7 @@ export default function GameWrapped() {
           </Grid>
 
           {/* Mais Longos e Mais Curtos ocupando toda a segunda linha */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]}>
               <List disablePadding>
                 {stats.longestGames.map((game, idx) => (
@@ -309,7 +309,7 @@ export default function GameWrapped() {
               </List>
             </CleanCard>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]}>
               <List disablePadding>
                 {stats.shortestGames.map((game, idx) => (
@@ -335,7 +335,7 @@ export default function GameWrapped() {
           </Grid>
 
           {/* Gêneros e Publishers Favoritos */}
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <Box>
@@ -379,7 +379,7 @@ export default function GameWrapped() {
           </Grid>
           
           {/* Número de Jogos por Plataforma e Físico vs Digital lado a lado */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]}>
               <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
                 <Table size="small" stickyHeader>
@@ -429,7 +429,7 @@ export default function GameWrapped() {
             </CleanCard>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]}>
               <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
                 <Table size="small" stickyHeader>

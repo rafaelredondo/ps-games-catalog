@@ -36,7 +36,9 @@ import {
   ToggleButton,
   TableSortLabel,
   Tooltip,
-  Checkbox
+  Checkbox,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -52,6 +54,8 @@ import { useGames } from '../contexts/GamesContext';
 
 function Home() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { games: allGames, loading, error, loadGames, loadGamesByPlatform, deleteGame, updateGame } = useGames();
   const [platform, setPlatform] = useState(() => {
     return localStorage.getItem('filter_platform') || 'all';
@@ -450,17 +454,23 @@ function Home() {
   // Renderização dos cards
   const renderCardView = () => {
     return (
-      <Grid container spacing={2} justifyContent="center">
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="flex-start">
         {filteredGames.map((game) => (
-          <Grid item key={game.id} xs={12} sm={6} md="auto">
+          <Grid key={game.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <Card 
               sx={{ 
                 bgcolor: '#222',
                 color: 'white',
                 height: '100%',
-                width: '300px',
+                width: '100%',
+                maxWidth: '100%',
+                minWidth: 0,
+                overflow: 'hidden',
                 position: 'relative',
                 cursor: 'pointer',
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'column',
                 '&:hover': {
                   boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
                   transform: 'translateY(-2px)',
@@ -498,40 +508,67 @@ function Home() {
                 image={game.coverUrl || 'https://via.placeholder.com/300x200?text=No+Cover'}
                 alt={game.name}
                 sx={{ 
-                  height: 150,
-                  objectFit: 'cover'
+                  height: { xs: 180, sm: 150, md: 160 },
+                  width: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                  flexShrink: 0
                 }}
               />
-              <CardContent sx={{ py: 1.5, px: 1.5, height: 'auto', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ 
+                py: { xs: 1.5, sm: 1.5 }, 
+                px: { xs: 2, sm: 1.5 }, 
+                flex: 1,
+                display: 'flex', 
+                flexDirection: 'column',
+                minWidth: 0,
+                overflow: { xs: 'visible', sm: 'hidden' },
+                width: '100%'
+              }}>
                 <Typography
                   variant="h6"
                   component="h2"
                   sx={{ 
                     fontWeight: 'bold', 
-                    fontSize: '1rem',
-                    mb: 0.75,
-                    lineHeight: 1.2,
-                    height: 'auto',
-                    maxHeight: '2.4em',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
+                    fontSize: { xs: '1.1rem', sm: '1rem' },
+                    mb: { xs: 0.5, sm: 0.75 },
+                    lineHeight: 1.3,
+                    // Mobile: altura dinâmica para quebra de linha
+                    height: { xs: 'auto', sm: '2.4em' },
+                    minHeight: { xs: '1.3em', sm: '2.4em' },
+                    maxHeight: { xs: 'none', sm: '2.4em' },
+                    // Mobile: sem truncamento, Desktop: com truncamento
+                    overflow: { xs: 'visible', sm: 'hidden' },
+                    textOverflow: { xs: 'unset', sm: 'ellipsis' },
+                    display: { xs: 'block', sm: '-webkit-box' },
+                    WebkitLineClamp: { xs: 'unset', sm: 2 },
+                    WebkitBoxOrient: { xs: 'unset', sm: 'vertical' },
+                    width: '100%',
+                    wordBreak: 'break-word'
                   }}
                 >
                   {game.name} {game.released && `(${new Date(game.released).getFullYear()})`}
                 </Typography>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                  <VideogameAssetIcon fontSize="small" sx={{ mr: 0.5, color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.25, sm: 0.5 } }}>
+                  <VideogameAssetIcon 
+                    fontSize="small" 
+                    sx={{ 
+                      mr: 0.5, 
+                      color: 'rgba(255,255,255,0.7)', 
+                      fontSize: { xs: '0.85rem', sm: '0.95rem' }
+                    }} 
+                  />
                   <Typography 
                     sx={{ 
-                      fontSize: '0.94rem', 
+                      fontSize: { xs: '0.95rem', sm: '0.94rem' }, 
                       color: 'rgba(255,255,255,0.7)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                      flex: 1,
+                      width: '100%'
                     }}
                   >
                     {game.platforms && game.platforms.join(', ')}
@@ -542,27 +579,41 @@ function Home() {
                   sx={{ 
                     display: 'flex', 
                     flexWrap: 'wrap', 
-                    gap: 0.5, 
-                    mt: 0.5,
+                    gap: { xs: 0.25, sm: 0.5 }, 
+                    mt: { xs: 0.25, sm: 0.5 },
                     overflow: 'hidden',
-                    maxHeight: '60px'
+                    maxHeight: { xs: '50px', sm: '60px' }
                   }}
                 >
-                  {game.genres && game.genres.map(genre => (
+                  {game.genres && game.genres.slice(0, 3).map(genre => (
                     <Chip
                       key={genre}
                       label={genre}
                       size="small"
                       sx={{ 
-                        mb: 0.5,
+                        mb: { xs: 0.5, sm: 0.5 },
                         bgcolor: 'rgba(100, 100, 100, 0.5)', 
                         color: 'white',
                         fontWeight: 'bold',
-                        fontSize: '0.84rem',
-                        height: '24px'
+                        fontSize: { xs: '0.85rem', sm: '0.84rem' },
+                        height: { xs: '28px', sm: '24px' }
                       }}
                     />
                   ))}
+                  {game.genres && game.genres.length > 3 && (
+                    <Chip
+                      label={`+${game.genres.length - 3}`}
+                      size="small"
+                      sx={{ 
+                        mb: { xs: 0.5, sm: 0.5 },
+                        bgcolor: 'rgba(150, 150, 150, 0.5)', 
+                        color: 'white',
+                        fontWeight: 'bold',
+                        fontSize: { xs: '0.85rem', sm: '0.84rem' },
+                        height: { xs: '28px', sm: '24px' }
+                      }}
+                    />
+                  )}
                 </Box>
               </CardContent>
             </Card>
@@ -578,8 +629,26 @@ function Home() {
     const sortedGames = [...filteredGames].sort(getComparator(order, orderBy));
     
     return (
-      <TableContainer component={Paper} sx={{ bgcolor: '#222', color: 'white', boxShadow: '0 4px 8px rgba(0,0,0,0.3)' }}>
-        <Table sx={{ minWidth: 650 }} aria-label="tabela de jogos">
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          bgcolor: '#222', 
+          color: 'white', 
+          boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+          overflow: 'auto',
+          '&::-webkit-scrollbar': {
+            height: 8,
+          },
+          '&::-webkit-scrollbar-track': {
+            background: '#1e1e1e',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#0070cc',
+            borderRadius: 4,
+          }
+        }}
+      >
+        <Table sx={{ minWidth: { xs: 800, sm: 650 } }} aria-label="tabela de jogos">
           <TableHead>
             <TableRow sx={{ '& th': { fontWeight: 'bold', bgcolor: '#333' } }}>
               <TableCell sx={{ color: 'white' }}>
@@ -801,48 +870,98 @@ function Home() {
   };
 
   return (
-    <Container maxWidth={false} sx={{ py: 3, px: { xs: 2, sm: 3, md: 4 }, maxWidth: '1800px', mx: 'auto' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
+    <Container maxWidth={false} sx={{ py: { xs: 2, sm: 3 }, px: { xs: 1, sm: 3, md: 4 }, maxWidth: '1800px', mx: 'auto' }}>
+      <Box 
+        display="flex" 
+        justifyContent="space-between" 
+        alignItems="center" 
+        mb={{ xs: 2, sm: 3 }}
+        flexDirection={{ xs: 'column', sm: 'row' }}
+        gap={{ xs: 1, sm: 0 }}
+      >
+        <Typography 
+          variant="h4" 
+          component="h1"
+          sx={{ 
+            fontSize: { xs: '1.5rem', sm: '2rem' },
+            textAlign: { xs: 'center', sm: 'left' }
+          }}
+        >
           Catálogo de Jogos
         </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
-            {filteredGames.length} {filteredGames.length === 1 ? 'jogo encontrado' : 'jogos encontrados'}
-          </Typography>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={handleViewModeChange}
-            aria-label="modo de visualização"
-            size="small"
+        <Box 
+          display="flex" 
+          alignItems="center" 
+          gap={{ xs: 1, sm: 2 }}
+          flexDirection={{ xs: 'column', sm: 'row' }}
+        >
+          <Typography 
+            variant="subtitle1" 
             sx={{ 
-              bgcolor: '#333',
-              '& .MuiToggleButton-root': { 
-                color: 'rgba(255,255,255,0.7)',
-                '&.Mui-selected': {
-                  bgcolor: '#0096FF',
-                  color: 'white',
-                  '&:hover': {
-                    bgcolor: '#0077cc',
-                  }
-                } 
-              }
+              fontWeight: 'medium', 
+              color: 'text.secondary',
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              textAlign: 'center'
             }}
           >
-            <ToggleButton value="card" aria-label="modo card">
-              <ViewModuleIcon />
-            </ToggleButton>
-            <ToggleButton value="table" aria-label="modo tabela">
-              <ViewListIcon />
-            </ToggleButton>
-          </ToggleButtonGroup>
+            {filteredGames.length} {filteredGames.length === 1 ? 'jogo encontrado' : 'jogos encontrados'}
+          </Typography>
+          {/* ToggleButtonGroup - Escondido em mobile */}
+          {!isMobile && (
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={handleViewModeChange}
+              aria-label="modo de visualização"
+              size="small"
+              sx={{ 
+                bgcolor: '#333',
+                '& .MuiToggleButton-root': { 
+                  color: 'rgba(255,255,255,0.7)',
+                  '&.Mui-selected': {
+                    bgcolor: '#0096FF',
+                    color: 'white',
+                    '&:hover': {
+                      bgcolor: '#0077cc',
+                    }
+                  } 
+                }
+              }}
+            >
+              <ToggleButton value="card" aria-label="modo card">
+                <ViewModuleIcon />
+              </ToggleButton>
+              <ToggleButton value="table" aria-label="modo tabela">
+                <ViewListIcon />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          )}
         </Box>
       </Box>
 
-      {/* Barra de filtros */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid item xs={12} sm={6} md={2}>
+      {/* Barra de filtros - Mobile First */}
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }} alignItems="center">
+        {/* Search - Prioridade máxima em mobile */}
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Buscar por nome"
+            variant="outlined"
+            value={searchTerm}
+            onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+
+        {/* Platform - Segunda prioridade */}
+        <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="platform-select-label">Plataforma</InputLabel>
             <Select
@@ -861,38 +980,8 @@ function Home() {
           </FormControl>
         </Grid>
         
-        <Grid item xs={12} sm={6} md={2}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Buscar por nome"
-            variant="outlined"
-            value={searchTerm}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={2}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Metacritic mínimo"
-            variant="outlined"
-            value={minMetacritic}
-            onChange={handleMinMetacriticChange}
-            type="number"
-            inputProps={{ min: 0, max: 100 }}
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={1.5}>
+        {/* Genre - Terceira prioridade */}
+        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="genre-select-label">Gênero</InputLabel>
             <Select
@@ -910,8 +999,40 @@ function Home() {
             </Select>
           </FormControl>
         </Grid>
+
+        {/* Status - Quarta prioridade */}
+        <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
+          <FormControl fullWidth variant="outlined" size="small">
+            <InputLabel id="status-select-label">Status</InputLabel>
+            <Select
+              labelId="status-select-label"
+              value={selectedStatus}
+              label="Status"
+              onChange={handleStatusChange}
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="completed">✅ Completado</MenuItem>
+              <MenuItem value="not_completed">⏳ Pendente</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
         
-        <Grid item xs={12} sm={6} md={1.5}>
+        {/* Metacritic - Menos usado, mas importante */}
+        <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Metacritic ≥"
+            variant="outlined"
+            value={minMetacritic}
+            onChange={handleMinMetacriticChange}
+            type="number"
+            inputProps={{ min: 0, max: 100 }}
+          />
+        </Grid>
+        
+        {/* Publisher - Hidden em xs, menos prioritário */}
+        <Grid size={{ xs: 6, sm: 6, md: 1.5 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
           <FormControl fullWidth variant="outlined" size="small">
             <InputLabel id="publisher-select-label">Publisher</InputLabel>
             <Select
@@ -930,46 +1051,40 @@ function Home() {
           </FormControl>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={1}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="status-select-label">Status</InputLabel>
-            <Select
-              labelId="status-select-label"
-              value={selectedStatus}
-              label="Status"
-              onChange={handleStatusChange}
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="completed">Completado</MenuItem>
-              <MenuItem value="not_completed">Não Completado</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={3} md={1}>
+        {/* Botões de ação */}
+        <Grid size={{ xs: 6, sm: 3, md: 1 }}>
           <Tooltip title="Limpar todos os filtros">
             <Button 
               variant="outlined" 
               color="error" 
               fullWidth
               onClick={handleClearFilters}
-              startIcon={<FilterAltOffIcon />}
-              sx={{ height: '40px' }}
+              startIcon={<FilterAltOffIcon fontSize="small" />}
+              sx={{ 
+                height: { xs: '36px', sm: '40px' },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                px: { xs: 1, sm: 2 }
+              }}
             >
               Limpar
             </Button>
           </Tooltip>
         </Grid>
 
-        <Grid item xs={12} sm={3} md={1}>
+        {/* Export - Hidden em mobile muito pequeno */}
+        <Grid size={{ xs: 6, sm: 3, md: 1 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
           <Tooltip title="Exportar jogos para CSV">
             <Button 
               variant="outlined" 
               color="info" 
               fullWidth
               onClick={handleExportCsv}
-              startIcon={<FileDownloadIcon />}
-              sx={{ height: '40px' }}
+              startIcon={<FileDownloadIcon fontSize="small" />}
+              sx={{ 
+                height: { xs: '36px', sm: '40px' },
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                px: { xs: 1, sm: 2 }
+              }}
               disabled={filteredGames.length === 0}
             >
               CSV
@@ -978,8 +1093,8 @@ function Home() {
         </Grid>
       </Grid>
 
-      {/* Renderizar a visualização selecionada */}
-      {viewMode === 'card' ? renderCardView() : renderTableView()}
+      {/* Renderizar a visualização selecionada - Mobile sempre usa cards */}
+      {(isMobile || viewMode === 'card') ? renderCardView() : renderTableView()}
       
       {/* Diálogo de confirmação de exclusão */}
       <Dialog

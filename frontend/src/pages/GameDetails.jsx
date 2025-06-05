@@ -258,7 +258,7 @@ function GameDetails() {
         <Box sx={{ p: 3 }}>
           <Grid container spacing={3}>
             {/* Plataformas */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CategoryTitle>Plataformas</CategoryTitle>
               <CategoryValue component={Box} sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
                 {game.platforms && game.platforms.map((platform) => (
@@ -282,7 +282,7 @@ function GameDetails() {
             
             {/* Gêneros */}
             {game.genres && game.genres.length > 0 && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <CategoryTitle>Gênero</CategoryTitle>
                 <CategoryValue component={Box} sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
                   {game.genres.map((genre) => (
@@ -307,7 +307,7 @@ function GameDetails() {
             
             {/* Data de Lançamento */}
             {game.released && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <CategoryTitle>Data de Lançamento</CategoryTitle>
                 <CategoryValue>
                   {new Date(game.released).toLocaleDateString('pt-BR', {
@@ -321,7 +321,7 @@ function GameDetails() {
             
             {/* Publishers/Developers */}
             {game.publishers && game.publishers.length > 0 && (
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <CategoryTitle>Publisher</CategoryTitle>
                 <CategoryValue component={Box} sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
                   {game.publishers.map((publisher) => (
@@ -345,7 +345,7 @@ function GameDetails() {
             )}
             
             {/* Tipos de Mídia */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CategoryTitle>Mídia</CategoryTitle>
               <CategoryValue>
                 {game.mediaTypes && game.mediaTypes.join(', ')}
@@ -353,7 +353,7 @@ function GameDetails() {
             </Grid>
             
             {/* Status */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CategoryTitle>Status</CategoryTitle>
               <CategoryValue>
                 {game.status ? (
@@ -386,7 +386,7 @@ function GameDetails() {
             </Grid>
             
             {/* Tempo de Jogo */}
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <CategoryTitle>Tempo de Jogo</CategoryTitle>
               <CategoryValue>
                 {game.playTime > 0 ? (
