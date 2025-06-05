@@ -152,13 +152,22 @@ if [ "$FRONTEND_CHANGED" = "true" ]; then
     
     # Atualizar configuração do nginx se necessário
     if [ -f "$REPO_DIR/deployment/nginx.conf" ]; then
+        # Criar diretórios nginx se não existirem
+        sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
         sudo cp "$REPO_DIR/deployment/nginx.conf" /etc/nginx/sites-available/ps-games-catalog
         sudo ln -sf /etc/nginx/sites-available/ps-games-catalog /etc/nginx/sites-enabled/ps-games-catalog
+        log_info "Configuração nginx atualizada"
+    else
+        log_info "Arquivo nginx.conf não encontrado, pulando configuração"
     fi
     
     # Limpar cache do nginx e recarregar
-    sudo nginx -t && sudo systemctl reload nginx
-    log_info "Cache do nginx limpo"
+    if sudo nginx -t; then
+        sudo systemctl reload nginx
+        log_info "Cache do nginx limpo"
+    else
+        log_warning "Configuração nginx inválida, mantendo configuração anterior"
+    fi
     
     log "✅ Frontend atualizado"
 else
