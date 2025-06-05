@@ -2,7 +2,7 @@
 
 Catálogo completo de jogos do PlayStation com deploy automático via GitHub Actions.
 
-## 🚀 Deploy Automático Configurado!
+## 🚀 Deploy Automático Configurado!!
 
 Este projeto agora possui **deploy automático** configurado:
 
