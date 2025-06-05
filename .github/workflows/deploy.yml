@@ -51,7 +51,7 @@ jobs:
         # Executar deploy no servidor
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
           $EC2_USER@$EC2_HOST \
-          'bash -c "cd /home/ec2-user/ps-games-catalog && ./deployment/deploy-ci.sh"'
+          'bash -c "cd /home/ec2-user/ps-games-catalog && git pull origin main && chmod +x deployment/*.sh && ./deployment/deploy-ci.sh"'
     
     - name: 🏥 Health Check
       env:
