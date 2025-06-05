@@ -5,6 +5,11 @@ on:
     branches: [ main ]
   workflow_dispatch: # Permite trigger manual
 
+# Cancela deploys anteriores quando um novo é iniciado
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     name: 🎯 Deploy Application
