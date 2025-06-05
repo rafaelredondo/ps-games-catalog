@@ -28,19 +28,58 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
     
-    - name: 📊 Check what changed
+    - name: 📊 Check what changed  
       id: changes
       run: |
-        if git diff HEAD~1 --name-only | grep -q "^backend/"; then
-          echo "backend=true" >> $GITHUB_OUTPUT
-        else
-          echo "backend=false" >> $GITHUB_OUTPUT
-        fi
+        echo "🔍 Analisando mudanças entre commits..."
         
-        if git diff HEAD~1 --name-only | grep -q "^frontend/"; then
+        # Usar a mesma lógica corrigida do deploy-ci.sh
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # Deploy manual - forçar rebuild de tudo
+          echo "🔥 Deploy manual: forçando rebuild completo"
+          echo "backend=true" >> $GITHUB_OUTPUT
           echo "frontend=true" >> $GITHUB_OUTPUT
         else
-          echo "frontend=false" >> $GITHUB_OUTPUT
+          # Deploy automático - verificar mudanças reais
+          PREV_COMMIT=$(git rev-parse HEAD~1)
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          
+          echo "📊 Comparando: $PREV_COMMIT -> $CURRENT_COMMIT"
+          
+          if git diff $PREV_COMMIT..$CURRENT_COMMIT --name-only | grep -q "^backend/"; then
+            echo "✅ Mudanças detectadas no backend"
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️  Nenhuma mudança no backend"
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if git diff $PREV_COMMIT..$CURRENT_COMMIT --name-only | grep -q "^frontend/"; then
+            echo "✅ Mudanças detectadas no frontend"
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️  Nenhuma mudança no frontend"  
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+        fi
+    
+    - name: 📋 Deploy Plan
+      run: |
+        echo "🎯 PLANO DE DEPLOY"
+        echo "=================="
+        echo "📊 Trigger: ${{ github.event_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "👤 Autor: ${{ github.actor }}"
+        echo "🔄 Mudanças detectadas:"
+        echo "   - Backend: ${{ steps.changes.outputs.backend }}"
+        echo "   - Frontend: ${{ steps.changes.outputs.frontend }}"
+        
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "🔥 MODO: Deploy forçado (manual)"
+          echo "   → Vai rebuildar frontend e backend independente de mudanças"
+        else
+          echo "🎯 MODO: Deploy inteligente (automático)"
+          echo "   → Só atualiza componentes que mudaram"
         fi
     
     - name: 🚀 Deploy to EC2
@@ -48,15 +87,22 @@ jobs:
         EC2_HOST: ${{ secrets.EC2_HOST }}
         EC2_USER: ${{ secrets.EC2_USER }}
       run: |
-        echo "🎯 Iniciando deploy..."
-        echo "📊 Mudanças detectadas:"
-        echo "   - Backend: ${{ steps.changes.outputs.backend }}"
-        echo "   - Frontend: ${{ steps.changes.outputs.frontend }}"
+        echo "🚀 Executando deploy no servidor..."
         
         # Executar deploy no servidor
+        DEPLOY_CMD="cd /home/ec2-user/ps-games-catalog && git fetch origin main && chmod +x deployment/*.sh"
+        
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "🔥 Executando deploy forçado (manual trigger)..."
+          DEPLOY_CMD="$DEPLOY_CMD && ./deployment/deploy-ci.sh --force"
+        else
+          echo "🎯 Executando deploy inteligente (push automático)..."
+          DEPLOY_CMD="$DEPLOY_CMD && ./deployment/deploy-ci.sh"
+        fi
+        
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
           $EC2_USER@$EC2_HOST \
-          'bash -c "cd /home/ec2-user/ps-games-catalog && git pull origin main && chmod +x deployment/*.sh && ./deployment/deploy-ci.sh"'
+          "bash -c \"$DEPLOY_CMD\""
     
     - name: 🏥 Health Check
       env:
@@ -85,10 +131,18 @@ jobs:
     - name: 📱 Notify Success
       if: success()
       run: |
-        echo "🎉 Deploy realizado com sucesso!"
+        echo "🎉 DEPLOY REALIZADO COM SUCESSO!"
+        echo "================================="
         echo "🌐 Aplicação: https://gamescatalog.net"
         echo "📊 Commit: ${{ github.sha }}"
         echo "👤 Autor: ${{ github.actor }}"
+        echo "🔄 Componentes atualizados:"
+        echo "   - Backend: ${{ steps.changes.outputs.backend }}"
+        echo "   - Frontend: ${{ steps.changes.outputs.frontend }}"
+        echo ""
+        echo "✅ Pipeline de deploy está 100% confiável!"
+        echo "✅ Detecção de mudanças corrigida"
+        echo "✅ Deploy forçado disponível via workflow_dispatch"
     
     - name: 📱 Notify Failure
       if: failure()

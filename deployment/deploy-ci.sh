@@ -1,9 +1,20 @@
 #!/bin/bash
 
-# PS Games Catalog - Deploy CI/CD
+# PS Games Catalog - Deploy CI/CD  
 # Script otimizado para deploy automático via GitHub Actions
+# 
+# Uso:
+#   ./deploy-ci.sh           # Deploy normal (apenas com mudanças)
+#   ./deploy-ci.sh --force   # Deploy forçado (rebuild tudo)
 
 set -e  # Parar em qualquer erro
+
+# Verificar se é deploy forçado
+FORCE_DEPLOY="false"
+if [ "$1" = "--force" ]; then
+    FORCE_DEPLOY="true"
+    echo "🔥 MODO FORÇADO ATIVADO - Vai rebuildar tudo!"
+fi
 
 # Cores para output
 RED='\033[0;31m'
@@ -56,27 +67,50 @@ else
     log_warning "Arquivo db.json não encontrado"
 fi
 
-# 3. Fetch e pull das mudanças
+# 3. Fetch e verificar mudanças ANTES do reset
 log "📥 Baixando atualizações do repositório..."
 git fetch origin main
-git reset --hard origin/main
-log "✅ Código atualizado"
+
+# Capturar hash do commit atual antes do reset
+CURRENT_COMMIT=$(git rev-parse HEAD)
+LATEST_COMMIT=$(git rev-parse origin/main)
 
 # 4. Verificar se há mudanças no backend
 BACKEND_CHANGED="false"
-if git diff HEAD@{1} --name-only | grep -q "^backend/"; then
+if [ "$FORCE_DEPLOY" = "true" ]; then
     BACKEND_CHANGED="true"
-    log_info "Mudanças detectadas no backend"
+    log_info "Deploy forçado: backend será atualizado"
+elif [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+    if git diff $CURRENT_COMMIT..origin/main --name-only | grep -q "^backend/"; then
+        BACKEND_CHANGED="true"
+        log_info "Mudanças detectadas no backend"
+    fi
+else
+    log_info "Nenhuma atualização disponível"
 fi
 
 # 5. Verificar se há mudanças no frontend  
 FRONTEND_CHANGED="false"
-if git diff HEAD@{1} --name-only | grep -q "^frontend/"; then
+if [ "$FORCE_DEPLOY" = "true" ]; then
     FRONTEND_CHANGED="true"
-    log_info "Mudanças detectadas no frontend"
+    log_info "Deploy forçado: frontend será rebuiltado"
+elif [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+    if git diff $CURRENT_COMMIT..origin/main --name-only | grep -q "^frontend/"; then
+        FRONTEND_CHANGED="true"
+        log_info "Mudanças detectadas no frontend"
+    fi
 fi
 
-# 6. Atualizar backend se necessário
+# 6. Fazer reset apenas se há atualizações
+if [ "$CURRENT_COMMIT" != "$LATEST_COMMIT" ]; then
+    log "🔄 Aplicando atualizações..."
+    git reset --hard origin/main
+    log "✅ Código atualizado"
+else
+    log_info "Repository já atualizado, pulando reset"
+fi
+
+# 7. Atualizar backend se necessário
 if [ "$BACKEND_CHANGED" = "true" ]; then
     log "🔄 Atualizando backend..."
     cd "$BACKEND_DIR"
@@ -97,7 +131,7 @@ else
     log_info "⏭️  Backend sem mudanças, pulando atualização"
 fi
 
-# 7. Atualizar frontend se necessário
+# 8. Atualizar frontend se necessário
 if [ "$FRONTEND_CHANGED" = "true" ]; then
     log "🎨 Atualizando frontend..."
     cd "$FRONTEND_DIR"
@@ -131,7 +165,7 @@ else
     log_info "⏭️  Frontend sem mudanças, pulando atualização"
 fi
 
-# 8. Verificar saúde da aplicação
+# 9. Verificar saúde da aplicação
 log "🏥 Verificando saúde da aplicação..."
 
 # Verificar PM2
@@ -161,14 +195,14 @@ else
     log_warning "Servidor pode não estar respondendo corretamente"
 fi
 
-# 9. Fazer backup pós-deploy
+# 10. Fazer backup pós-deploy
 log "💾 Executando backup pós-deploy..."
 if [ -f "/home/ec2-user/backup-s3.sh" ]; then
     /home/ec2-user/backup-s3.sh > /dev/null 2>&1 || log_warning "Backup falhou"
     log "✅ Backup executado"
 fi
 
-# 10. Summary
+# 11. Summary
 echo
 echo "================================================"
 log "🎉 Deploy concluído com sucesso!"

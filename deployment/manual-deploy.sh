@@ -27,9 +27,9 @@ ssh -i $KEY $USER@$SERVER << 'EOF'
     cd /home/ec2-user/ps-games-catalog
     git pull origin main
     
-    echo "🔧 Executando deploy..."
+    echo "🔧 Executando deploy forçado..."
     chmod +x deployment/*.sh
-    ./deployment/deploy-ci.sh
+    ./deployment/deploy-ci.sh --force
     
     echo "✅ Deploy manual concluído!"
 EOF
