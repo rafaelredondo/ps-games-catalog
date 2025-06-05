@@ -355,7 +355,7 @@ function GameDetails() {
             {/* Status */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <CategoryTitle>Status</CategoryTitle>
-              <CategoryValue>
+              <CategoryValue component={Box}>
                 {game.status ? (
                   <Chip
                     label={game.status}
@@ -388,7 +388,7 @@ function GameDetails() {
             {/* Tempo de Jogo */}
             <Grid size={{ xs: 12, sm: 6 }}>
               <CategoryTitle>Tempo de Jogo</CategoryTitle>
-              <CategoryValue>
+              <CategoryValue component={Box}>
                 {game.playTime > 0 ? (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <TimerIcon fontSize="small" />
@@ -397,7 +397,9 @@ function GameDetails() {
                     </Typography>
                   </Box>
                 ) : (
-                  "Não registrado"
+                  <Typography>
+                    Não registrado
+                  </Typography>
                 )}
               </CategoryValue>
             </Grid>

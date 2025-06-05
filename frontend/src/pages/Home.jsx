@@ -22,7 +22,6 @@ import {
   DialogActions,
   Chip,
   Button,
-  CardActionArea,
   TextField,
   InputAdornment,
   Table,
@@ -36,33 +35,51 @@ import {
   ToggleButton,
   TableSortLabel,
   Tooltip,
-  Checkbox,
   useMediaQuery,
   useTheme
 } from '@mui/material';
+
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DoneIcon from '@mui/icons-material/Done';
 import { useGames } from '../contexts/GamesContext';
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import { gamesService } from '../services/gamesService';
 
 function Home() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { games: allGames, loading, error, loadGames, loadGamesByPlatform, deleteGame, updateGame } = useGames();
-  const [platform, setPlatform] = useState(() => {
-    return localStorage.getItem('filter_platform') || 'all';
-  });
+  
+  // Estados dos filtros  
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem('filter_search') || '';
   });
+  const [platform, setPlatform] = useState(() => {
+    return localStorage.getItem('filter_platform') || 'all';
+  });
+  
+  // Hook de infinite scroll com filtros básicos
+  const {
+    games: allGames,
+    loading,
+    hasMore,
+    error,
+    sentinelRef,
+    refresh
+  } = useInfiniteScroll(gamesService.getPaginated, {
+    limit: 20,
+    search: searchTerm,
+    platform: platform === 'all' ? '' : platform
+  });
+  
+  // Contexto para operações de CRUD
+  const { deleteGame, updateGame } = useGames();
   const [minMetacritic, setMinMetacritic] = useState(() => {
     return localStorage.getItem('filter_metacritic') || '';
   });
@@ -129,24 +146,9 @@ function Home() {
     }
   }, [allGames]);
 
-  // Aplicar filtros aos jogos
+  // Aplicar filtros avançados aos jogos (busca e plataforma são filtradas na API)
   useEffect(() => {
     let result = [...allGames];
-    
-    // Filtro de plataforma
-    if (platform !== 'all') {
-      result = result.filter(game => 
-        game.platforms && game.platforms.includes(platform)
-      );
-    }
-    
-    // Filtro de texto de busca
-    if (searchTerm.trim() !== '') {
-      const search = searchTerm.toLowerCase().trim();
-      result = result.filter(game => 
-        game.name.toLowerCase().includes(search)
-      );
-    }
     
     // Filtro de metacritic mínimo
     if (minMetacritic !== '' && !isNaN(parseInt(minMetacritic))) {
@@ -177,7 +179,7 @@ function Home() {
     }
     
     setFilteredGames(result);
-  }, [allGames, platform, searchTerm, minMetacritic, selectedGenre, selectedPublisher, selectedStatus]);
+  }, [allGames, minMetacritic, selectedGenre, selectedPublisher, selectedStatus]);
 
   // Funções de manipulação dos filtros
   const handlePlatformChange = (event) => {
@@ -235,10 +237,7 @@ function Home() {
     return '#f00';
   };
 
-  // Efeito para carregar jogos iniciais
-  useEffect(() => {
-    loadGames();
-  }, []); // Deploy force v2
+  // Hook useInfiniteScroll já carrega os jogos automaticamente
 
   // Funções de ordenação de tabela
   const handleRequestSort = (property) => {
@@ -303,6 +302,9 @@ function Home() {
     localStorage.removeItem('filter_genre');
     localStorage.removeItem('filter_publisher');
     localStorage.removeItem('filter_status');
+    
+    // Refresh do infinite scroll para recarregar dados
+    refresh();
   };
 
   // Função para lidar com a confirmação de exclusão
@@ -390,8 +392,6 @@ function Home() {
   const handleMarkCompleted = async () => {
     if (gameToMarkCompleted) {
       try {
-        console.log('Marcando jogo como concluído:', gameToMarkCompleted);
-        
         // Importante: garantir que todos os campos obrigatórios estejam presentes
         // O backend espera name, platforms e mediaTypes como obrigatórios
         const updatedGame = { 
@@ -404,11 +404,8 @@ function Home() {
         if (!updatedGame.platforms) updatedGame.platforms = [];
         if (!updatedGame.mediaTypes) updatedGame.mediaTypes = [];
         
-        console.log('Dados atualizados a serem enviados:', updatedGame);
-        
         // Usar await para garantir que a operação seja concluída
         const result = await updateGame(gameToMarkCompleted.id, updatedGame);
-        console.log('Resultado da atualização:', result);
         
         // Atualizar a lista de jogos localmente
         setFilteredGames(prevGames => 
@@ -424,7 +421,7 @@ function Home() {
         setGameToMarkCompleted(null);
         
         // Recarregar a lista de jogos para garantir sincronização com o backend
-        loadGames();
+        refresh();
       } catch (err) {
         console.error('Erro ao marcar jogo como concluído:', err);
         setCompletedDialogOpen(false);
@@ -619,6 +616,31 @@ function Home() {
             </Card>
           </Grid>
         ))}
+        
+        {/* Sentinela para infinite scroll */}
+        {hasMore && (
+          <Grid size={{ xs: 12 }}>
+            <Box
+              ref={sentinelRef}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                py: 4,
+                mt: 2
+              }}
+            >
+              {loading && (
+                <>
+                  <CircularProgress size={32} color="primary" sx={{ mb: 2 }} />
+                  <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
+                    🔄 Carregando mais jogos...
+                  </Typography>
+                </>
+              )}
+            </Box>
+          </Grid>
+        )}
       </Grid>
     );
   };
@@ -865,6 +887,30 @@ function Home() {
             ))}
           </TableBody>
         </Table>
+        
+        {/* Sentinela para infinite scroll */}
+        {hasMore && (
+          <Box
+            ref={sentinelRef}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              py: 3,
+              mt: 2,
+              backgroundColor: '#1e1e1e'
+            }}
+          >
+            {loading && (
+              <>
+                <CircularProgress size={32} color="primary" sx={{ mb: 2 }} />
+                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
+                  🔄 Carregando mais jogos...
+                </Typography>
+              </>
+            )}
+          </Box>
+        )}
       </TableContainer>
     );
   };

@@ -12,6 +12,7 @@ import CsvPage from './pages/CsvPage';
 import GameWrapped from './pages/GameWrapped';
 import Navbar from './components/Navbar';
 
+
 // Creating a custom theme
 const theme = createTheme({
   palette: {

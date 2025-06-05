@@ -7,6 +7,25 @@ export const gamesService = {
     return response.data;
   },
 
+  // Listar jogos com paginação e filtros
+  async getPaginated({ page = 1, limit = 20, search = '', platform = '' }) {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    
+    if (search) {
+      params.append('search', search);
+    }
+    
+    if (platform) {
+      params.append('platform', platform);
+    }
+
+    const response = await api.get(`/games?${params.toString()}`);
+    return response.data;
+  },
+
   // Buscar jogos por plataforma
   async getByPlatform(platform) {
     const response = await api.get(`/games/platform/${platform}`);

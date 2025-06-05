@@ -22,11 +22,57 @@ router.delete('/clear', async (req, res) => {
   }
 });
 
-// Listar todos os jogos
+// Listar todos os jogos com paginação
 router.get('/', async (req, res) => {
   try {
-    const games = await gamesDb.getAll();
-    res.json(games);
+    // Parâmetros de paginação
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const search = req.query.search || '';
+    const platform = req.query.platform || '';
+    
+    // Buscar todos os jogos
+    let allGames = await gamesDb.getAll();
+    
+    // Aplicar filtros
+    if (search) {
+      allGames = allGames.filter(game => 
+        game.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    if (platform) {
+      allGames = allGames.filter(game => 
+        game.platforms && game.platforms.includes(platform)
+      );
+    }
+    
+    // Calcular paginação
+    const total = allGames.length;
+    const totalPages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    
+    // Aplicar paginação
+    const games = allGames.slice(startIndex, endIndex);
+    
+    // Se não há parâmetros de paginação, retorna formato antigo para compatibilidade
+    if (!req.query.page && !req.query.limit) {
+      return res.json(allGames);
+    }
+    
+    // Retornar com estrutura de paginação
+    res.json({
+      games,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Erro ao buscar jogos' });
   }
