@@ -81,6 +81,11 @@ export default function GameWrapped() {
   const touchStartRef = useRef(null);
   const touchEndRef = useRef(null);
 
+  // Animation state
+  const [isVisible, setIsVisible] = useState(false);
+  const [visibleCards, setVisibleCards] = useState(new Set());
+  const [animatedNumbers, setAnimatedNumbers] = useState({});
+
   const sections = [
     { title: "Top Metacritic", icon: <TrophyIcon /> },
     { title: "Mais Longos", icon: <ScheduleIcon /> },
@@ -93,6 +98,25 @@ export default function GameWrapped() {
   useEffect(() => {
     if (games.length > 0) calculateStats(games);
   }, [games]);
+
+  // Animation trigger effect
+  useEffect(() => {
+    if (games.length > 0 && !loading) {
+      // Start entrance animations immediately
+      setIsVisible(true);
+      
+      // Stagger card animations
+      const cardTimers = [];
+      for (let i = 0; i < 6; i++) {
+        const timer = setTimeout(() => {
+          setVisibleCards(prev => new Set([...prev, i]));
+        }, (i + 1) * 150); // 150ms delay between cards, starting after header
+        cardTimers.push(timer);
+      }
+      
+      return () => cardTimers.forEach(clearTimeout);
+    }
+  }, [games, loading]);
 
   // Swipe navigation functions
   const minSwipeDistance = 50;
@@ -133,6 +157,129 @@ export default function GameWrapped() {
     }
   };
 
+  // Count-up animation for numbers
+  const useCountUp = (end, duration = 3000, delay = 0) => {
+    const [count, setCount] = useState(0);
+    const [hasStarted, setHasStarted] = useState(false);
+
+    useEffect(() => {
+      if (!hasStarted && isVisible) {
+        const timer = setTimeout(() => {
+          setHasStarted(true);
+          let startTime = null;
+          let animationId = null;
+          
+          const animate = (currentTime) => {
+            if (startTime === null) startTime = currentTime;
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function mais suave
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+            const currentValue = Math.round(easeOutCubic * end);
+            
+            setCount(currentValue);
+            
+            if (progress < 1) {
+              animationId = requestAnimationFrame(animate);
+            }
+          };
+          
+          animationId = requestAnimationFrame(animate);
+          
+          // Cleanup function
+          return () => {
+            if (animationId) {
+              cancelAnimationFrame(animationId);
+            }
+          };
+        }, delay);
+
+        return () => clearTimeout(timer);
+      }
+    }, [end, duration, delay, hasStarted, isVisible]);
+
+    return count;
+  };
+
+  // Animated number component
+  const AnimatedNumber = ({ value, suffix = '', prefix = '', delay = 0 }) => {
+    const animatedValue = useCountUp(value, 3000, delay);
+    return (
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          fontWeight: 900, 
+          color: 'inherit',
+          transform: isVisible ? 'scale(1)' : 'scale(0.5)',
+          opacity: isVisible ? 1 : 0,
+          transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${delay + 600}ms`
+        }}
+      >
+        {prefix}{animatedValue}{suffix}
+      </Typography>
+    );
+  };
+
+  // Animated progress bar component
+  const AnimatedProgressBar = ({ value, color, delay = 0, label }) => {
+    const [progress, setProgress] = useState(0);
+    
+    useEffect(() => {
+      if (isVisible) {
+        const timer = setTimeout(() => {
+          setProgress(value);
+        }, delay + 800);
+        return () => clearTimeout(timer);
+      }
+    }, [isVisible, value, delay]);
+
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: 700, color }}>
+            {Math.round(progress)}%
+          </Typography>
+        </Box>
+        <Box sx={{ position: 'relative', height: 12, bgcolor: '#f0f0f0', borderRadius: 6, overflow: 'hidden' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              bgcolor: color,
+              borderRadius: 6,
+              width: `${progress}%`,
+              transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                animation: progress > 0 ? 'shimmer 1.5s ease-in-out' : 'none',
+              }
+            }}
+          />
+        </Box>
+        <style>
+          {`
+            @keyframes shimmer {
+              0% { left: -100%; }
+              100% { left: 100%; }
+            }
+          `}
+        </style>
+      </Box>
+    );
+  };
+
   function calculateStats(gamesData) {
     const count = (arr, key) => {
       const map = {};
@@ -169,11 +316,32 @@ export default function GameWrapped() {
       borderRadius: 4,
       color: 'white',
       overflow: 'hidden',
+      transform: isVisible ? 'translateY(0)' : 'translateY(-50px)',
+      opacity: isVisible ? 1 : 0,
+      transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
     }}>
-      <Typography variant={isMobile ? 'h3' : 'h2'} sx={{ fontWeight: 900, letterSpacing: 2, textShadow: '0 2px 16px #0008' }}>
+      <Typography 
+        variant={isMobile ? 'h3' : 'h2'} 
+        sx={{ 
+          fontWeight: 900, 
+          letterSpacing: 2, 
+          textShadow: '0 2px 16px #0008',
+          transform: isVisible ? 'scale(1)' : 'scale(0.9)',
+          transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
+        }}
+      >
         Game Wrapped 🎮
       </Typography>
-      <Typography variant="h5" sx={{ mt: 1, fontWeight: 400, opacity: 0.92 }}>
+      <Typography 
+        variant="h5" 
+        sx={{ 
+          mt: 1, 
+          fontWeight: 400, 
+          opacity: isVisible ? 0.92 : 0,
+          transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+          transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s'
+        }}
+      >
         Uma retrospectiva extravagante da sua coleção!
       </Typography>
     </Paper>
@@ -259,12 +427,23 @@ export default function GameWrapped() {
     </Box>
   );
 
-  // Card component with clean design
-  const CleanCard = ({ icon, title, children, color, ...props }) => (
+  // Card component with clean design and animations
+  const CleanCard = ({ icon, title, children, color, cardIndex = 0, ...props }) => {
+    const isCardVisible = visibleCards.has(cardIndex);
+    
+    return (
     <Paper elevation={2} {...props} sx={{
       borderRadius: 3,
       overflow: 'hidden',
       height: '100%',
+        transform: isCardVisible ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
+        opacity: isCardVisible ? 1 : 0,
+        transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: isCardVisible ? 'translateY(-8px) scale(1.02)' : 'translateY(30px) scale(0.95)',
+          boxShadow: isCardVisible ? '0 12px 24px rgba(0,0,0,0.15)' : 'none',
+          transition: 'all 0.3s ease'
+        },
       ...props.sx
     }}>
       <Box sx={{ 
@@ -273,16 +452,46 @@ export default function GameWrapped() {
         gap: 1.5, 
         p: 2,
         bgcolor: color,
-        color: 'white'
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: '-100%',
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+            transition: 'left 0.8s ease',
+            left: isCardVisible ? '100%' : '-100%'
+          }
+        }}>
+          <Box sx={{ 
+            transform: isCardVisible ? 'rotate(0deg) scale(1)' : 'rotate(-10deg) scale(0.8)',
+            transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
       }}>
         {icon}
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>{title}</Typography>
       </Box>
-      <Box sx={{ p: 2 }}>
+          <Typography variant="h6" sx={{ 
+            fontWeight: 700,
+            transform: isCardVisible ? 'translateX(0)' : 'translateX(-20px)',
+            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s'
+          }}>
+            {title}
+          </Typography>
+        </Box>
+        <Box sx={{ 
+          p: 2,
+          transform: isCardVisible ? 'translateY(0)' : 'translateY(20px)',
+          opacity: isCardVisible ? 1 : 0,
+          transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s'
+        }}>
         {children}
       </Box>
     </Paper>
   );
+  };
 
   if (loading) return <Box minHeight="80vh" display="flex" alignItems="center" justifyContent="center"><CircularProgress size={40} /></Box>;
   if (error) return <Container><Box mt={2}><Typography color="error">{error}</Typography></Box></Container>;
@@ -320,7 +529,7 @@ export default function GameWrapped() {
           >
             {/* Section 0: Top Metacritic */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
+              <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]} cardIndex={0}>
                 <List disablePadding>
                   {stats.topRatedGames.slice(0, 8).map((game, idx) => (
                     <ListItem key={game.id} divider={idx < 7} disablePadding sx={{ py: 1.5 }}>
@@ -336,19 +545,14 @@ export default function GameWrapped() {
                         {idx + 1}
                       </Typography>
                       <ListItemText 
-                        primary={
-                          <Typography sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
-                            {game.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                            <StarIcon sx={{ fontSize: 16, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                            <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                              {game.metacritic}
-                            </Typography>
-                          </Box>
-                        }
+                        primary={game.name}
+                        secondary={`⭐ ${game.metacritic}`}
+                        primaryTypographyProps={{ 
+                          sx: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }
+                        }}
+                        secondaryTypographyProps={{ 
+                          sx: { color: getMetacriticColor(game.metacritic), fontWeight: 700, mt: 0.5 }
+                        }}
                       />
                     </ListItem>
                   ))}
@@ -358,7 +562,7 @@ export default function GameWrapped() {
 
             {/* Section 1: Mais Longos */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]}>
+              <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1}>
                 <List disablePadding>
                   {stats.longestGames.map((game, idx) => (
                     <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
@@ -374,16 +578,14 @@ export default function GameWrapped() {
                         {idx + 1}
                       </Typography>
                       <ListItemText 
-                        primary={
-                          <Typography sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
-                            {game.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="body2" sx={{ color: COLORS[5], fontWeight: 700, mt: 0.5 }}>
-                            {formatPlayTime(game.playTime)}
-                          </Typography>
-                        }
+                        primary={game.name}
+                        secondary={formatPlayTime(game.playTime)}
+                        primaryTypographyProps={{ 
+                          sx: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }
+                        }}
+                        secondaryTypographyProps={{ 
+                          sx: { color: COLORS[5], fontWeight: 700, mt: 0.5 }
+                        }}
                       />
                     </ListItem>
                   ))}
@@ -393,7 +595,7 @@ export default function GameWrapped() {
 
             {/* Section 2: Mais Curtos */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]}>
+              <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2}>
                 <List disablePadding>
                   {stats.shortestGames.map((game, idx) => (
                     <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
@@ -409,16 +611,14 @@ export default function GameWrapped() {
                         {idx + 1}
                       </Typography>
                       <ListItemText 
-                        primary={
-                          <Typography sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
-                            {game.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="body2" sx={{ color: COLORS[6], fontWeight: 700, mt: 0.5 }}>
-                            {formatPlayTime(game.playTime)}
-                          </Typography>
-                        }
+                        primary={game.name}
+                        secondary={formatPlayTime(game.playTime)}
+                        primaryTypographyProps={{ 
+                          sx: { fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }
+                        }}
+                        secondaryTypographyProps={{ 
+                          sx: { color: COLORS[6], fontWeight: 700, mt: 0.5 }
+                        }}
                       />
                     </ListItem>
                   ))}
@@ -428,7 +628,7 @@ export default function GameWrapped() {
 
             {/* Section 3: Gêneros & Publishers */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]}>
+              <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]} cardIndex={3}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: COLORS[0] }}>
                   🎯 Gêneros Favoritos
                 </Typography>
@@ -473,54 +673,34 @@ export default function GameWrapped() {
 
             {/* Section 4: Plataformas */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]}>
-                <List disablePadding>
+              <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
+                <Box>
                   {stats.platforms.map((platform, idx) => {
-                    const maxGames = Math.max(...stats.platforms.map(p => p.value));
-                    const percentage = (platform.value / maxGames) * 100;
+                    const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
+                    const percentage = (platform.value / totalGames) * 100;
                     
                     return (
-                      <ListItem key={platform.name} disablePadding sx={{ py: 1.5, flexDirection: 'column', alignItems: 'stretch' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 1 }}>
-                          <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                            {platform.name}
-                          </Typography>
-                          <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: COLORS[3] }}>
-                            {platform.value}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ 
-                          width: '100%', 
-                          height: 8, 
-                          bgcolor: '#e0e0e0', 
-                          borderRadius: 4,
-                          overflow: 'hidden'
-                        }}>
-                          <Box sx={{ 
-                            width: `${percentage}%`, 
-                            height: '100%', 
-                            bgcolor: COLORS[idx % COLORS.length],
-                            transition: 'width 0.6s ease',
-                            borderRadius: 4
-                          }} />
-                        </Box>
-                      </ListItem>
+                      <AnimatedProgressBar
+                        key={platform.name}
+                        value={percentage}
+                        color={COLORS[idx % COLORS.length]}
+                        delay={idx * 200}
+                        label={`${platform.name} (${platform.value})`}
+                      />
                     );
                   })}
-                </List>
+                </Box>
               </CleanCard>
             </Box>
 
             {/* Section 5: Físico vs Digital */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]}>
+              <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {/* Physical Card */}
                   <Paper elevation={1} sx={{ p: 3, borderRadius: 3, textAlign: 'center', bgcolor: '#f8f9fa' }}>
                     <Typography sx={{ fontSize: '3rem', mb: 1 }}>📀</Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS[2], mb: 1 }}>
-                      {stats.format.physical}
-                    </Typography>
+                    <AnimatedNumber value={stats.format.physical} delay={0} />
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                       Jogos Físicos
                     </Typography>
@@ -548,9 +728,7 @@ export default function GameWrapped() {
                   {/* Digital Card */}
                   <Paper elevation={1} sx={{ p: 3, borderRadius: 3, textAlign: 'center', bgcolor: '#f8f9fa' }}>
                     <Typography sx={{ fontSize: '3rem', mb: 1 }}>💾</Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS[4], mb: 1 }}>
-                      {stats.format.digital}
-                    </Typography>
+                    <AnimatedNumber value={stats.format.digital} delay={200} />
                     <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                       Jogos Digitais
                     </Typography>
@@ -584,7 +762,7 @@ export default function GameWrapped() {
         <Grid container spacing={3} justifyContent="center" sx={{ display: isMobile ? 'none' : 'flex' }}>
           {/* Top Metacritic adaptativo */}
           <Grid size={{ xs: 12 }}>
-            <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
+            <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]} cardIndex={0}>
               {isMobile ? (
                 // Mobile: Lista vertical simples
                 <List disablePadding>
@@ -607,148 +785,128 @@ export default function GameWrapped() {
                             {game.name}
                           </Typography>
                         }
-                        secondary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                            <StarIcon sx={{ fontSize: 16, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                            <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                              {game.metacritic}
-                            </Typography>
-                          </Box>
-                        }
+                        secondary={`⭐ ${game.metacritic}`}
+                        secondaryTypographyProps={{ 
+                          sx: { color: getMetacriticColor(game.metacritic), fontWeight: 700, mt: 0.5 }
+                        }}
                       />
                     </ListItem>
                   ))}
                 </List>
               ) : (
                 // Desktop: 4 colunas como antes
-                <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                  {/* Primeira coluna - jogos 1-4 */}
-                  <Box sx={{ width: '23%' }}>
-                    <List disablePadding>
-                      {stats.topRatedGames.slice(0, 4).map((game, idx) => (
-                        <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
-                          <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
-                            {idx + 1}
-                          </Typography>
-                          <ListItemText 
-                            primary={
-                              <Tooltip title={game.name}>
-                                <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                  {game.name}
-                                </Typography>
-                              </Tooltip>
-                            }
-                            secondary={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                                <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                                  {game.metacritic}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                  
-                  {/* Segunda coluna - jogos 5-8 */}
-                  <Box sx={{ width: '23%' }}>
-                    <List disablePadding>
-                      {stats.topRatedGames.slice(4, 8).map((game, idx) => (
-                        <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
-                          <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
-                            {idx + 5}
-                          </Typography>
-                          <ListItemText 
-                            primary={
-                              <Tooltip title={game.name}>
-                                <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                  {game.name}
-                                </Typography>
-                              </Tooltip>
-                            }
-                            secondary={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                                <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                                  {game.metacritic}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                  
-                  {/* Terceira coluna - jogos 9-12 */}
-                  <Box sx={{ width: '23%' }}>
-                    <List disablePadding>
-                      {stats.topRatedGames.slice(8, 12).map((game, idx) => (
-                        <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
-                          <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
-                            {idx + 9}
-                          </Typography>
-                          <ListItemText 
-                            primary={
-                              <Tooltip title={game.name}>
-                                <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                  {game.name}
-                                </Typography>
-                              </Tooltip>
-                            }
-                            secondary={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                                <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                                  {game.metacritic}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                  
-                  {/* Quarta coluna - jogos 13-16 */}
-                  <Box sx={{ width: '23%' }}>
-                    <List disablePadding>
-                      {stats.topRatedGames.slice(12, 16).map((game, idx) => (
-                        <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
-                          <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
-                            {idx + 13}
-                          </Typography>
-                          <ListItemText 
-                            primary={
-                              <Tooltip title={game.name}>
-                                <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                                  {game.name}
-                                </Typography>
-                              </Tooltip>
-                            }
-                            secondary={
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <StarIcon sx={{ fontSize: 14, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
-                                <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
-                                  {game.metacritic}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                {/* Primeira coluna - jogos 1-4 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(0, 4).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 1}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={`⭐ ${game.metacritic}`}
+                          secondaryTypographyProps={{ 
+                            sx: { color: getMetacriticColor(game.metacritic), fontWeight: 700 }
+                          }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
                 </Box>
+                
+                {/* Segunda coluna - jogos 5-8 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(4, 8).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 5}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={`⭐ ${game.metacritic}`}
+                          secondaryTypographyProps={{ 
+                            sx: { color: getMetacriticColor(game.metacritic), fontWeight: 700 }
+                          }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+                
+                {/* Terceira coluna - jogos 9-12 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(8, 12).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 9}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={`⭐ ${game.metacritic}`}
+                          secondaryTypographyProps={{ 
+                            sx: { color: getMetacriticColor(game.metacritic), fontWeight: 700 }
+                          }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+                
+                {/* Quarta coluna - jogos 13-16 */}
+                <Box sx={{ width: '23%' }}>
+                  <List disablePadding>
+                    {stats.topRatedGames.slice(12, 16).map((game, idx) => (
+                      <ListItem key={game.id} divider={idx < 3} disablePadding sx={{ py: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: COLORS[8], mr: 1, fontSize: '0.9rem', width: 18, textAlign: 'center' }}>
+                          {idx + 13}
+                        </Typography>
+                        <ListItemText 
+                          primary={
+                            <Tooltip title={game.name}>
+                              <Typography noWrap sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                                {game.name}
+                              </Typography>
+                            </Tooltip>
+                          }
+                          secondary={`⭐ ${game.metacritic}`}
+                          secondaryTypographyProps={{ 
+                            sx: { color: getMetacriticColor(game.metacritic), fontWeight: 700 }
+                          }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              </Box>
               )}
             </CleanCard>
           </Grid>
 
           {/* Mais Longos e Mais Curtos - layout adaptativo */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]}>
+            <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1}>
               <List disablePadding>
                 {stats.longestGames.map((game, idx) => (
                   <ListItem key={game.id} divider={idx < stats.longestGames.length-1} disablePadding sx={{ 
@@ -773,11 +931,11 @@ export default function GameWrapped() {
                             {game.name}
                           </Typography>
                         ) : (
-                          <Tooltip title={game.name}>
-                            <Typography noWrap sx={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                              {game.name}
-                            </Typography>
-                          </Tooltip>
+                        <Tooltip title={game.name}>
+                          <Typography noWrap sx={{ fontSize: '0.95rem', fontWeight: 600 }}>
+                            {game.name}
+                          </Typography>
+                        </Tooltip>
                         )
                       }
                       secondary={formatPlayTime(game.playTime)} 
@@ -793,7 +951,7 @@ export default function GameWrapped() {
             </CleanCard>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]}>
+            <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2}>
               <List disablePadding>
                 {stats.shortestGames.map((game, idx) => (
                   <ListItem key={game.id} divider={idx < stats.shortestGames.length-1} disablePadding sx={{ 
@@ -818,11 +976,11 @@ export default function GameWrapped() {
                             {game.name}
                           </Typography>
                         ) : (
-                          <Tooltip title={game.name}>
-                            <Typography noWrap sx={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                              {game.name}
-                            </Typography>
-                          </Tooltip>
+                        <Tooltip title={game.name}>
+                          <Typography noWrap sx={{ fontSize: '0.95rem', fontWeight: 600 }}>
+                            {game.name}
+                          </Typography>
+                        </Tooltip>
                         )
                       }
                       secondary={formatPlayTime(game.playTime)} 
@@ -840,7 +998,7 @@ export default function GameWrapped() {
 
           {/* Gêneros e Publishers Favoritos - layout adaptativo */}
           <Grid size={{ xs: 12 }}>
-            <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]}>
+            <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]} cardIndex={3}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 2.5 : 3 }}>
                 <Box>
                   <Typography variant="subtitle1" sx={{ 
@@ -908,7 +1066,7 @@ export default function GameWrapped() {
           
           {/* Número de Jogos por Plataforma - layout adaptativo */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]}>
+            <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
               {isMobile ? (
                 // Mobile: Lista vertical mais touch-friendly
                 <List disablePadding>
@@ -924,95 +1082,90 @@ export default function GameWrapped() {
                               {platform.name}
                             </Typography>
                           }
-                          secondary={
-                            <Box sx={{ mt: 1 }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                  {platform.value} jogos
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                                  {percentage}%
-                                </Typography>
-                              </Box>
-                              <Box 
-                                sx={{ 
-                                  height: 8, 
-                                  width: '100%',
-                                  bgcolor: 'rgba(0,0,0,0.1)',
-                                  borderRadius: 2,
-                                  overflow: 'hidden'
-                                }}
-                              >
-                                <Box 
-                                  sx={{ 
-                                    height: '100%', 
-                                    width: `${percentage}%`, 
-                                    bgcolor: COLORS[index % COLORS.length],
-                                    transition: 'width 0.5s ease'
-                                  }} 
-                                />
-                              </Box>
-                            </Box>
-                          }
+                          secondary={`${platform.value} jogos • ${percentage}%`}
+                          secondaryTypographyProps={{
+                            sx: { mt: 0.5, color: 'text.secondary', fontWeight: 'medium' }
+                          }}
                         />
+                        {/* Barra de progresso separada para evitar aninhamento HTML inválido */}
+                        <Box sx={{ mt: 1, ml: 0 }}>
+                          <Box 
+                            sx={{ 
+                              height: 8, 
+                              width: '100%',
+                              bgcolor: 'rgba(0,0,0,0.1)',
+                              borderRadius: 2,
+                              overflow: 'hidden'
+                            }}
+                          >
+                            <Box 
+                              sx={{ 
+                                height: '100%', 
+                                width: `${percentage}%`, 
+                                bgcolor: COLORS[index % COLORS.length],
+                                transition: 'width 0.5s ease'
+                              }} 
+                            />
+                          </Box>
+                        </Box>
                       </ListItem>
                     );
                   })}
                 </List>
               ) : (
                 // Desktop: Tabela como antes
-                <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Plataforma</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Jogos</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Proporção</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {stats.platforms.map((platform, index) => {
-                        const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
-                        const percentage = ((platform.value / totalGames) * 100).toFixed(1);
-                        
-                        return (
-                          <TableRow key={platform.name} hover>
-                            <TableCell component="th" scope="row">
-                              {platform.name}
-                            </TableCell>
-                            <TableCell align="right">
-                              <Typography variant="body2" fontWeight="medium">
-                                {platform.value}
+              <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Plataforma</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Jogos</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Proporção</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {stats.platforms.map((platform, index) => {
+                      const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
+                      const percentage = ((platform.value / totalGames) * 100).toFixed(1);
+                      
+                      return (
+                        <TableRow key={platform.name} hover>
+                          <TableCell component="th" scope="row">
+                            {platform.name}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight="medium">
+                              {platform.value}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box 
+                                sx={{ 
+                                  height: 8, 
+                                  width: `${Math.min(percentage * 1.8, 100)}%`, 
+                                  bgcolor: COLORS[index % COLORS.length],
+                                  borderRadius: 2
+                                }} 
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {percentage}%
                               </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Box 
-                                  sx={{ 
-                                    height: 8, 
-                                    width: `${Math.min(percentage * 1.8, 100)}%`, 
-                                    bgcolor: COLORS[index % COLORS.length],
-                                    borderRadius: 2
-                                  }} 
-                                />
-                                <Typography variant="caption" color="text.secondary">
-                                  {percentage}%
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
               )}
             </CleanCard>
           </Grid>
 
           {/* Físico vs Digital - layout adaptativo */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]}>
+                          <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
               {isMobile ? (
                 // Mobile: Cards visuais em vez de tabela
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1072,58 +1225,58 @@ export default function GameWrapped() {
                 </Box>
               ) : (
                 // Desktop: Tabela como antes
-                <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
-                  <Table size="small" stickyHeader>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Formato</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Jogos</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Proporção</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {[
-                        { name: 'Físico', value: stats.format.physical, color: COLORS[0] },
-                        { name: 'Digital', value: stats.format.digital, color: COLORS[1] }
-                      ].map((format, index) => {
-                        const percentage = totalGames ? ((format.value / totalGames) * 100).toFixed(1) : 0;
-                        
-                        return (
-                          <TableRow key={format.name} hover>
-                            <TableCell component="th" scope="row">
-                              {format.name}
-                            </TableCell>
-                            <TableCell align="right">
-                              <Typography variant="body2" fontWeight="medium">
-                                {format.value}
+              <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Formato</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Jogos</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Proporção</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {[
+                      { name: 'Físico', value: stats.format.physical, color: COLORS[0] },
+                      { name: 'Digital', value: stats.format.digital, color: COLORS[1] }
+                    ].map((format, index) => {
+                      const percentage = totalGames ? ((format.value / totalGames) * 100).toFixed(1) : 0;
+                      
+                      return (
+                        <TableRow key={format.name} hover>
+                          <TableCell component="th" scope="row">
+                            {format.name}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight="medium">
+                              {format.value}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box 
+                                sx={{ 
+                                  height: 8, 
+                                  width: `${Math.min(percentage * 1.8, 100)}%`, 
+                                  bgcolor: format.color,
+                                  borderRadius: 2
+                                }} 
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {percentage}%
                               </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Box 
-                                  sx={{ 
-                                    height: 8, 
-                                    width: `${Math.min(percentage * 1.8, 100)}%`, 
-                                    bgcolor: format.color,
-                                    borderRadius: 2
-                                  }} 
-                                />
-                                <Typography variant="caption" color="text.secondary">
-                                  {percentage}%
-                                </Typography>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>{totalGames}</TableCell>
-                        <TableCell></TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>{totalGames}</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
               )}
             </CleanCard>
           </Grid>
