@@ -23,16 +23,38 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
   // Refs
   const sentinelRef = useRef(null)
   const currentPageRef = useRef(1)
+  const scrollPositionRef = useRef(0)
+  const isLoadingRef = useRef(false)
 
   // Estado derivado
   const hasMore = pagination.hasNext
 
+  // Função para preservar posição do scroll
+  const preserveScrollPosition = useCallback(() => {
+    scrollPositionRef.current = window.pageYOffset
+  }, [])
+
+  // Função para restaurar posição do scroll
+  const restoreScrollPosition = useCallback(() => {
+    if (scrollPositionRef.current > 0) {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollPositionRef.current)
+      })
+    }
+  }, [])
+
   // Função para fazer fetch dos dados
   const fetchGames = useCallback(async (page = 1, reset = false) => {
-    if (loading) return
-
+    if (isLoadingRef.current) return
+    
+    isLoadingRef.current = true
     setLoading(true)
     setError(null)
+
+    // Preservar posição se não for reset
+    if (!reset && page > 1) {
+      preserveScrollPosition()
+    }
 
     try {
       const response = await fetchFunction({
@@ -46,61 +68,89 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
         if (reset || page === 1) {
           return response.games
         }
-        return [...prevGames, ...response.games]
+        // Usar uma abordagem mais eficiente para adicionar novos jogos
+        const newGames = response.games.filter(newGame => 
+          !prevGames.some(existingGame => existingGame.id === newGame.id)
+        )
+        return [...prevGames, ...newGames]
       })
 
       setPagination(response.pagination)
       currentPageRef.current = page
 
+      // Restaurar posição se necessário
+      if (!reset && page > 1) {
+        setTimeout(restoreScrollPosition, 50)
+      }
+
     } catch (err) {
       setError(err.message || 'Erro ao carregar jogos')
     } finally {
       setLoading(false)
+      isLoadingRef.current = false
     }
-  }, [fetchFunction, limit, search, platform, loading])
+  }, [fetchFunction, limit, search, platform, preserveScrollPosition, restoreScrollPosition])
 
   // Função para carregar mais jogos
   const loadMore = useCallback(async () => {
-    if (hasMore && !loading) {
+    if (hasMore && !isLoadingRef.current) {
       const nextPage = currentPageRef.current + 1
       await fetchGames(nextPage, false)
     }
-  }, [hasMore, loading, fetchGames])
+  }, [hasMore, fetchGames])
 
   // Função para refresh (resetar)
   const refresh = useCallback(async () => {
     currentPageRef.current = 1
+    scrollPositionRef.current = 0
     await fetchGames(1, true)
   }, [fetchGames])
 
-  // IntersectionObserver para detectar fim da lista
+  // IntersectionObserver melhorado com throttling para detectar fim da lista
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
 
+    let throttleTimer = null
+
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries
-        if (entry.isIntersecting && hasMore && !loading) {
-          loadMore()
+        
+        // Throttle para evitar múltiplas execuções muito próximas
+        if (throttleTimer) return
+        
+        if (entry.isIntersecting && hasMore && !isLoadingRef.current) {
+          throttleTimer = setTimeout(() => {
+            // Verificação dupla para garantir que ainda é necessário carregar
+            if (hasMore && !isLoadingRef.current && entry.isIntersecting) {
+              loadMore()
+            }
+            throttleTimer = null
+          }, 200) // Delay otimizado para melhor experiência
         }
       },
       {
-        rootMargin: '100px', // Carrega antes de chegar no fim
-        threshold: 0.1
+        rootMargin: '50px', // Margem otimizada
+        threshold: 0.1, // Threshold para detecção precisa
+        root: null // Usar viewport como root
       }
     )
 
     observer.observe(sentinel)
 
     return () => {
+      if (throttleTimer) {
+        clearTimeout(throttleTimer)
+      }
       observer.unobserve(sentinel)
       observer.disconnect()
     }
-  }, [hasMore, loading, loadMore])
+  }, [hasMore, loadMore])
 
   // Carregamento inicial
   useEffect(() => {
+    currentPageRef.current = 1
     fetchGames(1, true)
   }, [search, platform]) // Recarrega quando filtros mudam
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -94,7 +94,6 @@ function Home() {
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
-  const [filteredGames, setFilteredGames] = useState([]);
   const [availablePublishers, setAvailablePublishers] = useState([]);
   const [availableGenres, setAvailableGenres] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
@@ -112,6 +111,41 @@ function Home() {
   });
   const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
   const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
+
+  // Aplicar filtros avançados usando useMemo para evitar re-renderizações
+  const filteredGames = useMemo(() => {
+    let result = [...allGames];
+    
+    // Filtro de metacritic mínimo
+    if (minMetacritic !== '' && !isNaN(parseInt(minMetacritic))) {
+      const minScore = parseInt(minMetacritic);
+      result = result.filter(game => 
+        game.metacritic && game.metacritic >= minScore
+      );
+    }
+    
+    // Filtro de gênero
+    if (selectedGenre !== 'all') {
+      result = result.filter(game => 
+        game.genres && game.genres.includes(selectedGenre)
+      );
+    }
+    
+    // Filtro de publisher
+    if (selectedPublisher !== 'all') {
+      result = result.filter(game => 
+        game.publishers && game.publishers.includes(selectedPublisher)
+      );
+    }
+    
+    // Filtro de status
+    if (selectedStatus !== 'all') {
+      const isCompleted = selectedStatus === 'completed';
+      result = result.filter(game => game.completed === isCompleted);
+    }
+    
+    return result;
+  }, [allGames, minMetacritic, selectedGenre, selectedPublisher, selectedStatus]);
 
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
@@ -146,101 +180,64 @@ function Home() {
     }
   }, [allGames]);
 
-  // Aplicar filtros avançados aos jogos (busca e plataforma são filtradas na API)
-  useEffect(() => {
-    let result = [...allGames];
-    
-    // Filtro de metacritic mínimo
-    if (minMetacritic !== '' && !isNaN(parseInt(minMetacritic))) {
-      const minScore = parseInt(minMetacritic);
-      result = result.filter(game => 
-        game.metacritic && game.metacritic >= minScore
-      );
-    }
-    
-    // Filtro de gênero
-    if (selectedGenre !== 'all') {
-      result = result.filter(game => 
-        game.genres && game.genres.includes(selectedGenre)
-      );
-    }
-    
-    // Filtro de publisher
-    if (selectedPublisher !== 'all') {
-      result = result.filter(game => 
-        game.publishers && game.publishers.includes(selectedPublisher)
-      );
-    }
-    
-    // Filtro de status
-    if (selectedStatus !== 'all') {
-      const isCompleted = selectedStatus === 'completed';
-      result = result.filter(game => game.completed === isCompleted);
-    }
-    
-    setFilteredGames(result);
-  }, [allGames, minMetacritic, selectedGenre, selectedPublisher, selectedStatus]);
-
-  // Funções de manipulação dos filtros
-  const handlePlatformChange = (event) => {
+  // Funções de manipulação otimizadas com useCallback
+  const handlePlatformChange = useCallback((event) => {
     const value = event.target.value;
     setPlatform(value);
     localStorage.setItem('filter_platform', value);
-  };
+  }, []);
 
-  const handleSearch = (event) => {
+  const handleSearch = useCallback((event) => {
     const value = event.target.value;
     setSearchTerm(value);
     localStorage.setItem('filter_search', value);
-  };
+  }, []);
 
-  const handleMinMetacriticChange = (event) => {
+  const handleMinMetacriticChange = useCallback((event) => {
     const value = event.target.value;
     setMinMetacritic(value);
     localStorage.setItem('filter_metacritic', value);
-  };
+  }, []);
 
-  const handleGenreChange = (event) => {
+  const handleGenreChange = useCallback((event) => {
     const value = event.target.value;
     setSelectedGenre(value);
     localStorage.setItem('filter_genre', value);
-  };
+  }, []);
 
-  const handlePublisherChange = (event) => {
+  const handlePublisherChange = useCallback((event) => {
     const value = event.target.value;
     setSelectedPublisher(value);
     localStorage.setItem('filter_publisher', value);
-  };
+  }, []);
 
-  const handleStatusChange = (event) => {
+  const handleStatusChange = useCallback((event) => {
     const value = event.target.value;
     setSelectedStatus(value);
     localStorage.setItem('filter_status', value);
-  };
+  }, []);
 
-  const handleCardClick = (gameId) => {
+  const handleCardClick = useCallback((gameId) => {
     navigate(`/game/${gameId}`);
-  };
+  }, [navigate]);
 
-  const handleViewModeChange = (event, newViewMode) => {
+  const handleViewModeChange = useCallback((event, newViewMode) => {
     if (newViewMode !== null) {
       setViewMode(newViewMode);
       // Salvar o modo de visualização escolhido no localStorage
       localStorage.setItem('viewMode', newViewMode);
     }
-  };
+  }, []);
 
-  const getMetacriticColor = (score) => {
+  const getMetacriticColor = useCallback((score) => {
     if (!score) return '#888';
     if (score >= 75) return '#6c3';
     if (score >= 50) return '#fc3';
     return '#f00';
-  };
-
-  // Hook useInfiniteScroll já carrega os jogos automaticamente
+  }, []);
 
   // Funções de ordenação de tabela
-  const handleRequestSort = (property) => {
+  const handleRequestSort = useCallback((property) => {
     const isAsc = orderBy === property && order === 'asc';
     const newOrder = isAsc ? 'desc' : 'asc';
     setOrder(newOrder);
@@ -249,15 +246,15 @@ function Home() {
     // Salvar as configurações de ordenação no localStorage
     localStorage.setItem('orderBy', property);
     localStorage.setItem('order', newOrder);
-  };
+  }, [orderBy, order]);
 
-  const getComparator = (order, orderBy) => {
+  const getComparator = useCallback((order, orderBy) => {
     return order === 'desc'
       ? (a, b) => descendingComparator(a, b, orderBy)
       : (a, b) => -descendingComparator(a, b, orderBy);
-  };
+  }, []);
 
-  const descendingComparator = (a, b, orderBy) => {
+  const descendingComparator = useCallback((a, b, orderBy) => {
     // Tratamento especial para diferentes tipos de campos
     if (orderBy === 'name') {
       return b.name.localeCompare(a.name);
@@ -283,10 +280,10 @@ function Home() {
       return scoreB - scoreA;
     }
     return 0;
-  };
+  }, []);
 
   // Função para limpar todos os filtros
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     // Redefine todos os estados para valores padrão
     setPlatform('all');
     setSearchTerm('');
@@ -305,15 +302,16 @@ function Home() {
     
     // Refresh do infinite scroll para recarregar dados
     refresh();
-  };
+  }, [refresh]);
 
   // Função para lidar com a confirmação de exclusão
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = useCallback(() => {
     if (gameToDelete) {
       deleteGame(gameToDelete.id)
         .then(() => {
           setDeleteDialogOpen(false);
           setGameToDelete(null);
+          refresh(); // Atualizar lista após exclusão
         })
         .catch((err) => {
           console.error('Erro ao excluir jogo:', err);
@@ -321,10 +319,10 @@ function Home() {
           setGameToDelete(null);
         });
     }
-  };
+  }, [gameToDelete, deleteGame, refresh]);
 
   // Função para exportar os jogos filtrados para CSV
-  const handleExportCsv = () => {
+  const handleExportCsv = useCallback(() => {
     // Converter os dados dos jogos para o formato CSV
     const headers = [
       'ID',
@@ -386,10 +384,10 @@ function Home() {
     // Limpeza
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 100);
-  };
+  }, [filteredGames]);
 
   // Função para marcar um jogo como concluído
-  const handleMarkCompleted = async () => {
+  const handleMarkCompleted = useCallback(async () => {
     if (gameToMarkCompleted) {
       try {
         // Importante: garantir que todos os campos obrigatórios estejam presentes
@@ -407,15 +405,6 @@ function Home() {
         // Usar await para garantir que a operação seja concluída
         const result = await updateGame(gameToMarkCompleted.id, updatedGame);
         
-        // Atualizar a lista de jogos localmente
-        setFilteredGames(prevGames => 
-          prevGames.map(game => 
-            game.id === gameToMarkCompleted.id 
-              ? { ...game, completed: true, status: 'Concluído' } 
-              : game
-          )
-        );
-        
         // Fechar o diálogo e limpar o estado
         setCompletedDialogOpen(false);
         setGameToMarkCompleted(null);
@@ -428,28 +417,10 @@ function Home() {
         setGameToMarkCompleted(null);
       }
     }
-  };
+  }, [gameToMarkCompleted, updateGame, refresh]);
 
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      </Container>
-    );
-  }
-
-  // Renderização dos cards
-  const renderCardView = () => {
+  // Renderização dos cards otimizada com useCallback
+  const renderCardView = useCallback(() => {
     return (
       <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="flex-start">
         {filteredGames.map((game) => (
@@ -468,10 +439,10 @@ function Home() {
                 boxSizing: 'border-box',
                 display: 'flex',
                 flexDirection: 'column',
+                transition: 'all 0.2s ease-in-out', // Suavizar transições
                 '&:hover': {
                   boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
                   transform: 'translateY(-2px)',
-                  transition: 'all 0.2s ease-in-out'
                 }
               }}
               onClick={() => handleCardClick(game.id)}
@@ -616,63 +587,19 @@ function Home() {
             </Card>
           </Grid>
         ))}
-        
-        {/* Sentinela para infinite scroll */}
-        {hasMore && (
-          <Grid size={{ xs: 12 }}>
-            <Box
-              ref={sentinelRef}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                py: 4,
-                mt: 2
-              }}
-            >
-              {loading && (
-                <>
-                  <CircularProgress size={32} color="primary" sx={{ mb: 2 }} />
-                  <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-                    🔄 Carregando mais jogos...
-                  </Typography>
-                </>
-              )}
-            </Box>
-          </Grid>
-        )}
       </Grid>
     );
-  };
+  }, [filteredGames, handleCardClick, getMetacriticColor]);
 
-  // Renderização da tabela
-  const renderTableView = () => {
-    // Ordenar os jogos filtrados
+  // Renderização da tabela otimizada com useCallback
+  const renderTableView = useCallback(() => {
     const sortedGames = [...filteredGames].sort(getComparator(order, orderBy));
     
     return (
-      <TableContainer 
-        component={Paper} 
-        sx={{ 
-          bgcolor: '#222', 
-          color: 'white', 
-          boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-          overflow: 'auto',
-          '&::-webkit-scrollbar': {
-            height: 8,
-          },
-          '&::-webkit-scrollbar-track': {
-            background: '#1e1e1e',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: '#0070cc',
-            borderRadius: 4,
-          }
-        }}
-      >
-        <Table sx={{ minWidth: { xs: 800, sm: 650 } }} aria-label="tabela de jogos">
+      <TableContainer component={Paper} sx={{ bgcolor: '#111', borderRadius: 2 }}>
+        <Table>
           <TableHead>
-            <TableRow sx={{ '& th': { fontWeight: 'bold', bgcolor: '#333' } }}>
+            <TableRow sx={{ '& th': { borderBottom: '2px solid rgba(255,255,255,0.1)' } }}>
               <TableCell sx={{ color: 'white' }}>
                 <TableSortLabel
                   active={orderBy === 'name'}
@@ -688,7 +615,7 @@ function Home() {
                     },
                   }}
                 >
-                  Nome
+                  Nome do Jogo
                 </TableSortLabel>
               </TableCell>
               <TableCell sx={{ color: 'white' }}>
@@ -887,33 +814,27 @@ function Home() {
             ))}
           </TableBody>
         </Table>
-        
-        {/* Sentinela para infinite scroll */}
-        {hasMore && (
-          <Box
-            ref={sentinelRef}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              py: 3,
-              mt: 2,
-              backgroundColor: '#1e1e1e'
-            }}
-          >
-            {loading && (
-              <>
-                <CircularProgress size={32} color="primary" sx={{ mb: 2 }} />
-                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
-                  🔄 Carregando mais jogos...
-                </Typography>
-              </>
-            )}
-          </Box>
-        )}
       </TableContainer>
     );
-  };
+  }, [filteredGames, order, orderBy, getComparator, handleCardClick, getMetacriticColor, handleRequestSort]);
+
+  if (loading && filteredGames.length === 0) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth={false} sx={{ py: { xs: 2, sm: 3 }, px: { xs: 1, sm: 3, md: 4 }, maxWidth: '1800px', mx: 'auto' }}>
@@ -941,17 +862,7 @@ function Home() {
           gap={{ xs: 1, sm: 2 }}
           flexDirection={{ xs: 'column', sm: 'row' }}
         >
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              fontWeight: 'medium', 
-              color: 'text.secondary',
-              fontSize: { xs: '0.9rem', sm: '1rem' },
-              textAlign: 'center'
-            }}
-          >
-            {filteredGames.length} {filteredGames.length === 1 ? 'jogo encontrado' : 'jogos encontrados'}
-          </Typography>
+
           {/* ToggleButtonGroup - Escondido em mobile */}
           {!isMobile && (
             <ToggleButtonGroup
@@ -1139,8 +1050,70 @@ function Home() {
         </Grid>
       </Grid>
 
-      {/* Renderizar a visualização selecionada - Mobile sempre usa cards */}
-      {(isMobile || viewMode === 'card') ? renderCardView() : renderTableView()}
+      {/* Container com ID para controle de scroll */}
+      <Box id="games-container">
+        {/* Renderizar a visualização selecionada - Mobile sempre usa cards */}
+        {(isMobile || viewMode === 'card') ? renderCardView() : renderTableView()}
+        
+        {/* Sentinela universal para infinite scroll com transições suaves */}
+        {(hasMore || loading) && (
+          <Box
+            ref={sentinelRef}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              py: 4,
+              mt: 3,
+              minHeight: '80px', // Altura mínima aumentada para melhor detecção
+              backgroundColor: 'transparent',
+              opacity: loading ? 1 : 0.7,
+              transition: 'opacity 0.3s ease-in-out', // Transição suave
+              willChange: 'opacity' // Otimização de performance
+            }}
+          >
+            {loading && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  animation: 'fadeIn 0.3s ease-in',
+                  '@keyframes fadeIn': {
+                    from: { opacity: 0, transform: 'translateY(10px)' },
+                    to: { opacity: 1, transform: 'translateY(0)' }
+                  }
+                }}
+              >
+                <CircularProgress size={32} color="primary" sx={{ mb: 2 }} />
+                <Typography 
+                  variant="body2" 
+                  color="primary.main" 
+                  sx={{ 
+                    fontWeight: 600,
+                    textAlign: 'center'
+                  }}
+                >
+                  🔄 Carregando mais jogos...
+                </Typography>
+              </Box>
+            )}
+            {!loading && hasMore && (
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ 
+                  fontWeight: 500,
+                  opacity: 0.5,
+                  textAlign: 'center'
+                }}
+              >
+                Role para carregar mais...
+              </Typography>
+            )}
+          </Box>
+        )}
+      </Box>
       
       {/* Diálogo de confirmação de exclusão */}
       <Dialog
