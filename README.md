@@ -67,3 +67,4 @@ ps-games-catalog/
 
 **🎉 Desenvolvido com deploy automático e infraestrutura em nuvem!**
 # Deploy trigger Thu Jun  5 20:00:22 -03 2025
+# SSH e deploy funcionando com novo IP EC2: 54.84.52.202
