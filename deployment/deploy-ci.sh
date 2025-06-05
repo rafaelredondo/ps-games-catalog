@@ -112,17 +112,9 @@ if [ "$FRONTEND_CHANGED" = "true" ]; then
     log_info "Fazendo build do frontend..."
     npm run build
     
-    # Fazer backup do frontend atual
-    if [ -d "$NGINX_ROOT" ]; then
-        sudo rm -rf "${NGINX_ROOT}.backup.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
-        sudo cp -r "$NGINX_ROOT" "${NGINX_ROOT}.backup.$(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
-    fi
-    
-    # Copiar novo build
-    sudo rm -rf "$NGINX_ROOT"/*
-    sudo cp -r dist/* "$NGINX_ROOT/"
-    sudo chown -R nginx:nginx "$NGINX_ROOT"
-    sudo chmod -R 755 "$NGINX_ROOT"
+    # O nginx está configurado para servir diretamente do diretório dist
+    # Não precisa copiar para outro local, apenas garantir permissões
+    chmod -R 755 dist/
     
     # Atualizar configuração do nginx se necessário
     if [ -f "$REPO_DIR/deployment/nginx.conf" ]; then
