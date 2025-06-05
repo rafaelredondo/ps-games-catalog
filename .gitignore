@@ -102,5 +102,4 @@ config/local.json
 # 🚫 OUTROS ARQUIVOS SENSÍVEIS
 .eslintcache
 .yarn-integrity
-package-lock.json
 
