@@ -146,9 +146,12 @@ if [ "$FRONTEND_CHANGED" = "true" ]; then
     log_info "Fazendo build do frontend..."
     npm run build
     
-    # O nginx está configurado para servir diretamente do diretório dist
-    # Não precisa copiar para outro local, apenas garantir permissões
-    chmod -R 755 dist/
+    # Copiar arquivos buildados para o diretório do nginx
+    log_info "Copiando arquivos para nginx..."
+    sudo rm -rf /var/www/html/*
+    sudo cp -r dist/* /var/www/html/
+    sudo chown -R nginx:nginx /var/www/html/
+    sudo chmod -R 755 /var/www/html/
     
     # Atualizar configuração do nginx se necessário
     if [ -f "$REPO_DIR/deployment/nginx.conf" ]; then
