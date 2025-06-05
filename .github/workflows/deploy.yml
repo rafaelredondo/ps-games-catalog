@@ -1,0 +1,87 @@
+name: 🚀 Deploy to AWS EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Permite trigger manual
+
+jobs:
+  deploy:
+    name: 🎯 Deploy Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📋 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Necessário para git diff
+    
+    - name: 🔐 Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: 📊 Check what changed
+      id: changes
+      run: |
+        if git diff HEAD~1 --name-only | grep -q "^backend/"; then
+          echo "backend=true" >> $GITHUB_OUTPUT
+        else
+          echo "backend=false" >> $GITHUB_OUTPUT
+        fi
+        
+        if git diff HEAD~1 --name-only | grep -q "^frontend/"; then
+          echo "frontend=true" >> $GITHUB_OUTPUT
+        else
+          echo "frontend=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: 🚀 Deploy to EC2
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+      run: |
+        echo "🎯 Iniciando deploy..."
+        echo "📊 Mudanças detectadas:"
+        echo "   - Backend: ${{ steps.changes.outputs.backend }}"
+        echo "   - Frontend: ${{ steps.changes.outputs.frontend }}"
+        
+        # Executar deploy no servidor
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          $EC2_USER@$EC2_HOST \
+          'bash -c "cd /home/ec2-user/ps-games-catalog && ./deployment/deploy-ci.sh"'
+    
+    - name: 🏥 Health Check
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+      run: |
+        echo "🏥 Verificando saúde da aplicação..."
+        
+        # Aguardar um pouco para app inicializar
+        sleep 10
+        
+        # Teste de conectividade
+        if curl -s -f --connect-timeout 10 https://gamescatalog.net > /dev/null; then
+          echo "✅ Aplicação está respondendo!"
+        else
+          echo "❌ Aplicação pode não estar respondendo"
+          exit 1
+        fi
+    
+    - name: 📱 Notify Success
+      if: success()
+      run: |
+        echo "🎉 Deploy realizado com sucesso!"
+        echo "🌐 Aplicação: https://gamescatalog.net"
+        echo "📊 Commit: ${{ github.sha }}"
+        echo "👤 Autor: ${{ github.actor }}"
+    
+    - name: 📱 Notify Failure
+      if: failure()
+      run: |
+        echo "❌ Deploy falhou!"
+        echo "📊 Commit: ${{ github.sha }}"
+        echo "👤 Autor: ${{ github.actor }}"
+        echo "🔍 Verifique os logs acima para detalhes" 
