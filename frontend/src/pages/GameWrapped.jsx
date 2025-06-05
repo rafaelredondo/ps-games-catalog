@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -23,7 +23,9 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Divider
+  Divider,
+  IconButton,
+  LinearProgress
 } from '@mui/material';
 import { 
   EmojiEvents as TrophyIcon,
@@ -34,7 +36,11 @@ import {
   Business as PublisherIcon,
   ArrowBack as ArrowBackIcon,
   Storage as PlatformIcon,
-  Album as PhysicalIcon
+  Album as PhysicalIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  RadioButtonChecked as DotIcon,
+  RadioButtonUnchecked as EmptyDotIcon
 } from '@mui/icons-material';
 import { useGames } from '../contexts/GamesContext';
 
@@ -69,9 +75,63 @@ export default function GameWrapped() {
     format: { physical: 0, digital: 0 }
   });
 
+  // Swipe navigation state
+  const [currentSection, setCurrentSection] = useState(0);
+  const sectionRefs = useRef([]);
+  const touchStartRef = useRef(null);
+  const touchEndRef = useRef(null);
+
+  const sections = [
+    { title: "Top Metacritic", icon: <TrophyIcon /> },
+    { title: "Mais Longos", icon: <ScheduleIcon /> },
+    { title: "Mais Curtos", icon: <SpeedIcon /> },
+    { title: "Gêneros & Publishers", icon: <CategoryIcon /> },
+    { title: "Plataformas", icon: <PlatformIcon /> },
+    { title: "Físico vs Digital", icon: <PhysicalIcon /> }
+  ];
+
   useEffect(() => {
     if (games.length > 0) calculateStats(games);
   }, [games]);
+
+  // Swipe navigation functions
+  const minSwipeDistance = 50;
+
+  const nextSection = () => {
+    setCurrentSection(prev => Math.min(prev + 1, sections.length - 1));
+  };
+
+  const prevSection = () => {
+    setCurrentSection(prev => Math.max(prev - 1, 0));
+  };
+
+  const goToSection = (index) => {
+    setCurrentSection(index);
+  };
+
+  const onTouchStart = (e) => {
+    touchEndRef.current = null;
+    touchStartRef.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e) => {
+    touchEndRef.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartRef.current || !touchEndRef.current) return;
+    
+    const distance = touchStartRef.current - touchEndRef.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && currentSection < sections.length - 1) {
+      nextSection();
+    }
+    if (isRightSwipe && currentSection > 0) {
+      prevSection();
+    }
+  };
 
   function calculateStats(gamesData) {
     const count = (arr, key) => {
@@ -119,6 +179,86 @@ export default function GameWrapped() {
     </Paper>
   );
 
+  // Navigation controls for mobile
+  const SwipeNavigation = () => (
+    <Box sx={{ display: isMobile ? 'block' : 'none', mb: 3 }}>
+      {/* Section indicators */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
+        {sections.map((_, index) => (
+          <IconButton
+            key={index}
+            size="small"
+            onClick={() => goToSection(index)}
+            sx={{ 
+              color: index === currentSection ? COLORS[index] : '#bbb',
+              mx: 0.5,
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {index === currentSection ? <DotIcon /> : <EmptyDotIcon />}
+          </IconButton>
+        ))}
+      </Box>
+
+      {/* Navigation controls */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2 }}>
+        <IconButton 
+          onClick={prevSection} 
+          disabled={currentSection === 0}
+          sx={{ 
+            bgcolor: currentSection === 0 ? 'transparent' : 'white',
+            color: currentSection === 0 ? '#ccc' : COLORS[currentSection],
+            boxShadow: currentSection === 0 ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
+            '&:hover': { bgcolor: currentSection === 0 ? 'transparent' : 'white' }
+          }}
+        >
+          <ChevronLeftIcon />
+        </IconButton>
+
+        {/* Current section info */}
+        <Box sx={{ textAlign: 'center', flex: 1 }}>
+          <Typography variant="body2" sx={{ color: '#666', fontSize: '0.8rem' }}>
+            {currentSection + 1} de {sections.length}
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: COLORS[currentSection] }}>
+            {sections[currentSection].title}
+          </Typography>
+        </Box>
+
+        <IconButton 
+          onClick={nextSection} 
+          disabled={currentSection === sections.length - 1}
+          sx={{ 
+            bgcolor: currentSection === sections.length - 1 ? 'transparent' : 'white',
+            color: currentSection === sections.length - 1 ? '#ccc' : COLORS[currentSection],
+            boxShadow: currentSection === sections.length - 1 ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
+            '&:hover': { bgcolor: currentSection === sections.length - 1 ? 'transparent' : 'white' }
+          }}
+        >
+          <ChevronRightIcon />
+        </IconButton>
+      </Box>
+
+      {/* Progress bar */}
+      <Box sx={{ mt: 2, px: 2 }}>
+        <LinearProgress 
+          variant="determinate" 
+          value={(currentSection + 1) / sections.length * 100}
+          sx={{
+            height: 6,
+            borderRadius: 3,
+            bgcolor: '#e0e0e0',
+            '& .MuiLinearProgress-bar': {
+              bgcolor: COLORS[currentSection],
+              borderRadius: 3,
+              transition: 'all 0.4s ease'
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  );
+
   // Card component with clean design
   const CleanCard = ({ icon, title, children, color, ...props }) => (
     <Paper elevation={2} {...props} sx={{
@@ -156,7 +296,292 @@ export default function GameWrapped() {
     <Box sx={{ position: 'relative', minHeight: '100vh', background: '#f5f5f5', py: 4 }}>
       <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, mx: 'auto' }}>
         <Header />
-        <Grid container spacing={3} justifyContent="center">
+        <SwipeNavigation />
+        
+        {/* Swipe container for mobile */}
+        <Box
+          sx={{
+            display: isMobile ? 'block' : 'none',
+            position: 'relative',
+            overflow: 'hidden',
+            minHeight: '60vh'
+          }}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              width: `${sections.length * 100}%`,
+              transform: `translateX(-${currentSection * (100 / sections.length)}%)`,
+              transition: 'transform 0.3s ease',
+            }}
+          >
+            {/* Section 0: Top Metacritic */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
+                <List disablePadding>
+                  {stats.topRatedGames.slice(0, 8).map((game, idx) => (
+                    <ListItem key={game.id} divider={idx < 7} disablePadding sx={{ py: 1.5 }}>
+                      <Typography sx={{ 
+                        fontWeight: 700, 
+                        color: COLORS[8], 
+                        mr: 2, 
+                        fontSize: '1.1rem', 
+                        width: 28, 
+                        textAlign: 'center',
+                        minWidth: 28
+                      }}>
+                        {idx + 1}
+                      </Typography>
+                      <ListItemText 
+                        primary={
+                          <Typography sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                            {game.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                            <StarIcon sx={{ fontSize: 16, color: getMetacriticColor(game.metacritic), mr: 0.5 }} />
+                            <Typography variant="body2" sx={{ color: getMetacriticColor(game.metacritic), fontWeight: 700 }}>
+                              {game.metacritic}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CleanCard>
+            </Box>
+
+            {/* Section 1: Mais Longos */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]}>
+                <List disablePadding>
+                  {stats.longestGames.map((game, idx) => (
+                    <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
+                      <Typography sx={{ 
+                        fontWeight: 700, 
+                        color: COLORS[5], 
+                        mr: 2, 
+                        fontSize: '1.1rem', 
+                        width: 32, 
+                        textAlign: 'center',
+                        minWidth: 32
+                      }}>
+                        {idx + 1}
+                      </Typography>
+                      <ListItemText 
+                        primary={
+                          <Typography sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                            {game.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="body2" sx={{ color: COLORS[5], fontWeight: 700, mt: 0.5 }}>
+                            {formatPlayTime(game.playTime)}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CleanCard>
+            </Box>
+
+            {/* Section 2: Mais Curtos */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]}>
+                <List disablePadding>
+                  {stats.shortestGames.map((game, idx) => (
+                    <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
+                      <Typography sx={{ 
+                        fontWeight: 700, 
+                        color: COLORS[6], 
+                        mr: 2, 
+                        fontSize: '1.1rem', 
+                        width: 32, 
+                        textAlign: 'center',
+                        minWidth: 32
+                      }}>
+                        {idx + 1}
+                      </Typography>
+                      <ListItemText 
+                        primary={
+                          <Typography sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                            {game.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="body2" sx={{ color: COLORS[6], fontWeight: 700, mt: 0.5 }}>
+                            {formatPlayTime(game.playTime)}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              </CleanCard>
+            </Box>
+
+            {/* Section 3: Gêneros & Publishers */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: COLORS[0] }}>
+                  🎯 Gêneros Favoritos
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
+                  {stats.genres.map((genre, idx) => (
+                    <Chip
+                      key={genre.name}
+                      label={`${genre.name} (${genre.value})`}
+                      sx={{
+                        minHeight: 44,
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        bgcolor: COLORS[idx % COLORS.length],
+                        color: 'white',
+                        '&:hover': { transform: 'scale(1.05)', transition: 'transform 0.2s' }
+                      }}
+                    />
+                  ))}
+                </Box>
+                
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: COLORS[0] }}>
+                  🏢 Publishers Favoritos
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                  {stats.publishers.map((publisher, idx) => (
+                    <Chip
+                      key={publisher.name}
+                      label={`${publisher.name} (${publisher.value})`}
+                      sx={{
+                        minHeight: 44,
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        bgcolor: COLORS[(idx + 4) % COLORS.length],
+                        color: 'white',
+                        '&:hover': { transform: 'scale(1.05)', transition: 'transform 0.2s' }
+                      }}
+                    />
+                  ))}
+                </Box>
+              </CleanCard>
+            </Box>
+
+            {/* Section 4: Plataformas */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]}>
+                <List disablePadding>
+                  {stats.platforms.map((platform, idx) => {
+                    const maxGames = Math.max(...stats.platforms.map(p => p.value));
+                    const percentage = (platform.value / maxGames) * 100;
+                    
+                    return (
+                      <ListItem key={platform.name} disablePadding sx={{ py: 1.5, flexDirection: 'column', alignItems: 'stretch' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 1 }}>
+                          <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                            {platform.name}
+                          </Typography>
+                          <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: COLORS[3] }}>
+                            {platform.value}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ 
+                          width: '100%', 
+                          height: 8, 
+                          bgcolor: '#e0e0e0', 
+                          borderRadius: 4,
+                          overflow: 'hidden'
+                        }}>
+                          <Box sx={{ 
+                            width: `${percentage}%`, 
+                            height: '100%', 
+                            bgcolor: COLORS[idx % COLORS.length],
+                            transition: 'width 0.6s ease',
+                            borderRadius: 4
+                          }} />
+                        </Box>
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              </CleanCard>
+            </Box>
+
+            {/* Section 5: Físico vs Digital */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {/* Physical Card */}
+                  <Paper elevation={1} sx={{ p: 3, borderRadius: 3, textAlign: 'center', bgcolor: '#f8f9fa' }}>
+                    <Typography sx={{ fontSize: '3rem', mb: 1 }}>📀</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS[2], mb: 1 }}>
+                      {stats.format.physical}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                      Jogos Físicos
+                    </Typography>
+                    <Box sx={{ 
+                      width: '100%', 
+                      height: 8, 
+                      bgcolor: '#e0e0e0', 
+                      borderRadius: 4,
+                      overflow: 'hidden',
+                      mb: 1
+                    }}>
+                      <Box sx={{ 
+                        width: `${physicalPercentage}%`, 
+                        height: '100%', 
+                        bgcolor: COLORS[2],
+                        transition: 'width 0.8s ease',
+                        borderRadius: 4
+                      }} />
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: COLORS[2] }}>
+                      {physicalPercentage}%
+                    </Typography>
+                  </Paper>
+
+                  {/* Digital Card */}
+                  <Paper elevation={1} sx={{ p: 3, borderRadius: 3, textAlign: 'center', bgcolor: '#f8f9fa' }}>
+                    <Typography sx={{ fontSize: '3rem', mb: 1 }}>💾</Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 900, color: COLORS[4], mb: 1 }}>
+                      {stats.format.digital}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                      Jogos Digitais
+                    </Typography>
+                    <Box sx={{ 
+                      width: '100%', 
+                      height: 8, 
+                      bgcolor: '#e0e0e0', 
+                      borderRadius: 4,
+                      overflow: 'hidden',
+                      mb: 1
+                    }}>
+                      <Box sx={{ 
+                        width: `${digitalPercentage}%`, 
+                        height: '100%', 
+                        bgcolor: COLORS[4],
+                        transition: 'width 0.8s ease',
+                        borderRadius: 4
+                      }} />
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: COLORS[4] }}>
+                      {digitalPercentage}%
+                    </Typography>
+                  </Paper>
+                </Box>
+              </CleanCard>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Desktop view - Grid layout unchanged */}
+        <Grid container spacing={3} justifyContent="center" sx={{ display: isMobile ? 'none' : 'flex' }}>
           {/* Top Metacritic adaptativo */}
           <Grid size={{ xs: 12 }}>
             <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]}>
