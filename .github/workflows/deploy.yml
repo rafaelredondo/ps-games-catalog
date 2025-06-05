@@ -59,16 +59,23 @@ jobs:
       run: |
         echo "🏥 Verificando saúde da aplicação..."
         
-        # Aguardar um pouco para app inicializar
-        sleep 10
+        # Aguardar serviços inicializarem
+        sleep 15
         
-        # Teste de conectividade
-        if curl -s -f --connect-timeout 10 https://gamescatalog.net > /dev/null; then
-          echo "✅ Aplicação está respondendo!"
-        else
-          echo "❌ Aplicação pode não estar respondendo"
-          exit 1
-        fi
+        # Tentativas com retry
+        for i in {1..3}; do
+          echo "🔄 Tentativa $i/3..."
+          if curl -s -f --connect-timeout 10 --max-time 30 https://gamescatalog.net > /dev/null; then
+            echo "✅ Aplicação está respondendo!"
+            exit 0
+          else
+            echo "⏳ Aguardando 10s antes da próxima tentativa..."
+            sleep 10
+          fi
+        done
+        
+        echo "❌ Aplicação não está respondendo após 3 tentativas"
+        exit 1
     
     - name: 📱 Notify Success
       if: success()
