@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -419,8 +419,8 @@ function Home() {
     }
   }, [gameToMarkCompleted, updateGame, refresh]);
 
-  // Renderização dos cards otimizada com useCallback
-  const renderCardView = useCallback(() => {
+  // Renderização dos cards
+  const renderCardView = () => {
     return (
       <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="flex-start">
         {filteredGames.map((game) => (
@@ -589,10 +589,10 @@ function Home() {
         ))}
       </Grid>
     );
-  }, [filteredGames, handleCardClick, getMetacriticColor]);
+  };
 
-  // Renderização da tabela otimizada com useCallback
-  const renderTableView = useCallback(() => {
+  // Renderização da tabela
+  const renderTableView = () => {
     const sortedGames = [...filteredGames].sort(getComparator(order, orderBy));
     
     return (
@@ -816,7 +816,7 @@ function Home() {
         </Table>
       </TableContainer>
     );
-  }, [filteredGames, order, orderBy, getComparator, handleCardClick, getMetacriticColor, handleRequestSort]);
+  };
 
   if (loading && filteredGames.length === 0) {
     return (
