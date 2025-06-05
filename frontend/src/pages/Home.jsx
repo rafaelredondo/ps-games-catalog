@@ -238,7 +238,7 @@ function Home() {
   // Efeito para carregar jogos iniciais
   useEffect(() => {
     loadGames();
-  }, []);
+  }, []); // Deploy force v2
 
   // Funções de ordenação de tabela
   const handleRequestSort = (property) => {
