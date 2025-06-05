@@ -180,13 +180,19 @@ fi
 # 9. Verificar saúde da aplicação
 log "🏥 Verificando saúde da aplicação..."
 
-# Verificar PM2
+# Verificar PM2 e iniciar se necessário
 if pm2 status | grep -q "online"; then
     log "✅ Backend rodando"
 else
-    log_error "Backend não está rodando!"
-    pm2 logs "$APP_NAME" --lines 10
-    exit 1
+    log_warning "Backend não está rodando, iniciando..."
+    cd "$BACKEND_DIR"
+    pm2 start src/server.js --name "$APP_NAME" || {
+        log_error "Falha ao iniciar backend!"
+        pm2 logs "$APP_NAME" --lines 10
+        exit 1
+    }
+    pm2 save
+    log "✅ Backend iniciado"
 fi
 
 # Verificar nginx
