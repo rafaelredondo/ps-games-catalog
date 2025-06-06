@@ -4,6 +4,63 @@ import Game from '../models/Game.js';
 
 const router = express.Router();
 
+// Função auxiliar para ordenação de jogos
+function sortGames(games, orderBy, order) {
+  const sortedGames = [...games].sort((a, b) => {
+    let valueA, valueB;
+    
+    switch (orderBy) {
+      case 'name':
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+        break;
+        
+      case 'metacritic':
+        // Jogos sem score ficam no final (valor 0)
+        valueA = a.metacritic || 0;
+        valueB = b.metacritic || 0;
+        break;
+        
+      case 'year':
+        // Jogos sem data ficam no final (valor 0)
+        valueA = a.released ? new Date(a.released).getFullYear() : 0;
+        valueB = b.released ? new Date(b.released).getFullYear() : 0;
+        break;
+        
+      case 'platforms':
+        // Ordenação alfabética das plataformas concatenadas
+        valueA = a.platforms ? a.platforms.join(', ').toLowerCase() : '';
+        valueB = b.platforms ? b.platforms.join(', ').toLowerCase() : '';
+        break;
+        
+      case 'genres':
+        // Ordenação alfabética dos gêneros concatenados
+        valueA = a.genres ? a.genres.join(', ').toLowerCase() : '';
+        valueB = b.genres ? b.genres.join(', ').toLowerCase() : '';
+        break;
+        
+      default:
+        // Ordenação padrão por nome para campos inválidos
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+        break;
+    }
+    
+    // Comparação baseada no tipo de valor
+    let comparison = 0;
+    if (typeof valueA === 'string' && typeof valueB === 'string') {
+      comparison = valueA.localeCompare(valueB);
+    } else {
+      comparison = valueA - valueB;
+    }
+    
+    // Aplicar ordem (asc/desc)
+    return order === 'desc' ? -comparison : comparison;
+  });
+  
+  return sortedGames;
+}
+
 // Função auxiliar para verificar duplicatas
 async function checkDuplicate(gameName, platforms, mediaTypes) {
   const games = await gamesDb.getAll();
@@ -31,6 +88,10 @@ router.get('/', async (req, res) => {
     const search = req.query.search || '';
     const platform = req.query.platform || '';
     
+    // Parâmetros de ordenação
+    const orderBy = req.query.orderBy || 'name';
+    const order = req.query.order || 'asc';
+    
     // Buscar todos os jogos
     let allGames = await gamesDb.getAll();
     
@@ -46,6 +107,9 @@ router.get('/', async (req, res) => {
         game.platforms && game.platforms.includes(platform)
       );
     }
+    
+    // Aplicar ordenação
+    allGames = sortGames(allGames, orderBy, order);
     
     // Calcular paginação
     const total = allGames.length;

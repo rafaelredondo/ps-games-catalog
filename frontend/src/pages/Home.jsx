@@ -64,6 +64,14 @@ function Home() {
     return localStorage.getItem('filter_platform') || 'all';
   });
   
+  // Estados de ordenação - devem ser declarados antes do useInfiniteScroll
+  const [orderBy, setOrderBy] = useState(() => {
+    return localStorage.getItem('orderBy') || 'name';
+  });
+  const [order, setOrder] = useState(() => {
+    return localStorage.getItem('order') || 'asc';
+  });
+  
   // Hook de infinite scroll com filtros básicos
   const {
     games: allGames,
@@ -75,7 +83,9 @@ function Home() {
   } = useInfiniteScroll(gamesService.getPaginated, {
     limit: 20,
     search: searchTerm,
-    platform: platform === 'all' ? '' : platform
+    platform: platform === 'all' ? '' : platform,
+    orderBy,
+    order
   });
   
   // Contexto para operações de CRUD
@@ -100,14 +110,6 @@ function Home() {
   const [viewMode, setViewMode] = useState(() => {
     // Recuperar o modo de visualização do localStorage ou usar 'card' como padrão
     return localStorage.getItem('viewMode') || 'card';
-  });
-  const [orderBy, setOrderBy] = useState(() => {
-    // Recuperar a coluna de ordenação do localStorage ou usar 'name' como padrão
-    return localStorage.getItem('orderBy') || 'name';
-  });
-  const [order, setOrder] = useState(() => {
-    // Recuperar a direção de ordenação do localStorage ou usar 'asc' como padrão
-    return localStorage.getItem('order') || 'asc';
   });
   const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
   const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
@@ -248,39 +250,7 @@ function Home() {
     localStorage.setItem('order', newOrder);
   }, [orderBy, order]);
 
-  const getComparator = useCallback((order, orderBy) => {
-    return order === 'desc'
-      ? (a, b) => descendingComparator(a, b, orderBy)
-      : (a, b) => -descendingComparator(a, b, orderBy);
-  }, []);
 
-  const descendingComparator = useCallback((a, b, orderBy) => {
-    // Tratamento especial para diferentes tipos de campos
-    if (orderBy === 'name') {
-      return b.name.localeCompare(a.name);
-    } 
-    else if (orderBy === 'platforms') {
-      const platformsA = a.platforms ? a.platforms.join(', ') : '';
-      const platformsB = b.platforms ? b.platforms.join(', ') : '';
-      return platformsB.localeCompare(platformsA);
-    }
-    else if (orderBy === 'genres') {
-      const genresA = a.genres ? a.genres.join(', ') : '';
-      const genresB = b.genres ? b.genres.join(', ') : '';
-      return genresB.localeCompare(genresA);
-    }
-    else if (orderBy === 'year') {
-      const yearA = a.released ? new Date(a.released).getFullYear() : 0;
-      const yearB = b.released ? new Date(b.released).getFullYear() : 0;
-      return yearB - yearA;
-    }
-    else if (orderBy === 'metacritic') {
-      const scoreA = a.metacritic || 0;
-      const scoreB = b.metacritic || 0;
-      return scoreB - scoreA;
-    }
-    return 0;
-  }, []);
 
   // Função para limpar todos os filtros
   const handleClearFilters = useCallback(() => {
@@ -593,7 +563,8 @@ function Home() {
 
   // Renderização da tabela
   const renderTableView = () => {
-    const sortedGames = [...filteredGames].sort(getComparator(order, orderBy));
+    // Agora os jogos já vêm ordenados do backend
+    const gamesToShow = filteredGames;
     
     return (
       <TableContainer component={Paper} sx={{ bgcolor: '#111', borderRadius: 2 }}>
@@ -699,7 +670,7 @@ function Home() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedGames.map((game) => (
+            {gamesToShow.map((game) => (
               <TableRow 
                 key={game.id}
                 hover

@@ -102,4 +102,130 @@ describe('🚀 API Paginação - TDD Baby Steps', () => {
 
   });
 
+  describe('🔴 RED: GET /api/games com parâmetros de ordenação', () => {
+    
+    test('should accept orderBy and order parameters', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=name&order=asc')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      expect(Array.isArray(response.body.games)).toBe(true);
+    });
+
+    test('should sort games by name in ascending order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=name&order=asc')
+        .expect(200);
+
+      const games = response.body.games;
+      if (games.length > 1) {
+        // Verificar se está ordenado por nome (A-Z)
+        for (let i = 1; i < games.length; i++) {
+          expect(games[i].name.localeCompare(games[i-1].name)).toBeGreaterThanOrEqual(0);
+        }
+      }
+    });
+
+    test('should sort games by name in descending order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=name&order=desc')
+        .expect(200);
+
+      const games = response.body.games;
+      if (games.length > 1) {
+        // Verificar se está ordenado por nome (Z-A)
+        for (let i = 1; i < games.length; i++) {
+          expect(games[i].name.localeCompare(games[i-1].name)).toBeLessThanOrEqual(0);
+        }
+      }
+    });
+
+    test('should sort games by metacritic score in descending order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=metacritic&order=desc')
+        .expect(200);
+
+      const games = response.body.games;
+      const gamesWithMetacritic = games.filter(game => game.metacritic != null);
+      
+      if (gamesWithMetacritic.length > 1) {
+        // Verificar se está ordenado por metacritic (maior para menor)
+        for (let i = 1; i < gamesWithMetacritic.length; i++) {
+          expect(gamesWithMetacritic[i].metacritic).toBeLessThanOrEqual(gamesWithMetacritic[i-1].metacritic);
+        }
+      }
+    });
+
+    test('should sort games by year in descending order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=year&order=desc')
+        .expect(200);
+
+      const games = response.body.games;
+      const gamesWithYear = games.filter(game => game.released);
+      
+      if (gamesWithYear.length > 1) {
+        // Verificar se está ordenado por ano (mais recente para mais antigo)
+        for (let i = 1; i < gamesWithYear.length; i++) {
+          const currentYear = new Date(gamesWithYear[i].released).getFullYear();
+          const previousYear = new Date(gamesWithYear[i-1].released).getFullYear();
+          expect(currentYear).toBeLessThanOrEqual(previousYear);
+        }
+      }
+    });
+
+    test('should use default order when orderBy provided without order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=name')
+        .expect(200);
+
+      const games = response.body.games;
+      if (games.length > 1) {
+        // Deve usar ordem ascendente como padrão
+        for (let i = 1; i < games.length; i++) {
+          expect(games[i].name.localeCompare(games[i-1].name)).toBeGreaterThanOrEqual(0);
+        }
+      }
+    });
+
+    test('should combine sorting with filtering and pagination', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=5&search=a&orderBy=metacritic&order=desc')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      const games = response.body.games;
+      
+      // Verificar que os filtros foram aplicados
+      if (games.length > 0) {
+        games.forEach(game => {
+          expect(game.name.toLowerCase()).toContain('a');
+        });
+        
+        // Verificar ordenação por metacritic (se houver jogos com score)
+        const gamesWithMetacritic = games.filter(game => game.metacritic != null);
+        if (gamesWithMetacritic.length > 1) {
+          for (let i = 1; i < gamesWithMetacritic.length; i++) {
+            expect(gamesWithMetacritic[i].metacritic).toBeLessThanOrEqual(gamesWithMetacritic[i-1].metacritic);
+          }
+        }
+      }
+    });
+
+    test('should handle invalid orderBy parameter gracefully', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=invalid&order=asc')
+        .expect(200);
+
+      // Deve retornar dados sem falhar, usando ordenação padrão
+      expect(response.body).toHaveProperty('games');
+      expect(Array.isArray(response.body.games)).toBe(true);
+    });
+
+  });
+
 }); 

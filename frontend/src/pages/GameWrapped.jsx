@@ -697,16 +697,27 @@ export default function GameWrapped() {
               <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {/* Physical Card */}
-                  <Paper elevation={1} sx={{ p: 3, borderRadius: 3, textAlign: 'center', bgcolor: '#f8f9fa' }}>
-                    <Typography sx={{ fontSize: '3rem', mb: 1 }}>📀</Typography>
+                  <Paper elevation={3} sx={{ 
+                    p: 3, 
+                    borderRadius: 3, 
+                    textAlign: 'center', 
+                    background: `linear-gradient(135deg, ${COLORS[2]}15 0%, ${COLORS[2]}25 100%)`,
+                    border: `2px solid ${COLORS[2]}40`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 8px 25px ${COLORS[2]}30`
+                    }
+                  }}>
+                    <Typography sx={{ fontSize: '3rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>💿</Typography>
                     <AnimatedNumber value={stats.format.physical} delay={0} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2c3e50' }}>
                       Jogos Físicos
                     </Typography>
                     <Box sx={{ 
                       width: '100%', 
                       height: 8, 
-                      bgcolor: '#e0e0e0', 
+                      bgcolor: 'rgba(0,0,0,0.1)', 
                       borderRadius: 4,
                       overflow: 'hidden',
                       mb: 1
@@ -714,27 +725,38 @@ export default function GameWrapped() {
                       <Box sx={{ 
                         width: `${physicalPercentage}%`, 
                         height: '100%', 
-                        bgcolor: COLORS[2],
+                        background: `linear-gradient(90deg, ${COLORS[2]} 0%, ${COLORS[2]}cc 100%)`,
                         transition: 'width 0.8s ease',
                         borderRadius: 4
                       }} />
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: COLORS[2] }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: COLORS[2], fontSize: '1.1rem' }}>
                       {physicalPercentage}%
                     </Typography>
                   </Paper>
 
                   {/* Digital Card */}
-                  <Paper elevation={1} sx={{ p: 3, borderRadius: 3, textAlign: 'center', bgcolor: '#f8f9fa' }}>
-                    <Typography sx={{ fontSize: '3rem', mb: 1 }}>💾</Typography>
+                  <Paper elevation={3} sx={{ 
+                    p: 3, 
+                    borderRadius: 3, 
+                    textAlign: 'center', 
+                    background: `linear-gradient(135deg, ${COLORS[4]}15 0%, ${COLORS[4]}25 100%)`,
+                    border: `2px solid ${COLORS[4]}40`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 8px 25px ${COLORS[4]}30`
+                    }
+                  }}>
+                    <Typography sx={{ fontSize: '3rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>☁️</Typography>
                     <AnimatedNumber value={stats.format.digital} delay={200} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2c3e50' }}>
                       Jogos Digitais
                     </Typography>
                     <Box sx={{ 
                       width: '100%', 
                       height: 8, 
-                      bgcolor: '#e0e0e0', 
+                      bgcolor: 'rgba(0,0,0,0.1)', 
                       borderRadius: 4,
                       overflow: 'hidden',
                       mb: 1
@@ -742,12 +764,12 @@ export default function GameWrapped() {
                       <Box sx={{ 
                         width: `${digitalPercentage}%`, 
                         height: '100%', 
-                        bgcolor: COLORS[4],
+                        background: `linear-gradient(90deg, ${COLORS[4]} 0%, ${COLORS[4]}cc 100%)`,
                         transition: 'width 0.8s ease',
                         borderRadius: 4
                       }} />
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: COLORS[4] }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: COLORS[4], fontSize: '1.1rem' }}>
                       {digitalPercentage}%
                     </Typography>
                   </Paper>
@@ -1169,17 +1191,22 @@ export default function GameWrapped() {
                 // Mobile: Cards visuais em vez de tabela
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {[
-                    { name: 'Físico', value: stats.format.physical, color: COLORS[0], emoji: '📀' },
-                    { name: 'Digital', value: stats.format.digital, color: COLORS[1], emoji: '💾' }
+                    { name: 'Físico', value: stats.format.physical, color: COLORS[0], emoji: '💿' },
+                    { name: 'Digital', value: stats.format.digital, color: COLORS[1], emoji: '☁️' }
                   ].map((format) => {
                     const percentage = totalGames ? ((format.value / totalGames) * 100).toFixed(1) : 0;
                     
                     return (
                       <Box key={format.name} sx={{ 
                         p: 2.5, 
-                        bgcolor: 'rgba(0,0,0,0.03)', 
-                        borderRadius: 2,
-                        border: `2px solid ${format.color}20`
+                        background: `linear-gradient(135deg, ${format.color}15 0%, ${format.color}25 100%)`,
+                        borderRadius: 3,
+                        border: `2px solid ${format.color}40`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-1px)',
+                          boxShadow: `0 4px 15px ${format.color}30`
+                        }
                       }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                           <Typography sx={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>

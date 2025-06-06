@@ -8,7 +8,7 @@ export const gamesService = {
   },
 
   // Listar jogos com paginação e filtros
-  async getPaginated({ page = 1, limit = 20, search = '', platform = '' }) {
+  async getPaginated({ page = 1, limit = 20, search = '', platform = '', orderBy = 'name', order = 'asc' }) {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString()
@@ -20,6 +20,14 @@ export const gamesService = {
     
     if (platform) {
       params.append('platform', platform);
+    }
+    
+    if (orderBy) {
+      params.append('orderBy', orderBy);
+    }
+    
+    if (order) {
+      params.append('order', order);
     }
 
     const response = await api.get(`/games?${params.toString()}`);
