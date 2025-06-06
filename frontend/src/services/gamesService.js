@@ -8,7 +8,19 @@ export const gamesService = {
   },
 
   // Listar jogos com paginação e filtros
-  async getPaginated({ page = 1, limit = 20, search = '', platform = '', orderBy = 'name', order = 'asc' }) {
+  async getPaginated({ 
+    page = 1, 
+    limit = 20, 
+    search = '', 
+    platform = '', 
+    orderBy = 'name', 
+    order = 'asc',
+    // Filtros avançados
+    minMetacritic = '',
+    genre = '',
+    publisher = '',
+    status = ''
+  }) {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString()
@@ -28,6 +40,23 @@ export const gamesService = {
     
     if (order) {
       params.append('order', order);
+    }
+
+    // Adicionar filtros avançados
+    if (minMetacritic) {
+      params.append('minMetacritic', minMetacritic);
+    }
+    
+    if (genre) {
+      params.append('genre', genre);
+    }
+    
+    if (publisher) {
+      params.append('publisher', publisher);
+    }
+    
+    if (status) {
+      params.append('status', status);
     }
 
     const response = await api.get(`/games?${params.toString()}`);

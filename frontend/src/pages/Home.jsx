@@ -72,9 +72,9 @@ function Home() {
     return localStorage.getItem('order') || 'asc';
   });
   
-  // Hook de infinite scroll com filtros básicos
+  // Hook de infinite scroll com todos os filtros
   const {
-    games: allGames,
+    games: filteredGames,
     loading,
     hasMore,
     error,
@@ -85,7 +85,12 @@ function Home() {
     search: searchTerm,
     platform: platform === 'all' ? '' : platform,
     orderBy,
-    order
+    order,
+    // Filtros avançados passados para o backend
+    minMetacritic: minMetacritic !== '' ? minMetacritic : '',
+    genre: selectedGenre === 'all' ? '' : selectedGenre,
+    publisher: selectedPublisher === 'all' ? '' : selectedPublisher,
+    status: selectedStatus === 'all' ? '' : selectedStatus
   });
   
   // Contexto para operações de CRUD
@@ -114,49 +119,14 @@ function Home() {
   const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
   const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
 
-  // Aplicar filtros avançados usando useMemo para evitar re-renderizações
-  const filteredGames = useMemo(() => {
-    let result = [...allGames];
-    
-    // Filtro de metacritic mínimo
-    if (minMetacritic !== '' && !isNaN(parseInt(minMetacritic))) {
-      const minScore = parseInt(minMetacritic);
-      result = result.filter(game => 
-        game.metacritic && game.metacritic >= minScore
-      );
-    }
-    
-    // Filtro de gênero
-    if (selectedGenre !== 'all') {
-      result = result.filter(game => 
-        game.genres && game.genres.includes(selectedGenre)
-      );
-    }
-    
-    // Filtro de publisher
-    if (selectedPublisher !== 'all') {
-      result = result.filter(game => 
-        game.publishers && game.publishers.includes(selectedPublisher)
-      );
-    }
-    
-    // Filtro de status
-    if (selectedStatus !== 'all') {
-      const isCompleted = selectedStatus === 'completed';
-      result = result.filter(game => game.completed === isCompleted);
-    }
-    
-    return result;
-  }, [allGames, minMetacritic, selectedGenre, selectedPublisher, selectedStatus]);
-
   // Extrair plataformas, publishers e gêneros únicos dos jogos
   useEffect(() => {
-    if (allGames.length > 0) {
+    if (filteredGames.length > 0) {
       const publishers = new Set();
       const genres = new Set();
       const platforms = new Set();
       
-      allGames.forEach(game => {
+      filteredGames.forEach(game => {
         if (game.publishers && Array.isArray(game.publishers)) {
           game.publishers.forEach(publisher => {
             publishers.add(publisher);
@@ -180,7 +150,7 @@ function Home() {
       setAvailableGenres(Array.from(genres).sort());
       setAvailablePlatforms(Array.from(platforms).sort());
     }
-  }, [allGames]);
+  }, [filteredGames]);
 
   // Funções de manipulação otimizadas com useCallback
   const handlePlatformChange = useCallback((event) => {
@@ -249,8 +219,6 @@ function Home() {
     localStorage.setItem('orderBy', property);
     localStorage.setItem('order', newOrder);
   }, [orderBy, order]);
-
-
 
   // Função para limpar todos os filtros
   const handleClearFilters = useCallback(() => {

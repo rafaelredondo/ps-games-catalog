@@ -92,10 +92,16 @@ router.get('/', async (req, res) => {
     const orderBy = req.query.orderBy || 'name';
     const order = req.query.order || 'asc';
     
+    // Parâmetros de filtros avançados
+    const minMetacritic = req.query.minMetacritic ? parseInt(req.query.minMetacritic) : null;
+    const genre = req.query.genre || '';
+    const publisher = req.query.publisher || '';
+    const status = req.query.status || '';
+    
     // Buscar todos os jogos
     let allGames = await gamesDb.getAll();
     
-    // Aplicar filtros
+    // Aplicar filtros básicos
     if (search) {
       allGames = allGames.filter(game => 
         game.name.toLowerCase().includes(search.toLowerCase())
@@ -106,6 +112,31 @@ router.get('/', async (req, res) => {
       allGames = allGames.filter(game => 
         game.platforms && game.platforms.includes(platform)
       );
+    }
+    
+    // Aplicar filtros avançados
+    if (minMetacritic !== null) {
+      allGames = allGames.filter(game => 
+        game.metacritic && game.metacritic >= minMetacritic
+      );
+    }
+    
+    if (genre) {
+      allGames = allGames.filter(game => 
+        game.genres && Array.isArray(game.genres) && game.genres.includes(genre)
+      );
+    }
+    
+    if (publisher) {
+      allGames = allGames.filter(game => 
+        game.publishers && Array.isArray(game.publishers) && 
+        game.publishers.some(pub => pub.includes(publisher))
+      );
+    }
+    
+    if (status) {
+      const isCompleted = status === 'completed';
+      allGames = allGames.filter(game => game.completed === isCompleted);
     }
     
     // Aplicar ordenação

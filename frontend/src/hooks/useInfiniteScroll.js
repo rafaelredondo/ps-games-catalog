@@ -6,7 +6,12 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
     search = '',
     platform = '',
     orderBy = 'name',  // Campo para ordenação (name, metacritic, year, etc.)
-    order = 'asc'      // Direção da ordenação (asc/desc)
+    order = 'asc',     // Direção da ordenação (asc/desc)
+    // Filtros avançados
+    minMetacritic = '',
+    genre = '',
+    publisher = '',
+    status = ''
   } = options
 
   // Estados
@@ -65,7 +70,12 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
         search,
         platform,
         orderBy,
-        order
+        order,
+        // Filtros avançados
+        minMetacritic,
+        genre,
+        publisher,
+        status
       })
 
       setGames(prevGames => {
@@ -93,7 +103,7 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
       setLoading(false)
       isLoadingRef.current = false
     }
-  }, [fetchFunction, limit, search, platform, orderBy, order, preserveScrollPosition, restoreScrollPosition])
+  }, [fetchFunction, limit, search, platform, orderBy, order, minMetacritic, genre, publisher, status, preserveScrollPosition, restoreScrollPosition])
 
   // Função para carregar mais jogos
   const loadMore = useCallback(async () => {
@@ -156,7 +166,7 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
   useEffect(() => {
     currentPageRef.current = 1
     fetchGames(1, true)
-  }, [search, platform, orderBy, order]) // Recarrega quando filtros ou ordenação mudam (reset para página 1)
+  }, [search, platform, orderBy, order, minMetacritic, genre, publisher, status]) // Recarrega quando filtros ou ordenação mudam (reset para página 1)
 
   return {
     games,

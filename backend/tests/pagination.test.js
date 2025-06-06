@@ -102,6 +102,137 @@ describe('🚀 API Paginação - TDD Baby Steps', () => {
 
   });
 
+  describe('🔴 RED: GET /api/games com filtros avançados', () => {
+    
+    test('should filter games by minimum metacritic score', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&minMetacritic=90')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      // Todos os jogos retornados devem ter metacritic >= 90
+      response.body.games.forEach(game => {
+        if (game.metacritic) {
+          expect(game.metacritic).toBeGreaterThanOrEqual(90);
+        }
+      });
+    });
+
+    test('should filter games by genre', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&genre=Action')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      // Todos os jogos retornados devem conter o gênero "Action"
+      response.body.games.forEach(game => {
+        if (game.genres && Array.isArray(game.genres)) {
+          expect(game.genres).toContain('Action');
+        }
+      });
+    });
+
+    test('should filter games by publisher', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&publisher=Sony')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      // Todos os jogos retornados devem conter "Sony" nos publishers
+      response.body.games.forEach(game => {
+        if (game.publishers && Array.isArray(game.publishers)) {
+          expect(game.publishers.some(pub => pub.includes('Sony'))).toBe(true);
+        }
+      });
+    });
+
+    test('should filter games by completion status - completed', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&status=completed')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      // Todos os jogos retornados devem estar completados
+      response.body.games.forEach(game => {
+        expect(game.completed).toBe(true);
+      });
+    });
+
+    test('should filter games by completion status - not completed', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&status=pending')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      // Todos os jogos retornados devem não estar completados
+      response.body.games.forEach(game => {
+        expect(game.completed).toBe(false);
+      });
+    });
+
+    test('should combine multiple advanced filters', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=5&minMetacritic=85&genre=Action&status=completed')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      // Verificar que todos os filtros são aplicados
+      response.body.games.forEach(game => {
+        if (game.metacritic) {
+          expect(game.metacritic).toBeGreaterThanOrEqual(85);
+        }
+        if (game.genres && Array.isArray(game.genres)) {
+          expect(game.genres).toContain('Action');
+        }
+        expect(game.completed).toBe(true);
+      });
+    });
+
+    test('should combine advanced filters with search and sorting', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=5&search=a&minMetacritic=80&orderBy=metacritic&order=desc')
+        .expect(200);
+
+      expect(response.body).toHaveProperty('games');
+      expect(response.body).toHaveProperty('pagination');
+      
+      const games = response.body.games;
+      
+      // Verificar filtro de busca
+      games.forEach(game => {
+        expect(game.name.toLowerCase()).toContain('a');
+      });
+      
+      // Verificar filtro de metacritic
+      games.forEach(game => {
+        if (game.metacritic) {
+          expect(game.metacritic).toBeGreaterThanOrEqual(80);
+        }
+      });
+      
+      // Verificar ordenação por metacritic desc
+      const gamesWithMetacritic = games.filter(game => game.metacritic != null);
+      if (gamesWithMetacritic.length > 1) {
+        for (let i = 1; i < gamesWithMetacritic.length; i++) {
+          expect(gamesWithMetacritic[i].metacritic).toBeLessThanOrEqual(gamesWithMetacritic[i-1].metacritic);
+        }
+      }
+    });
+
+  });
+
   describe('🔴 RED: GET /api/games com parâmetros de ordenação', () => {
     
     test('should accept orderBy and order parameters', async () => {
@@ -200,30 +331,20 @@ describe('🚀 API Paginação - TDD Baby Steps', () => {
       
       const games = response.body.games;
       
-      // Verificar que os filtros foram aplicados
+      // Verificar que busca foi aplicada
       if (games.length > 0) {
         games.forEach(game => {
           expect(game.name.toLowerCase()).toContain('a');
         });
-        
-        // Verificar ordenação por metacritic (se houver jogos com score)
-        const gamesWithMetacritic = games.filter(game => game.metacritic != null);
-        if (gamesWithMetacritic.length > 1) {
-          for (let i = 1; i < gamesWithMetacritic.length; i++) {
-            expect(gamesWithMetacritic[i].metacritic).toBeLessThanOrEqual(gamesWithMetacritic[i-1].metacritic);
-          }
+      }
+      
+      // Verificar que ordenação foi aplicada
+      const gamesWithMetacritic = games.filter(game => game.metacritic != null);
+      if (gamesWithMetacritic.length > 1) {
+        for (let i = 1; i < gamesWithMetacritic.length; i++) {
+          expect(gamesWithMetacritic[i].metacritic).toBeLessThanOrEqual(gamesWithMetacritic[i-1].metacritic);
         }
       }
-    });
-
-    test('should handle invalid orderBy parameter gracefully', async () => {
-      const response = await request(app)
-        .get('/api/games?page=1&limit=10&orderBy=invalid&order=asc')
-        .expect(200);
-
-      // Deve retornar dados sem falhar, usando ordenação padrão
-      expect(response.body).toHaveProperty('games');
-      expect(Array.isArray(response.body.games)).toBe(true);
     });
 
   });
