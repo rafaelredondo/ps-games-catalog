@@ -146,14 +146,18 @@ jobs:
         echo "🚀 Executando deploy no servidor..."
         
         # Executar deploy simplificado no servidor
-        DEPLOY_CMD="cd /home/ec2-user/ps-games-catalog && git fetch origin main && chmod +x deployment/*.sh"
-        
-        # Usar sempre o script simplificado que não faz build
-        DEPLOY_CMD="$DEPLOY_CMD && ./deployment/deploy-simple.sh"
-        
         ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
           $EC2_USER@$EC2_HOST \
-          "bash -c \"$DEPLOY_CMD\""
+          "bash -c \"
+            cd /home/ec2-user/ps-games-catalog && 
+            echo '📥 Atualizando repositório...' &&
+            git fetch origin main && 
+            git reset --hard origin/main &&
+            echo '🔧 Configurando permissões...' &&
+            chmod +x deployment/*.sh &&
+            echo '🚀 Executando deploy simplificado...' &&
+            ./deployment/deploy-simple.sh
+          \""
     
     - name: 🏥 Health Check
       env:
