@@ -58,6 +58,9 @@ log "📋 Verificando frontend buildado..."
 if [ -d "$FRONTEND_TEMP_DIR" ] && [ "$(ls -A $FRONTEND_TEMP_DIR 2>/dev/null)" ]; then
     log "📦 Instalando frontend buildado do GitHub Actions..."
     
+    # Criar diretório nginx se não existir
+    sudo mkdir -p "$NGINX_DIR"
+    
     # Limpar diretório do nginx
     sudo rm -rf "$NGINX_DIR"/*
     
