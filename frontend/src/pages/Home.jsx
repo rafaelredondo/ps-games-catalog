@@ -72,6 +72,20 @@ function Home() {
     return localStorage.getItem('order') || 'asc';
   });
   
+  // Estados dos filtros avançados - devem ser declarados antes do useInfiniteScroll
+  const [minMetacritic, setMinMetacritic] = useState(() => {
+    return localStorage.getItem('filter_metacritic') || '';
+  });
+  const [selectedGenre, setSelectedGenre] = useState(() => {
+    return localStorage.getItem('filter_genre') || 'all';
+  });
+  const [selectedPublisher, setSelectedPublisher] = useState(() => {
+    return localStorage.getItem('filter_publisher') || 'all';
+  });
+  const [selectedStatus, setSelectedStatus] = useState(() => {
+    return localStorage.getItem('filter_status') || 'all';
+  });
+  
   // Hook de infinite scroll com todos os filtros
   const {
     games: filteredGames,
@@ -95,18 +109,8 @@ function Home() {
   
   // Contexto para operações de CRUD
   const { deleteGame, updateGame } = useGames();
-  const [minMetacritic, setMinMetacritic] = useState(() => {
-    return localStorage.getItem('filter_metacritic') || '';
-  });
-  const [selectedGenre, setSelectedGenre] = useState(() => {
-    return localStorage.getItem('filter_genre') || 'all';
-  });
-  const [selectedPublisher, setSelectedPublisher] = useState(() => {
-    return localStorage.getItem('filter_publisher') || 'all';
-  });
-  const [selectedStatus, setSelectedStatus] = useState(() => {
-    return localStorage.getItem('filter_status') || 'all';
-  });
+  
+  // Estados de UI
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
   const [availablePublishers, setAvailablePublishers] = useState([]);
@@ -119,38 +123,55 @@ function Home() {
   const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
   const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
 
-  // Extrair plataformas, publishers e gêneros únicos dos jogos
+  // Buscar TODOS os jogos para popular os dropdowns (sem filtros)
   useEffect(() => {
-    if (filteredGames.length > 0) {
-      const publishers = new Set();
-      const genres = new Set();
-      const platforms = new Set();
-      
-      filteredGames.forEach(game => {
-        if (game.publishers && Array.isArray(game.publishers)) {
-          game.publishers.forEach(publisher => {
-            publishers.add(publisher);
-          });
-        }
+    const fetchAllGamesForDropdowns = async () => {
+      try {
+        // Buscar apenas primeira página para ter amostras dos campos, mas com limite maior
+        const response = await gamesService.getPaginated({ 
+          page: 1, 
+          limit: 1000, // Buscar muitos jogos para ter todas as opções
+          // Sem filtros para ter todas as opções disponíveis
+        });
         
-        if (game.genres && Array.isArray(game.genres)) {
-          game.genres.forEach(genre => {
-            genres.add(genre);
-          });
-        }
+        const allGames = response.games;
         
-        if (game.platforms && Array.isArray(game.platforms)) {
-          game.platforms.forEach(platform => {
-            platforms.add(platform);
+        if (allGames && allGames.length > 0) {
+          const publishers = new Set();
+          const genres = new Set();
+          const platforms = new Set();
+          
+          allGames.forEach(game => {
+            if (game.publishers && Array.isArray(game.publishers)) {
+              game.publishers.forEach(publisher => {
+                publishers.add(publisher);
+              });
+            }
+            
+            if (game.genres && Array.isArray(game.genres)) {
+              game.genres.forEach(genre => {
+                genres.add(genre);
+              });
+            }
+            
+            if (game.platforms && Array.isArray(game.platforms)) {
+              game.platforms.forEach(platform => {
+                platforms.add(platform);
+              });
+            }
           });
+          
+          setAvailablePublishers(Array.from(publishers).sort());
+          setAvailableGenres(Array.from(genres).sort());
+          setAvailablePlatforms(Array.from(platforms).sort());
         }
-      });
-      
-      setAvailablePublishers(Array.from(publishers).sort());
-      setAvailableGenres(Array.from(genres).sort());
-      setAvailablePlatforms(Array.from(platforms).sort());
-    }
-  }, [filteredGames]);
+      } catch (error) {
+        console.error('Erro ao buscar jogos para dropdowns:', error);
+      }
+    };
+
+    fetchAllGamesForDropdowns();
+  }, []); // Executar apenas uma vez no mount
 
   // Funções de manipulação otimizadas com useCallback
   const handlePlatformChange = useCallback((event) => {
@@ -238,9 +259,9 @@ function Home() {
     localStorage.removeItem('filter_publisher');
     localStorage.removeItem('filter_status');
     
-    // Refresh do infinite scroll para recarregar dados
-    refresh();
-  }, [refresh]);
+    // REMOVIDO: refresh() manual - o useEffect do useInfiniteScroll 
+    // vai detectar automaticamente as mudanças dos filtros e recarregar
+  }, []);
 
   // Função para lidar com a confirmação de exclusão
   const handleDeleteConfirm = useCallback(() => {

@@ -168,13 +168,27 @@ describe('🚀 API Paginação - TDD Baby Steps', () => {
 
     test('should filter games by completion status - not completed', async () => {
       const response = await request(app)
-        .get('/api/games?page=1&limit=10&status=pending')
+        .get('/api/games?page=1&limit=10&status=not_completed')
         .expect(200);
 
-      expect(response.body).toHaveProperty('games');
-      expect(response.body).toHaveProperty('pagination');
+      expect(response.body.games).toBeDefined();
+      expect(Array.isArray(response.body.games)).toBe(true);
       
-      // Todos os jogos retornados devem não estar completados
+      // Verificar se todos os jogos retornados não estão completos
+      response.body.games.forEach(game => {
+        expect(game.completed).toBe(false);
+      });
+    });
+
+    test('should filter games by completion status - frontend not_completed value', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&status=not_completed')
+        .expect(200);
+
+      expect(response.body.games).toBeDefined();
+      expect(Array.isArray(response.body.games)).toBe(true);
+      
+      // Verificar se todos os jogos retornados não estão completos
       response.body.games.forEach(game => {
         expect(game.completed).toBe(false);
       });

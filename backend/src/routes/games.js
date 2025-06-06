@@ -135,8 +135,17 @@ router.get('/', async (req, res) => {
     }
     
     if (status) {
-      const isCompleted = status === 'completed';
-      allGames = allGames.filter(game => game.completed === isCompleted);
+      // Aceitar tanto valores do frontend quanto valores em português
+      const isCompleted = status === 'completed' || status === 'Concluído';
+      const isPending = status === 'not_completed' || status === 'pending' || 
+                       status === 'Não iniciado' || status === 'Jogando' || 
+                       status === 'Abandonado' || status === 'Na fila';
+      
+      if (isCompleted) {
+        allGames = allGames.filter(game => game.completed === true);
+      } else if (isPending) {
+        allGames = allGames.filter(game => game.completed === false);
+      }
     }
     
     // Aplicar ordenação
