@@ -12,7 +12,16 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Aplicar autenticação a todas as rotas da API
+// Health check endpoint (sem autenticação)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
+// Aplicar autenticação a todas as outras rotas da API (exceto health)
 app.use('/api', basicAuth);
 
 // Rotas
