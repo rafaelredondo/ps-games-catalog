@@ -53,9 +53,11 @@ if ! npm ci --production --silent; then
 fi
 log "✅ Dependências do backend atualizadas"
 
-# 4. Copiar frontend buildado do diretório temporário
-log "📋 Instalando frontend buildado..."
+# 4. Copiar frontend buildado do diretório temporário (se disponível)
+log "📋 Verificando frontend buildado..."
 if [ -d "$FRONTEND_TEMP_DIR" ] && [ "$(ls -A $FRONTEND_TEMP_DIR 2>/dev/null)" ]; then
+    log "📦 Instalando frontend buildado do GitHub Actions..."
+    
     # Limpar diretório do nginx
     sudo rm -rf "$NGINX_DIR"/*
     
@@ -66,10 +68,19 @@ if [ -d "$FRONTEND_TEMP_DIR" ] && [ "$(ls -A $FRONTEND_TEMP_DIR 2>/dev/null)" ];
     sudo chown -R nginx:nginx "$NGINX_DIR"
     sudo chmod -R 755 "$NGINX_DIR"
     
-    log "✅ Frontend instalado com sucesso"
+    log "✅ Frontend instalado com sucesso do GitHub Actions"
 else
-    log_error "Diretório do frontend buildado não encontrado: $FRONTEND_TEMP_DIR"
-    exit 1
+    log_warning "Diretório do frontend buildado não encontrado: $FRONTEND_TEMP_DIR"
+    log "📦 Mantendo frontend atual - sem mudanças detectadas"
+    
+    # Verificar se há frontend atual
+    if [ ! -d "$NGINX_DIR" ] || [ ! "$(ls -A $NGINX_DIR 2>/dev/null)" ]; then
+        log_error "Nenhum frontend disponível! É necessário fazer um deploy com frontend."
+        log "💡 Dica: Execute um deploy manual via GitHub Actions para forçar rebuild do frontend"
+        exit 1
+    fi
+    
+    log "✅ Frontend atual mantido"
 fi
 
 # 5. Reiniciar backend via PM2
