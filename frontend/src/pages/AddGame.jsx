@@ -94,8 +94,6 @@ const AddGame = () => {
   const mediaTypeOptions = ["Físico", "Digital"];
 
   const handleSearch = async (searchTerm) => {
-    setInputName(searchTerm); // Salvar o valor digitado independentemente dos resultados da API
-    
     if (!searchTerm) {
       setSearchResults([]);
       return;
@@ -300,7 +298,24 @@ const AddGame = () => {
               typeof option === 'string' ? option : option.name
             }
             loading={searchLoading}
-            onInputChange={(_, value) => handleSearch(value)}
+            onInputChange={(_, value) => {
+              // Otimizar o gerenciamento de estado para evitar perda de foco
+              const searchValue = value || '';
+              setInputName(searchValue);
+              
+              // Atualizar formData de forma síncrona
+              setFormData(prev => ({
+                ...prev,
+                name: searchValue
+              }));
+              
+              // Disparar busca de forma otimizada
+              if (searchValue.trim()) {
+                handleSearch(searchValue);
+              } else {
+                setSearchResults([]);
+              }
+            }}
             onChange={(_, value) => handleGameSelect(value)}
             inputValue={inputName}
             ref={autocompleteRef}
@@ -312,15 +327,7 @@ const AddGame = () => {
                 fullWidth
                 margin="normal"
                 name="name"
-                onChange={(e) => {
-                  // Atualizar diretamente o formData quando o valor do input muda
-                  const value = e.target.value;
-                  setInputName(value);
-                  setFormData(prev => ({
-                    ...prev,
-                    name: value
-                  }));
-                }}
+                // Remover o onChange conflitante - o Autocomplete já gerencia via onInputChange
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
