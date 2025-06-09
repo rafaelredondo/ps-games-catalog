@@ -10,6 +10,7 @@ import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
  * @param {string} props.value - Selected value
  * @param {Function} props.onChange - Change handler
  * @param {string} props.label - Select label
+ * @param {string} props.name - Field name for forms
  * @param {Array} props.options - Array of options {value, label} or strings
  * @param {string} props.allOptionValue - Value for "all" option (default: "all")
  * @param {string} props.allOptionLabel - Label for "all" option
@@ -24,6 +25,7 @@ const FilterSelect = ({
   value,
   onChange,
   label,
+  name,
   options = [],
   allOptionValue = "all",
   allOptionLabel,
@@ -75,6 +77,7 @@ const FilterSelect = ({
         labelId={labelId}
         value={value}
         label={label}
+        name={name}
         onChange={onChange}
         sx={{
           borderRadius: 1,

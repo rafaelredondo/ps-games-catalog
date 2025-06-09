@@ -212,6 +212,7 @@ function EditGame() {
             value={formData.status}
             onChange={handleChange}
             label="Status do Jogo"
+            name="status"
             options={dropdownOptions.statuses}
             allOptionValue=""
             allOptionLabel="Nenhum"
