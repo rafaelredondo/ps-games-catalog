@@ -137,4 +137,42 @@ router.post('/search/:gameName', async (req, res) => {
   }
 });
 
+// Debug endpoint para capturar logs
+router.post('/debug/:gameName', async (req, res) => {
+  try {
+    const { gameName } = req.params;
+    
+    // Capturar logs
+    const originalLog = console.log;
+    const logs = [];
+    console.log = (...args) => {
+      logs.push(args.join(' '));
+      originalLog(...args);
+    };
+    
+    const crawler = new MetacriticCrawler();
+    const score = await crawler.searchMetacriticScore(gameName);
+    
+    // Restaurar console.log
+    console.log = originalLog;
+    
+    res.json({
+      success: true,
+      data: {
+        gameName,
+        metacriticScore: score,
+        found: score !== null,
+        logs: logs
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro no debug do crawler:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 export default router; 
