@@ -86,9 +86,21 @@ export class MetacriticCrawler {
 
       console.log(`🔍 Buscando "${gameName}" no Metacritic...`);
       console.log(`🌐 URL: ${directUrl}`);
+      console.log(`🔧 User-Agent: ${config.headers['User-Agent']}`);
       
       const response = await axios.get(directUrl, config);
       const html = response.data;
+      
+      console.log(`📊 Response Status: ${response.status}`);
+      console.log(`📊 Response Size: ${html.length} chars`);
+      console.log(`📊 Response Headers:`, JSON.stringify(response.headers, null, 2));
+      
+      // Log de debug para ver se a página está carregando
+      if (html.length < 1000) {
+        console.log(`⚠️ Página muito pequena! Conteúdo:`, html.substring(0, 500));
+      } else {
+        console.log(`📄 Primeiros 200 chars:`, html.substring(0, 200));
+      }
 
       return this.extractScoreFromHTML(html, gameName);
 
