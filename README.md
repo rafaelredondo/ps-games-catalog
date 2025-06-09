@@ -80,12 +80,28 @@ npm run crawler         # Executar crawler (10 jogos)
 node scripts/metacritic-crawler.js --max-games 5
 ```
 
-**Features:**
+### 🎮 HowLongToBeat Crawler (Novo!)
+Sistema para buscar tempos de jogo do HowLongToBeat para jogos sem playTime:
+
+```bash
+# Buscar tempos de jogo automaticamente
+node scripts/howlongtobeat-crawler.js --max-games 5
+
+# Modo simulação
+node scripts/howlongtobeat-crawler.js --dry-run
+
+# Ver ajuda completa
+node scripts/howlongtobeat-crawler.js --help
+```
+
+**Features dos Crawlers:**
 - ✅ Busca automática de notas no Metacritic
+- ✅ Busca automática de tempos de jogo no HowLongToBeat
 - 🔍 Modo de simulação (dry-run)
 - 🌐 API REST para integração web
 - ⏰ Rate limiting respeitoso
 - 🧪 Desenvolvido com TDD
+- 📊 Múltiplas estratégias de busca
 
 ---
 

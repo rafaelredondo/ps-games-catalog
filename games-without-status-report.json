@@ -1,0 +1,3233 @@
+{
+  "timestamp": "2025-06-09T18:35:38.459Z",
+  "totalGames": 400,
+  "gamesWithoutStatus": 318,
+  "percentage": "79.5",
+  "games": [
+    {
+      "id": "1747259744763",
+      "name": "Detroit: Become Human™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-05-25",
+      "metacritic": 79,
+      "playTime": 12
+    },
+    {
+      "id": "1747259746116",
+      "name": "FINAL FANTASY 15",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-11-29",
+      "metacritic": 82,
+      "playTime": 28
+    },
+    {
+      "id": "1747259749622",
+      "name": "Ghost of Tsushima",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2020-07-17",
+      "metacritic": 83,
+      "playTime": 25
+    },
+    {
+      "id": "1747259750839",
+      "name": "Gran Turismo®SPORT",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-10-17",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259753445",
+      "name": "Life is Strange: Before the Storm",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-08-31",
+      "metacritic": 77,
+      "playTime": 10
+    },
+    {
+      "id": "1747259754634",
+      "name": "Mafia II: Definitive Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-05-19",
+      "metacritic": 65,
+      "playTime": 16
+    },
+    {
+      "id": "1747259755131",
+      "name": "Mafia III",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-10-06",
+      "metacritic": 62,
+      "playTime": 40
+    },
+    {
+      "id": "1747259755676",
+      "name": "Mafia: Definitive Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-09-25",
+      "metacritic": 78,
+      "playTime": 13
+    },
+    {
+      "id": "1747259758043",
+      "name": "METAL GEAR SOLID V: THE PHANTOM PAIN",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-09-01",
+      "metacritic": 91,
+      "playTime": 46
+    },
+    {
+      "id": "1747259759390",
+      "name": "Ni no Kuni™ II: Revenant Kingdom",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-03-23",
+      "metacritic": 82,
+      "playTime": 40
+    },
+    {
+      "id": "1747259763084",
+      "name": "RESIDENT EVIL 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-01-25",
+      "metacritic": 91,
+      "playTime": 15
+    },
+    {
+      "id": "1747259763752",
+      "name": "RESIDENT EVIL 3",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-04-02",
+      "metacritic": 80,
+      "playTime": 8
+    },
+    {
+      "id": "1747259764585",
+      "name": "Resident Evil 7",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-01-23",
+      "metacritic": 85,
+      "playTime": 12
+    },
+    {
+      "id": "1747259765231",
+      "name": "SHADOW OF THE COLOSSUS",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2005-10-18",
+      "metacritic": 91,
+      "playTime": 9
+    },
+    {
+      "id": "1747259766985",
+      "name": "The Last Guardian™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-10-25",
+      "metacritic": 82,
+      "playTime": 12
+    },
+    {
+      "id": "1747259772468",
+      "name": "The Witcher 3: Wild Hunt - Complete Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-08-30",
+      "metacritic": 92,
+      "playTime": 51
+    },
+    {
+      "id": "1747259776185",
+      "name": "Until Dawn™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-08-25",
+      "metacritic": "79",
+      "playTime": null
+    },
+    {
+      "id": "1747259776762",
+      "name": "YAKUZA 0",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-03-12",
+      "metacritic": 85,
+      "playTime": 31
+    },
+    {
+      "id": "1747259777364",
+      "name": "YAKUZA 6: The Song of Life",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-04-17",
+      "metacritic": 84,
+      "playTime": 32
+    },
+    {
+      "id": "1747259777885",
+      "name": "YAKUZA KIWAMI",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-01-21",
+      "metacritic": 83,
+      "playTime": 30
+    },
+    {
+      "id": "1747259778650",
+      "name": "YAKUZA KIWAMI 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-12-07",
+      "metacritic": 85,
+      "playTime": 30
+    },
+    {
+      "id": "1747259779533",
+      "name": "Yakuza: Like A Dragon",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-01-16",
+      "metacritic": 85,
+      "playTime": 67
+    },
+    {
+      "id": "1747259781338",
+      "name": "99Vidas",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-12-22",
+      "metacritic": 69,
+      "playTime": 7
+    },
+    {
+      "id": "1747259783090",
+      "name": "Another World - 20th Anniversary Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2011-09-22",
+      "metacritic": "80",
+      "playTime": null
+    },
+    {
+      "id": "1747259784861",
+      "name": "Assassin's Creed® Origins",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-10-27",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259785453",
+      "name": "Bastion",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2011-07-20",
+      "metacritic": 86,
+      "playTime": null
+    },
+    {
+      "id": "1747259787822",
+      "name": "Broken Age",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-01-28",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259788473",
+      "name": "Bubsy: The Woolies Strike Back",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-10-30",
+      "metacritic": "45",
+      "playTime": null
+    },
+    {
+      "id": "1747259789753",
+      "name": "Child of Light",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-04-29",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259790354",
+      "name": "Claire",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-01-22",
+      "metacritic": "75",
+      "playTime": null
+    },
+    {
+      "id": "1747259791762",
+      "name": "Day of the Tentacle Remastered",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-03-21",
+      "metacritic": 86,
+      "playTime": null
+    },
+    {
+      "id": "1747259792430",
+      "name": "DAYS GONE",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-04-26",
+      "metacritic": 74,
+      "playTime": 40
+    },
+    {
+      "id": "1747259796453",
+      "name": "Erica",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-08-19",
+      "metacritic": 74,
+      "playTime": 2
+    },
+    {
+      "id": "1747259797871",
+      "name": "Gone Home: Console Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-01-12",
+      "metacritic": "86",
+      "playTime": null
+    },
+    {
+      "id": "1747259801041",
+      "name": "HEAVY RAIN™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2010-02-17",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259801651",
+      "name": "Hellblade: Senua's Sacrifice™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-08-07",
+      "metacritic": 83,
+      "playTime": 8
+    },
+    {
+      "id": "1747259802216",
+      "name": "Hidden Agenda",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-10-23",
+      "metacritic": 66,
+      "playTime": null
+    },
+    {
+      "id": "1747259802742",
+      "name": "HITMAN™ 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-11-13",
+      "metacritic": "82",
+      "playTime": null
+    },
+    {
+      "id": "1747259803392",
+      "name": "HOT WHEELS UNLEASHED™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-09-27",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747259807377",
+      "name": "INSIDE",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-06-28",
+      "metacritic": 87,
+      "playTime": 3
+    },
+    {
+      "id": "1747259808097",
+      "name": "Last Day of June",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-08-30",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747259808787",
+      "name": "LEGO® Harry Potter™ Collection",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2010-06-03",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747259810720",
+      "name": "LIMBO",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2010-07-21",
+      "metacritic": 88,
+      "playTime": 4
+    },
+    {
+      "id": "1747259811393",
+      "name": "Mass Effect: Andromeda",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-03-21",
+      "metacritic": 73,
+      "playTime": 20
+    },
+    {
+      "id": "1747259812102",
+      "name": "NBA 2K Playgrounds 2",
+      "platforms": [
+        "PlayStation 4",
+        "Nintendo Switch"
+      ],
+      "released": "2018-10-16",
+      "metacritic": 68,
+      "playTime": null
+    },
+    {
+      "id": "1747259812898",
+      "name": "Overcooked",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2016-08-01",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259814067",
+      "name": "Persona 5",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-09-15",
+      "metacritic": 93,
+      "playTime": 98
+    },
+    {
+      "id": "1747259815272",
+      "name": "RiME",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-05-25",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747259816087",
+      "name": "SONIC FORCES",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-11-07",
+      "metacritic": 58,
+      "playTime": null
+    },
+    {
+      "id": "1747259816797",
+      "name": "Sonic Mania",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-08-15",
+      "metacritic": 85,
+      "playTime": null
+    },
+    {
+      "id": "1747259820131",
+      "name": "The Evil Within",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-10-12",
+      "metacritic": 68,
+      "playTime": 16
+    },
+    {
+      "id": "1747259822077",
+      "name": "The Walking Dead: Michonne",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-22",
+      "metacritic": 66,
+      "playTime": null
+    },
+    {
+      "id": "1747259822919",
+      "name": "The Walking Dead: Saints & Sinners",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-01-23",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259823577",
+      "name": "Tiny Tina's Assault on Dragon Keep: A Wonderlands One-shot Adventure",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-11-09",
+      "metacritic": "80",
+      "playTime": null
+    },
+    {
+      "id": "1747259824167",
+      "name": "Virginia",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-09-21",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747259824818",
+      "name": "What Remains of Edith Finch",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-23",
+      "metacritic": 89,
+      "playTime": 2
+    },
+    {
+      "id": "1747259827389",
+      "name": "Cosmic Star Heroine",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-10",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259828792",
+      "name": "DIRT 5™",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2020-11-05",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747259830006",
+      "name": "Driveclub",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-10-07",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747259830725",
+      "name": "Everybody's Gone To The Rapture™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-08-11",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259833339",
+      "name": "Firewatch",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-08",
+      "metacritic": 81,
+      "playTime": 4
+    },
+    {
+      "id": "1747259833912",
+      "name": "Frantics",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-02-20",
+      "metacritic": "68",
+      "playTime": null
+    },
+    {
+      "id": "1747259835190",
+      "name": "God of War® III Remastered",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-07-14",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259835826",
+      "name": "The Messenger ",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-08-30",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747259836353",
+      "name": "Grim Fandango Remastered",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-01-26",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747259836916",
+      "name": "HITMAN™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-03-11",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747259837858",
+      "name": "Just Dance 2016",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-10-20",
+      "metacritic": "73",
+      "playTime": null
+    },
+    {
+      "id": "1747259838512",
+      "name": "LEGO® DC Super-Villains",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-10-15",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747259839187",
+      "name": "Let's Sing 2016",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-10-23",
+      "metacritic": "70",
+      "playTime": null
+    },
+    {
+      "id": "1747259840671",
+      "name": "Mighty No. 9",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-06-21",
+      "metacritic": 52,
+      "playTime": null
+    },
+    {
+      "id": "1747259841244",
+      "name": "Nioh",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-02-07",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747259841864",
+      "name": "Nioh 2",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2020-03-13",
+      "metacritic": 85,
+      "playTime": null
+    },
+    {
+      "id": "1747259844536",
+      "name": "That's You!™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-06-29",
+      "metacritic": "70",
+      "playTime": null
+    },
+    {
+      "id": "1747259845090",
+      "name": "SpongeBob SquarePants: Battle For Bikini Bottom - Rehydrated",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-06-23",
+      "metacritic": 68,
+      "playTime": null
+    },
+    {
+      "id": "1747259845725",
+      "name": "Tales from the Borderlands",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-10-21",
+      "metacritic": 85,
+      "playTime": null
+    },
+    {
+      "id": "1747259846421",
+      "name": "The Order: 1886",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-01-13",
+      "metacritic": 63,
+      "playTime": 7
+    },
+    {
+      "id": "1747259847618",
+      "name": "Wild Arms™ 3",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "1996-12-20",
+      "metacritic": "78",
+      "playTime": null
+    },
+    {
+      "id": "1747259848134",
+      "name": "WIPEOUT™ OMEGA COLLECTION",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-06-07",
+      "metacritic": 85,
+      "playTime": null
+    },
+    {
+      "id": "1747259850601",
+      "name": "2064: Read Only Memories",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-10-05",
+      "metacritic": "76",
+      "playTime": null
+    },
+    {
+      "id": "1747259851728",
+      "name": "A KING'S TALE: FINAL FANTASY XV",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-11-29",
+      "metacritic": "65",
+      "playTime": null
+    },
+    {
+      "id": "1747259852600",
+      "name": "A Plague Tale: Innocence",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2019-05-13",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747259853328",
+      "name": "ABSOLVER",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-08-28",
+      "metacritic": 69,
+      "playTime": null
+    },
+    {
+      "id": "1747259853886",
+      "name": "ABZU",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-08-02",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747259855131",
+      "name": "Amnesia Collection",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-11-22",
+      "metacritic": "78",
+      "playTime": null
+    },
+    {
+      "id": "1747259857058",
+      "name": "Arcadegeddon",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-07-08",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259858272",
+      "name": "ARK: Survival Evolved",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-06-02",
+      "metacritic": 70,
+      "playTime": null
+    },
+    {
+      "id": "1747259859598",
+      "name": "Assassin's Creed® Freedom Cry",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-02-18",
+      "metacritic": 73,
+      "playTime": null
+    },
+    {
+      "id": "1747259864612",
+      "name": "ASTRO BOT Rescue Mission",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-10-02",
+      "metacritic": 90,
+      "playTime": null
+    },
+    {
+      "id": "1747259865204",
+      "name": "Axiom Verge 2",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2021-08-11",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259866526",
+      "name": "Battlefield™ V",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-11-20",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259867082",
+      "name": "Biomutant",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-05-25",
+      "metacritic": 69,
+      "playTime": null
+    },
+    {
+      "id": "1747259867808",
+      "name": "Bioshock Infinite: The Complete Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2013-07-30",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259868647",
+      "name": "BioShock: The Collection",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-09-13",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747259869770",
+      "name": "Bloodborne™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-03-24",
+      "metacritic": 92,
+      "playTime": null
+    },
+    {
+      "id": "1747259870371",
+      "name": "Bombing Busters",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-07-03",
+      "metacritic": 55,
+      "playTime": null
+    },
+    {
+      "id": "1747259872406",
+      "name": "Borderlands: The Handsome Collection",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-03-24",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259873067",
+      "name": "Bound",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-08-16",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747259873606",
+      "name": "Bugsnax",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-11-12",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259874246",
+      "name": "Bulletstorm: Full Clip Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-07",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259874816",
+      "name": "Burly Men At Sea",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-09-29",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747259876047",
+      "name": "Call of Duty®: Black Ops 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2010-11-09",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259876968",
+      "name": "Call of Duty®: Black Ops III",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2010-11-09",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259877674",
+      "name": "Call of Duty®: Modern Warfare® 2 Campaign Remastered",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-03-31",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747259878340",
+      "name": "Call of Duty®: WWII",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-11-03",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259878878",
+      "name": "Capcom Arcade Stadium",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-02-17",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747259879488",
+      "name": "Chivalry 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-06-08",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747259880082",
+      "name": "Cities: Skylines",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-03-10",
+      "metacritic": 85,
+      "playTime": null
+    },
+    {
+      "id": "1747259880622",
+      "name": "CODE VEIN",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-09-26",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747259881174",
+      "name": "Conan Exiles",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-01-30",
+      "metacritic": 67,
+      "playTime": null
+    },
+    {
+      "id": "1747259881727",
+      "name": "Concrete Genie",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-10-08",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259882447",
+      "name": "Control",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2019-08-27",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747259883169",
+      "name": "Curse of the Dead Gods",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-02-23",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259883786",
+      "name": "Curses 'N Chaos",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-08-18",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259886447",
+      "name": "Darksiders II Deathinitive Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-11-05",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259887166",
+      "name": "Darksiders III",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-11-27",
+      "metacritic": 65,
+      "playTime": null
+    },
+    {
+      "id": "1747259887819",
+      "name": "Dead by Daylight",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-06-14",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747259889019",
+      "name": "Deep Rock Galactic",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-05-13",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747259891055",
+      "name": "Descenders",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-05-07",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259891587",
+      "name": "Destiny 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-09-06",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747259892814",
+      "name": "Destruction AllStars™",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2021-02-02",
+      "metacritic": 62,
+      "playTime": null
+    },
+    {
+      "id": "1747259893344",
+      "name": "Deus Ex: Mankind Divided™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-08-22",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747259893911",
+      "name": "DiRT Rally 2.0",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-02-26",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747259897936",
+      "name": "Divine Knockout",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2022-12-06",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259901287",
+      "name": "Dragon's Crown Pro",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-05-15",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259903503",
+      "name": "Dungeon Punks",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-07-26",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747259904106",
+      "name": "EA SPORTS™ UFC® 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-08-14",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259904735",
+      "name": "eFootball PES 2020",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-09-10",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747259905493",
+      "name": "Evil Dead: The Game",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2022-05-13",
+      "metacritic": 73,
+      "playTime": null
+    },
+    {
+      "id": "1747259906216",
+      "name": "Fall Guys: Ultimate Knockout",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-08-04",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259907009",
+      "name": "Fallen Legion: Flames of Rebellion",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-07-18",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259907752",
+      "name": "Fallout 76",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-11-14",
+      "metacritic": 51,
+      "playTime": null
+    },
+    {
+      "id": "1747259909223",
+      "name": "Farming Simulator 19",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-11-19",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259910095",
+      "name": "Farpoint",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-05-16",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747259910790",
+      "name": "FEZ",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2012-04-13",
+      "metacritic": 91,
+      "playTime": null
+    },
+    {
+      "id": "1747259915331",
+      "name": "Firewall Zero Hour™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-08-28",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259916251",
+      "name": "First Class Trouble",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-11-02",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259916970",
+      "name": "For Honor",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-02-13",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259917707",
+      "name": "forma.8",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-02-23",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259918583",
+      "name": "Fortnite",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-04-06",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259919492",
+      "name": "Friday the 13th: The Game",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-05-25",
+      "metacritic": 61,
+      "playTime": null
+    },
+    {
+      "id": "1747259920774",
+      "name": "Ghostrunner",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-10-27",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259921418",
+      "name": "Ghostwire: Tokyo",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-03-24",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747259922005",
+      "name": "Goat Simulator",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-04-01",
+      "metacritic": 62,
+      "playTime": null
+    },
+    {
+      "id": "1747259922779",
+      "name": "Godfall: Challenger Edition",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2017-07-06",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259923607",
+      "name": "Granblue Fantasy: Versus",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-03-13",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747259924283",
+      "name": "Grand Kingdom",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-11-19",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259924897",
+      "name": "GreedFall",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-09-10",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747259925470",
+      "name": "GRID Legends",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-02-25",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259926799",
+      "name": "H1Z1: Battle Royale",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-05-22",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259929178",
+      "name": "Heavenly Bodies",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-12-07",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259929793",
+      "name": "Hell Let Loose",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2019-06-06",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259930384",
+      "name": "Here They Lie™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-10-13",
+      "metacritic": 62,
+      "playTime": null
+    },
+    {
+      "id": "1747259930998",
+      "name": "Hollow Knight",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-02-23",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747259931717",
+      "name": "Hood: Outlaws & Legends",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-05-10",
+      "metacritic": 64,
+      "playTime": null
+    },
+    {
+      "id": "1747259936220",
+      "name": "Horizon Call of the Mountain",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2023-02-22",
+      "metacritic": "79",
+      "playTime": null
+    },
+    {
+      "id": "1747259939204",
+      "name": "inFAMOUS Second Son™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-03-21",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259939923",
+      "name": "Injustice 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-05-09",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747259940440",
+      "name": "Injustice: Gods Among Us Ultimate Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2013-11-12",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259941668",
+      "name": "Jurassic World Evolution 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-11-09",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259942262",
+      "name": "Just Cause 3",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-11-30",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747259942817",
+      "name": "Just Cause 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-12-04",
+      "metacritic": 68,
+      "playTime": null
+    },
+    {
+      "id": "1747259943349",
+      "name": "Killing Floor 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-11-18",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259943991",
+      "name": "King Oddball",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2012-09-27",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259945728",
+      "name": "Kingdoms of Amalur: Re-Reckoning",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-09-08",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747259946246",
+      "name": "KNACK™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2013-11-15",
+      "metacritic": 54,
+      "playTime": null
+    },
+    {
+      "id": "1747259946890",
+      "name": "Knockout City™",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-05-21",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747259947723",
+      "name": "Kung Fu Panda: Confronto de Lendas",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "1985-10-18",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259948855",
+      "name": "Laser League",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-02-08",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259949431",
+      "name": "Little Nightmares",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-27",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259950013",
+      "name": "Lovers in a Dangerous Spacetime",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-09-08",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259950558",
+      "name": "Mad Max",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-08-31",
+      "metacritic": 73,
+      "playTime": null
+    },
+    {
+      "id": "1747259951279",
+      "name": "Maneater",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-05-22",
+      "metacritic": 68,
+      "playTime": null
+    },
+    {
+      "id": "1747259951986",
+      "name": "Maquette",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2021-03-02",
+      "metacritic": 70,
+      "playTime": null
+    },
+    {
+      "id": "1747259953240",
+      "name": "Meet Your Maker",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2023-04-04",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259954448",
+      "name": "Minha amiga Peppa Pig",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259956397",
+      "name": "Mortal Kombat X",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-04-07",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259957510",
+      "name": "Mortal Shell",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-08-18",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259958199",
+      "name": "Moss",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-02-27",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747259960916",
+      "name": "MultiVersus",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-07-26",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259961721",
+      "name": "NARUTO TO BORUTO: SHINOBI STRIKER",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-08-30",
+      "metacritic": 62,
+      "playTime": null
+    },
+    {
+      "id": "1747259962311",
+      "name": "NBA 2K18: The Prelude",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-09-08",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259963035",
+      "name": "NBA 2K19",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-09-07",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259963865",
+      "name": "NBA 2K23",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-09-09",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259964539",
+      "name": "Need for Speed™ Heat",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-11-08",
+      "metacritic": 73,
+      "playTime": null
+    },
+    {
+      "id": "1747259965830",
+      "name": "Need for Speed™ Rivals",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2013-11-15",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747259966390",
+      "name": "Nickelodeon All-Star Brawl",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-10-05",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259966970",
+      "name": "OlliOlli World",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-02-07",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259968578",
+      "name": "ONRUSH™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-06-05",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259969156",
+      "name": "Operation Tango",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2021-06-01",
+      "metacritic": 73,
+      "playTime": null
+    },
+    {
+      "id": "1747259969767",
+      "name": "Outlast",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2013-09-03",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259970427",
+      "name": "Outlast 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-24",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259971592",
+      "name": "Paper Beast",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-03-24",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747259972937",
+      "name": "Persona 5 Strikers",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-02-20",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747259973596",
+      "name": "PGA TOUR 2K21",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-08-21",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259975367",
+      "name": "Planet Coaster",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2016-11-17",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747259975970",
+      "name": "Plants vs. Zombies: Battle for Neighborville™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-10-18",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259976623",
+      "name": "Portal Knights",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-25",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747259977200",
+      "name": "Predator: Hunting Grounds",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-04-24",
+      "metacritic": 59,
+      "playTime": null
+    },
+    {
+      "id": "1747259977820",
+      "name": "PRO EVOLUTION SOCCER 2018 Online Beta",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2006-10-27",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747259978441",
+      "name": "PSYCHO-PASS MANDATORY HAPPINESS",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-03-24",
+      "metacritic": 68,
+      "playTime": null
+    },
+    {
+      "id": "1747259979725",
+      "name": "PUBG: BATTLEGROUNDS",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-12-20",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747259983481",
+      "name": "Remnant: From the Ashes",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-08-20",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747259986197",
+      "name": "Rocketbirds 2: Evolution",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-04-26",
+      "metacritic": 67,
+      "playTime": null
+    },
+    {
+      "id": "1747259986915",
+      "name": "Roundabout",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-09-18",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747259993285",
+      "name": "Slay the Spire",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-01-22",
+      "metacritic": 86,
+      "playTime": null
+    },
+    {
+      "id": "1747259993849",
+      "name": "Sniper Elite 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-02-13",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747259994585",
+      "name": "SOMA",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-09-21",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747259998747",
+      "name": "STAR WARS™ Battlefront™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2004-09-20",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747260000600",
+      "name": "STAR WARS™ Battlefront™ II",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-11-17",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747260001751",
+      "name": "STAR WARS™: Squadrons",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-10-02",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747260002358",
+      "name": "StarBlood Arena",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-11",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747260002950",
+      "name": "STEEP",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-12-02",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747260004322",
+      "name": "Stranded Deep",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-01-23",
+      "metacritic": 65,
+      "playTime": null
+    },
+    {
+      "id": "1747260005713",
+      "name": "STREET FIGHTER V",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-15",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747260006435",
+      "name": "Strike Vector EX",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-08-30",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747260007006",
+      "name": "SUPERHOT",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-24",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747260010763",
+      "name": "Tails of Iron",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-09-16",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747260011342",
+      "name": "Tearaway® Unfolded",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-09-08",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747260013233",
+      "name": "Tennis World Tour 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-09-22",
+      "metacritic": 57,
+      "playTime": null
+    },
+    {
+      "id": "1747260014703",
+      "name": "The Bridge",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2013-02-21",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747260016919",
+      "name": "The Dark Pictures Anthology: Man of Medan",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-08-30",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747260017631",
+      "name": "The Dark Pictures Anthology: The Devil in Me",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-11-17",
+      "metacritic": "69",
+      "playTime": null
+    },
+    {
+      "id": "1747260018334",
+      "name": "The Elder Scrolls Online: Tamriel Unlimited",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-03-17",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747260020349",
+      "name": "The Persistence",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-07-24",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747260021638",
+      "name": "The Sims™ 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-09-02",
+      "metacritic": 67,
+      "playTime": null
+    },
+    {
+      "id": "1747260022339",
+      "name": "The Surge",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-05-15",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747260023652",
+      "name": "TOEM",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2021-09-16",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747260024320",
+      "name": "Tom Clancy's The Division® 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2019-03-15",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747260025065",
+      "name": "Tony Hawk's Pro Skater 1 + 2",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2020-09-04",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747260025637",
+      "name": "Trackmania Turbo",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-03-22",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747260026429",
+      "name": "Trek to Yomi",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2022-05-05",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747260026969",
+      "name": "Trials Fusion™",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-04-15",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747260030544",
+      "name": "Tribes of Midgard",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-07-27",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747260032002",
+      "name": "Uncanny Valley",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2015-04-23",
+      "metacritic": 67,
+      "playTime": null
+    },
+    {
+      "id": "1747260034120",
+      "name": "Until Dawn™: Rush of Blood",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-10-10",
+      "metacritic": 72,
+      "playTime": null
+    },
+    {
+      "id": "1747260034900",
+      "name": "Until You Fall",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-09-29",
+      "metacritic": 86,
+      "playTime": null
+    },
+    {
+      "id": "1747260035554",
+      "name": "Vampyr",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-06-04",
+      "metacritic": 70,
+      "playTime": null
+    },
+    {
+      "id": "1747260037015",
+      "name": "Virtua Fighter 5 Ultimate Showdown",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2012-05-29",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747260038213",
+      "name": "WATCH_DOGS® 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-11-28",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747260042754",
+      "name": "Worms Battlegrounds",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2014-05-30",
+      "metacritic": 66,
+      "playTime": null
+    },
+    {
+      "id": "1747260043541",
+      "name": "Worms Rumble",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2020-12-01",
+      "metacritic": 67,
+      "playTime": null
+    },
+    {
+      "id": "1747260044551",
+      "name": "Wreckfest",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2018-06-13",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747260045096",
+      "name": "WWE 2K Battlegrounds",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-09-18",
+      "metacritic": 58,
+      "playTime": null
+    },
+    {
+      "id": "1747260045749",
+      "name": "XCOM 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-04",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747260047636",
+      "name": "Zombie Army 4: Dead War",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-02-04",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747260050361",
+      "name": "Endling",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-07-19",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747260052342",
+      "name": "PGA Tour 2K23",
+      "platforms": [],
+      "released": "2022-10-11",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747260054279",
+      "name": "Dreams",
+      "platforms": [],
+      "released": "2020-02-14",
+      "metacritic": 89,
+      "playTime": null
+    },
+    {
+      "id": "1747263192545",
+      "name": "Dragon Age: The Veilguard",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2024-10-31",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263204155",
+      "name": "Sonic Colors: Ultimate",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-09-07",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263305827",
+      "name": "Red Dead Redemption 2",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-10-26",
+      "metacritic": 96,
+      "playTime": null
+    },
+    {
+      "id": "1747263326533",
+      "name": "Street Fighter 6",
+      "platforms": [
+        "PlayStation 5",
+        "PlayStation 4"
+      ],
+      "released": "2023-06-01",
+      "metacritic": "92",
+      "playTime": null
+    },
+    {
+      "id": "1747263344585",
+      "name": "KLONOA Phantasy Reverie Series",
+      "platforms": [
+        "PlayStation 5",
+        "PlayStation 4"
+      ],
+      "released": "2022-07-07",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263358162",
+      "name": "Red Dead Redemption",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2010-05-18",
+      "metacritic": 95,
+      "playTime": null
+    },
+    {
+      "id": "1747263447777",
+      "name": "High on Life",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-12-13",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263477325",
+      "name": "Payday 3",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2023-09-21",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263494341",
+      "name": "PAC-MAN WORLD Re-PAC",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-08-26",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263511495",
+      "name": "The Stanley Parable: Ultra Deluxe",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-04-27",
+      "metacritic": 90,
+      "playTime": null
+    },
+    {
+      "id": "1747263577495",
+      "name": "Need for Speed: Hot Pursuit Remastered",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-11-06",
+      "metacritic": 75,
+      "playTime": null
+    },
+    {
+      "id": "1747263593475",
+      "name": "Aliens: Dark Descent",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2023-06-19",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263609781",
+      "name": "Temtem",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2020-01-21",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747263621474",
+      "name": "It Takes Two",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-03-26",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747263717147",
+      "name": "House Flipper",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-05-16",
+      "metacritic": 62,
+      "playTime": null
+    },
+    {
+      "id": "1747263727245",
+      "name": "ROBLOX",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2006-08-27",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263761365",
+      "name": "DEATH NOTE Killer Within",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2024-11-05",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263901261",
+      "name": "HOT WHEELS UNLEASHED 2 - Turbocharged",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2023-10-19",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263916680",
+      "name": "Doki Doki Literature Club Plus!",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-06-30",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747263934454",
+      "name": "WWE 2K24",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2024-03-07",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264008060",
+      "name": "Five Nights at Freddy's: Security Breach",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-12-16",
+      "metacritic": 64,
+      "playTime": null
+    },
+    {
+      "id": "1747264070543",
+      "name": "Ender Lilies: Quietus of the Knights",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-06-22",
+      "metacritic": 86,
+      "playTime": null
+    },
+    {
+      "id": "1747264237249",
+      "name": "Borderlands 3",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2019-09-13",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747264253383",
+      "name": "Among Us",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2018-07-25",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747264322967",
+      "name": "AEW: Fight Forever",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2023-06-29",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264336783",
+      "name": "Streets of Rage 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-04-30",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747264390098",
+      "name": "Tunic",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-03-16",
+      "metacritic": 86,
+      "playTime": null
+    },
+    {
+      "id": "1747264407254",
+      "name": "Ghostrunner 2",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2023-10-26",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264469598",
+      "name": "Minecraft Legends",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2023-04-18",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264485841",
+      "name": "Immortals of Aveum",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2023-08-21",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264498741",
+      "name": "Yakuza 4",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2010-03-18",
+      "metacritic": 78,
+      "playTime": null
+    },
+    {
+      "id": "1747264508661",
+      "name": "Yakuza 3",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2009-02-26",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747264519823",
+      "name": "Yakuza 5",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2012-12-06",
+      "metacritic": 83,
+      "playTime": null
+    },
+    {
+      "id": "1747264534284",
+      "name": "Sifu",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-02-08",
+      "metacritic": 79,
+      "playTime": null
+    },
+    {
+      "id": "1747264544750",
+      "name": "Hello Neighbor 2",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-12-05",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264565945",
+      "name": "F1 23",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2023-06-15",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264574749",
+      "name": "The Disney Afternoon Collection",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2017-04-18",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747264586283",
+      "name": "Foamstars",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2024-02-06",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264599572",
+      "name": "Steelrising",
+      "platforms": [
+        "PlayStation 5"
+      ],
+      "released": "2022-09-08",
+      "metacritic": 71,
+      "playTime": null
+    },
+    {
+      "id": "1747264611229",
+      "name": "Rollerdrome",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-08-16",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264681762",
+      "name": "PowerWash Simulator",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-07-14",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264697527",
+      "name": "LEGO 2K Drive",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2023-05-18",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264718110",
+      "name": "Castlevania Requiem: Symphony of the Night & Rondo of Blood",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2018-10-26",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747264746246",
+      "name": "Aliens: Fireteam Elite",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-08-23",
+      "metacritic": 69,
+      "playTime": null
+    },
+    {
+      "id": "1747264768057",
+      "name": "DRAGON BALL: THE BREAKERS",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2022-10-13",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264782856",
+      "name": "Farming Simulator 22",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-11-22",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264813058",
+      "name": "Weird West",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-03-31",
+      "metacritic": 77,
+      "playTime": null
+    },
+    {
+      "id": "1747264824029",
+      "name": "The Callisto Protocol",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2022-12-01",
+      "metacritic": 69,
+      "playTime": null
+    },
+    {
+      "id": "1747264848122",
+      "name": "Death's Door",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-07-20",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747264974887",
+      "name": "Call of Duty: Black Ops Cold War",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2020-11-13",
+      "metacritic": 76,
+      "playTime": null
+    },
+    {
+      "id": "1747265114590",
+      "name": "Minecraft: Dungeons",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-05-26",
+      "metacritic": 74,
+      "playTime": null
+    },
+    {
+      "id": "1747265130449",
+      "name": "Battlefield 2042",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2021-11-12",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747265219409",
+      "name": "Mass Effect: Legendary Edition",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2021-05-14",
+      "metacritic": 88,
+      "playTime": null
+    },
+    {
+      "id": "1747265257364",
+      "name": "Star Wars Jedi: Fallen Order",
+      "platforms": [
+        "PlayStation 4",
+        "PlayStation 5"
+      ],
+      "released": "2019-11-15",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747265333889",
+      "name": "Resident Evil: Resistance",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2020-04-03",
+      "metacritic": 64,
+      "playTime": null
+    },
+    {
+      "id": "1747265386640",
+      "name": "I Am Setsuna",
+      "platforms": [
+        "PlayStation 4"
+      ],
+      "released": "2016-02-18",
+      "metacritic": 73,
+      "playTime": null
+    },
+    {
+      "id": "1747273957933",
+      "name": "Super Mario RPG",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2023-11-17",
+      "metacritic": "84",
+      "playTime": null
+    },
+    {
+      "id": "1747274075632",
+      "name": "Double Dragon Gaiden: Rise Of The Dragons",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2023-07-27",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747274126982",
+      "name": "Chained Echoes",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2022-12-08",
+      "metacritic": 89,
+      "playTime": null
+    },
+    {
+      "id": "1747274247701",
+      "name": "The Walking Dead: Season 2",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2013-12-16",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747274413200",
+      "name": "Venba",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2023-07-31",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747274487361",
+      "name": "Just Dance 2024 Edition",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2023-10-24",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747274513289",
+      "name": "Dragon's Dogma: Dark Arisen",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2013-04-23",
+      "metacritic": 81,
+      "playTime": null
+    },
+    {
+      "id": "1747274525094",
+      "name": "A Short Hike",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2019-07-29",
+      "metacritic": 84,
+      "playTime": null
+    },
+    {
+      "id": "1747274610011",
+      "name": "F-Zero 99",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2023-09-14",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747274702220",
+      "name": "Overcooked! 2",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2018-08-06",
+      "metacritic": 82,
+      "playTime": null
+    },
+    {
+      "id": "1747274715772",
+      "name": "Stardew Valley",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2016-02-25",
+      "metacritic": 89,
+      "playTime": null
+    },
+    {
+      "id": "1747274761429",
+      "name": "Jump Rope Challenge",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2020-06-15",
+      "metacritic": null,
+      "playTime": null
+    },
+    {
+      "id": "1747274821310",
+      "name": "Mega Man 11",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "2018-10-02",
+      "metacritic": 80,
+      "playTime": null
+    },
+    {
+      "id": "1747274835732",
+      "name": "Piano for kids.",
+      "platforms": [
+        "Nintendo Switch"
+      ],
+      "released": "",
+      "metacritic": null,
+      "playTime": null
+    }
+  ]
+}
