@@ -95,15 +95,27 @@ router.post('/search/:gameName', async (req, res) => {
 
     console.log(`🔍 Buscando nota para "${gameName}" via API`);
     
+    // Capturar logs para debug
+    const originalLog = console.log;
+    const logs = [];
+    console.log = (...args) => {
+      logs.push(args.join(' '));
+      originalLog(...args);
+    };
+    
     const crawler = new MetacriticCrawler();
     const score = await crawler.searchMetacriticScore(gameName);
+    
+    // Restaurar console.log
+    console.log = originalLog;
     
     const result = {
       success: true,
       data: {
         gameName,
         metacriticScore: score,
-        found: score !== null
+        found: score !== null,
+        debugLogs: logs // Incluir logs para debug
       }
     };
 
