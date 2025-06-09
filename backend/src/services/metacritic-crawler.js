@@ -105,11 +105,27 @@ export class MetacriticCrawler {
       return this.extractScoreFromHTML(html, gameName);
 
     } catch (error) {
-      if (error.response && error.response.status === 404) {
-        console.log(`❌ Página não encontrada para "${gameName}"`);
-        return null;
+      console.log(`❌ Erro na requisição para "${gameName}":`, error.message);
+      console.log(`🔧 Error code:`, error.code);
+      console.log(`🔧 Error type:`, error.constructor.name);
+      
+      if (error.response) {
+        console.log(`📊 Response status:`, error.response.status);
+        console.log(`📊 Response data:`, error.response.data?.substring(0, 200));
+        
+        if (error.response.status === 404) {
+          console.log(`❌ Página não encontrada para "${gameName}"`);
+          return null;
+        }
+      } else if (error.request) {
+        console.log(`❌ Erro de rede/timeout para "${gameName}"`);
+        console.log(`🔧 Request details:`, error.request?.constructor?.name);
+      } else {
+        console.log(`❌ Erro desconhecido para "${gameName}":`, error.message);
       }
-      throw error;
+      
+      // Não fazer throw, retornar null para continuar com URLs alternativas
+      return null;
     }
   }
 
