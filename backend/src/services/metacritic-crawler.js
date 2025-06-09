@@ -189,6 +189,9 @@ export class MetacriticCrawler {
    * Extrai a pontuação do HTML
    */
   extractScoreFromHTML(html, gameName) {
+    console.log(`🔍 Extraindo score para "${gameName}"`);
+    console.log(`📊 HTML size: ${html.length} chars`);
+    
     // Padrões atualizados para o novo Metacritic (2024)
     const scorePatterns = [
       // Padrões mais específicos primeiro (maior precisão)
@@ -211,13 +214,20 @@ export class MetacriticCrawler {
       /score['"]\s*:\s*['"]*(\d+)['"]/i
     ];
 
-    for (const pattern of scorePatterns) {
+    console.log(`🔍 Testando ${scorePatterns.length} padrões...`);
+    
+    for (let i = 0; i < scorePatterns.length; i++) {
+      const pattern = scorePatterns[i];
       const match = html.match(pattern);
+      console.log(`🧪 Padrão ${i+1}: ${pattern} -> ${match ? `MATCH: ${match[1]}` : 'NO MATCH'}`);
+      
       if (match && match[1]) {
         const score = parseInt(match[1], 10);
         if (score >= 0 && score <= 100) {
-          console.log(`✅ Nota encontrada: ${score}`);
+          console.log(`✅ Nota encontrada: ${score} (padrão ${i+1})`);
           return score;
+        } else {
+          console.log(`⚠️ Score inválido: ${score} (fora do range 0-100)`);
         }
       }
     }
@@ -225,11 +235,20 @@ export class MetacriticCrawler {
     // Verificar se a página carregou corretamente
     if (html.length < 1000) {
       console.log(`❌ Página muito pequena para "${gameName}"`);
+      console.log(`📄 Conteúdo completo:`, html);
       return null;
     }
 
     console.log(`⚠️ HTML carregado mas nota não encontrada para "${gameName}"`);
-    // console.log('📄 Primeiros 500 caracteres:', html.substring(0, 500)); // DEBUG
+    console.log('📄 Primeiros 1000 caracteres:', html.substring(0, 1000));
+    
+    // Verificar se contém indicadores do Metacritic
+    const indicators = ['metacritic', 'metascore', 'ratingValue', 'God of War'];
+    indicators.forEach(indicator => {
+      const found = html.toLowerCase().includes(indicator.toLowerCase());
+      console.log(`🔍 Contém "${indicator}": ${found ? '✅' : '❌'}`);
+    });
+    
     return null;
   }
 
