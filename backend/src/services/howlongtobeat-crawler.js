@@ -140,12 +140,33 @@ export class HowLongToBeatCrawler {
       const gameLinks = this.extractGameLinksFromSearchHTML(response.data);
       
       if (gameLinks.length > 0) {
-        // Tentar o primeiro resultado (mais relevante)
-        const firstGameUrl = `${this.baseUrl}${gameLinks[0]}`;
-        console.log(`🔗 Tentando jogo: ${firstGameUrl}`);
+        // Tentar múltiplos resultados até encontrar um match válido
+        for (let i = 0; i < Math.min(gameLinks.length, 3); i++) {
+          const gameUrl = `${this.baseUrl}${gameLinks[i]}`;
+          console.log(`🔗 Tentando jogo ${i + 1}/${gameLinks.length}: ${gameUrl}`);
+          
+          const gameResponse = await axios.get(gameUrl, config);
+          const gameTitle = this.extractGameTitleFromHTML(gameResponse.data);
+          
+          if (gameTitle) {
+            console.log(`📖 Título encontrado: "${gameTitle}"`);
+            
+            // Verificar se é realmente o jogo que procuramos
+            if (this.isGameNameMatch(gameName, gameTitle)) {
+              console.log(`✅ Match confirmado! Extraindo tempo...`);
+              return this.extractPlayTimeFromHTML(gameResponse.data, gameName);
+            } else {
+              console.log(`❌ Não é o jogo procurado. Buscando: "${gameName}" vs Encontrado: "${gameTitle}"`);
+            }
+          }
+          
+          // Delay entre tentativas
+          if (i < gameLinks.length - 1) {
+            await this.sleep(1000); // 1 segundo entre tentativas
+          }
+        }
         
-        const gameResponse = await axios.get(firstGameUrl, config);
-        return this.extractPlayTimeFromHTML(gameResponse.data, gameName);
+        console.log(`❌ Nenhum dos ${Math.min(gameLinks.length, 3)} resultados corresponde a "${gameName}"`);
       }
 
       return null;
@@ -213,6 +234,133 @@ export class HowLongToBeatCrawler {
       console.error('Erro ao extrair links da busca:', error);
       return [];
     }
+  }
+
+  /**
+   * Extrai o título do jogo da página HTML
+   */
+  extractGameTitleFromHTML(html) {
+    try {
+      // Padrões para extrair o título do jogo
+      const titlePatterns = [
+        // Título na tag title
+        /<title[^>]*>([^<]+)/i,
+        
+        // Título em h1
+        /<h1[^>]*>([^<]+)<\/h1>/i,
+        
+        // Título em elementos específicos do HowLongToBeat
+        /<div[^>]*class="[^"]*GameHeader_profile_header[^"]*"[^>]*>[\s\S]*?<h1[^>]*>([^<]+)<\/h1>/i,
+        /<div[^>]*class="[^"]*profile_header[^"]*"[^>]*>[\s\S]*?<h1[^>]*>([^<]+)<\/h1>/i,
+        
+        // Fallback para outras estruturas
+        /<h2[^>]*>([^<]+)<\/h2>/i
+      ];
+
+      for (const pattern of titlePatterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          let title = match[1].trim();
+          
+          // Limpar título
+          title = title.replace(/\s*\|\s*HowLongToBeat/i, '');
+          title = title.replace(/^\s*HowLongToBeat\s*[\|\-]\s*/i, '');
+          title = title.trim();
+          
+          if (title.length > 2) {
+            return title;
+          }
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Erro ao extrair título:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Verifica se o nome do jogo encontrado é um match válido
+   */
+  isGameNameMatch(searchedName, foundName) {
+    try {
+      if (!searchedName || !foundName) return false;
+
+      // Normalizar ambos os nomes
+      const normalizeGameName = (name) => {
+        return name
+          .toLowerCase()
+          .replace(/[™®©]/g, '') // Remover símbolos de marca
+          .replace(/[^\w\s]/g, ' ') // Remover pontuação
+          .replace(/\s+/g, ' ') // Normalizar espaços
+          .replace(/\b(the|a|an)\b/g, '') // Remover artigos
+          .replace(/\b(edition|remastered|definitive|enhanced|deluxe|goty|complete)\b/g, '') // Remover palavras especiais
+          .trim();
+      };
+
+      const normalizedSearched = normalizeGameName(searchedName);
+      const normalizedFound = normalizeGameName(foundName);
+
+      // Match exato após normalização
+      if (normalizedSearched === normalizedFound) {
+        return true;
+      }
+
+      // Verificar se um contém o outro (pelo menos 70% de sobreposição)
+      const searchWords = normalizedSearched.split(/\s+/).filter(w => w.length > 2);
+      const foundWords = normalizedFound.split(/\s+/).filter(w => w.length > 2);
+
+      if (searchWords.length === 0 || foundWords.length === 0) return false;
+
+      // Contar palavras em comum
+      const commonWords = searchWords.filter(word => 
+        foundWords.some(fWord => 
+          fWord.includes(word) || word.includes(fWord) || 
+          this.calculateLevenshteinDistance(word, fWord) <= 2
+        )
+      );
+
+      const similarity = commonWords.length / Math.max(searchWords.length, foundWords.length);
+      
+      // Aceitar se similaridade >= 65%
+      return similarity >= 0.65;
+      
+    } catch (error) {
+      console.error('Erro na verificação de match:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Calcula distância de Levenshtein para matching fuzzy
+   */
+  calculateLevenshteinDistance(str1, str2) {
+    const matrix = [];
+
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+
+    return matrix[str2.length][str1.length];
   }
 
   /**

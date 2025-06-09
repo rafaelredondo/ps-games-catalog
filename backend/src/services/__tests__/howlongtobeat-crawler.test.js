@@ -182,6 +182,72 @@ describe('HowLongToBeatCrawler', () => {
     });
   });
 
+  describe('extractGameTitleFromHTML', () => {
+    test('should extract title from title tag', () => {
+      const html = '<title>God of War | HowLongToBeat</title>';
+      const result = crawler.extractGameTitleFromHTML(html);
+      expect(result).toBe('God of War');
+    });
+
+    test('should extract title from h1 tag', () => {
+      const html = '<h1>Spider-Man</h1>';
+      const result = crawler.extractGameTitleFromHTML(html);
+      expect(result).toBe('Spider-Man');
+    });
+
+    test('should clean HowLongToBeat suffixes', () => {
+      const html = '<title>HowLongToBeat - Horizon Zero Dawn</title>';
+      const result = crawler.extractGameTitleFromHTML(html);
+      expect(result).toBe('Horizon Zero Dawn');
+    });
+
+    test('should return null for invalid HTML', () => {
+      const html = '<div>No title here</div>';
+      const result = crawler.extractGameTitleFromHTML(html);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('isGameNameMatch', () => {
+    test('should match exact names', () => {
+      expect(crawler.isGameNameMatch('God of War', 'God of War')).toBe(true);
+    });
+
+    test('should match ignoring case and symbols', () => {
+      expect(crawler.isGameNameMatch('God of War™', 'god of war')).toBe(true);
+      expect(crawler.isGameNameMatch('Spider-Man', 'Spider Man')).toBe(true);
+    });
+
+    test('should match ignoring edition words', () => {
+      expect(crawler.isGameNameMatch('Tomb Raider Definitive Edition', 'Tomb Raider')).toBe(true);
+      expect(crawler.isGameNameMatch('God of War', 'God of War Remastered')).toBe(true);
+    });
+
+    test('should not match completely different games', () => {
+      expect(crawler.isGameNameMatch('God of War', 'Claire Obscure')).toBe(false);
+      expect(crawler.isGameNameMatch('Tomb Raider', 'Spider-Man')).toBe(false);
+    });
+
+    test('should handle partial matches with high similarity', () => {
+      expect(crawler.isGameNameMatch('The Last of Us', 'Last of Us')).toBe(true);
+      expect(crawler.isGameNameMatch('Super Mario Odyssey', 'Mario Odyssey')).toBe(true);
+    });
+
+    test('should handle edge cases', () => {
+      expect(crawler.isGameNameMatch('', '')).toBe(false);
+      expect(crawler.isGameNameMatch(null, 'Game')).toBe(false);
+      expect(crawler.isGameNameMatch('Game', null)).toBe(false);
+    });
+  });
+
+  describe('calculateLevenshteinDistance', () => {
+    test('should calculate correct distance for similar strings', () => {
+      expect(crawler.calculateLevenshteinDistance('cat', 'bat')).toBe(1);
+      expect(crawler.calculateLevenshteinDistance('kitten', 'sitting')).toBe(3);
+      expect(crawler.calculateLevenshteinDistance('same', 'same')).toBe(0);
+    });
+  });
+
   describe('URL sanitization', () => {
     test('should sanitize game names for URLs', () => {
       // Testar indiretamente através do método que usa a sanitização

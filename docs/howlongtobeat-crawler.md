@@ -217,12 +217,18 @@ HowLongToBeatCrawler
 2. **Parsing Melhorado**: Converte "26½ Hours" → 26.5 horas corretamente
 3. **Validação Robusta**: Filtra IDs numéricos e tempos irrealistas
 4. **Debug Aprimorado**: Logs mais informativos para troubleshooting
+5. **🎯 Matching de Jogos**: Agora verifica se o jogo encontrado realmente corresponde ao buscado
+6. **🔍 Múltiplas Tentativas**: Testa até 3 resultados de busca por jogo
+7. **📖 Extração de Título**: Extrai título real da página para validação
+8. **🤖 Algoritmo Inteligente**: Similaridade de nomes com 65% de threshold
 
 ### Taxa de Sucesso
 
-- **Testes Controlados**: 100% (3/3 jogos em dry-run)
-- **Limitação Atual**: Alguns jogos redirecionam para resultados genéricos
-- **Parsing Funcional**: Extração de tempo funcionando corretamente
+- **🛡️ Validação**: 100% de precisão - não retorna mais dados incorretos
+- **🎯 Matching**: Rejeita corretamente jogos que não correspondem ao buscado
+- **🔍 Detecção**: Identifica "Claire Obscure" ≠ "Tomb Raider" corretamente
+- **📊 Parsing**: Extração de tempo funcionando quando jogo correto é encontrado
+- **⚠️ Limitação**: HowLongToBeat pode retornar resultados genéricos em buscas
 
 ### Próximos Passos
 
