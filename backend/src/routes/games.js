@@ -69,6 +69,59 @@ async function checkDuplicate(gameName, platforms, mediaTypes) {
   );
 }
 
+// Buscar opções para dropdowns/combos (otimizado)
+router.get('/dropdown-options', async (req, res) => {
+  try {
+    const games = await gamesDb.getAll();
+    
+    // Extrair opções únicas de forma otimizada
+    const platformsSet = new Set();
+    const genresSet = new Set();
+    const publishersSet = new Set();
+    
+    games.forEach(game => {
+      // Platforms
+      if (game.platforms && Array.isArray(game.platforms)) {
+        game.platforms.forEach(platform => platformsSet.add(platform));
+      }
+      
+      // Genres  
+      if (game.genres && Array.isArray(game.genres)) {
+        game.genres.forEach(genre => genresSet.add(genre));
+      }
+      
+      // Publishers
+      if (game.publishers && Array.isArray(game.publishers)) {
+        game.publishers.forEach(publisher => publishersSet.add(publisher));
+      }
+    });
+    
+    // Converter para arrays ordenados
+    const platforms = Array.from(platformsSet).sort();
+    const genres = Array.from(genresSet).sort();
+    const publishers = Array.from(publishersSet).sort();
+    
+    // Status fixos (não dependem dos jogos)
+    const statuses = ['Concluído', 'Não iniciado', 'Jogando', 'Abandonado', 'Na fila'];
+    
+    res.json({
+      platforms,
+      genres, 
+      publishers,
+      statuses,
+      meta: {
+        totalGames: games.length,
+        platformCount: platforms.length,
+        genreCount: genres.length,
+        publisherCount: publishers.length
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar opções de dropdown:', error);
+    res.status(500).json({ error: 'Erro ao buscar opções de dropdown' });
+  }
+});
+
 // Limpar todo o banco de dados
 router.delete('/clear', async (req, res) => {
   try {
@@ -135,17 +188,10 @@ router.get('/', async (req, res) => {
     }
     
     if (status) {
-      // Aceitar tanto valores do frontend quanto valores em português
-      const isCompleted = status === 'completed' || status === 'Concluído';
-      const isPending = status === 'not_completed' || status === 'pending' || 
-                       status === 'Não iniciado' || status === 'Jogando' || 
-                       status === 'Abandonado' || status === 'Na fila';
-      
-      if (isCompleted) {
-        allGames = allGames.filter(game => game.completed === true);
-      } else if (isPending) {
-        allGames = allGames.filter(game => game.completed === false);
-      }
+      // Filtrar por status específico usando o campo status (string)
+      allGames = allGames.filter(game => 
+        game.status === status
+      );
     }
     
     // Aplicar ordenação

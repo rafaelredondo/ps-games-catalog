@@ -1,0 +1,22 @@
+{
+  "name": "ps-games-catalog",
+  "version": "1.0.0",
+  "description": "Catálogo de jogos PlayStation com deploy automático",
+  "type": "module",
+  "scripts": {
+    "start": "echo 'Use npm start no frontend/ ou backend/'",
+    "crawler": "node scripts/metacritic-crawler.js",
+    "crawler:dry": "node scripts/metacritic-crawler.js --dry-run",
+    "crawler:help": "node scripts/metacritic-crawler.js --help",
+    "test": "cd backend && npm test",
+    "deploy": "./scripts/deploy-direct.sh",
+    "deploy:github": "./scripts/github-deploy.sh"
+  },
+  "keywords": ["playstation", "games", "catalog", "metacritic", "crawler"],
+  "author": "Rafael Redondo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rafaelredondo/ps-games-catalog.git"
+  }
+} 

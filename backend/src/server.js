@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { initDatabase } from './db/database.js';
 import gamesRouter from './routes/games.js';
+import metacriticRouter from './routes/metacritic.js';
 import { basicAuth } from './middleware/auth.js';
 
 const app = express();
@@ -26,6 +27,7 @@ app.use('/api', basicAuth);
 
 // Rotas
 app.use('/api/games', gamesRouter);
+app.use('/api/metacritic', metacriticRouter);
 
 // Rota de teste
 app.get('/', (req, res) => {

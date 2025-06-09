@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { gamesService } from '../services/gamesService';
+import { useDropdownCache } from './DropdownCacheContext';
 
 const GamesContext = createContext();
 
 export function GamesProvider({ children }) {
+  const { invalidateAllCaches } = useDropdownCache();
+  
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -49,6 +52,10 @@ export function GamesProvider({ children }) {
       
       const newGame = await gamesService.create(game);
       setGames(prevGames => [...prevGames, newGame]);
+      
+      // Invalidar cache de dropdown options
+      invalidateAllCaches();
+      
       return newGame;
     } catch (err) {
       setError(err.message || 'Erro ao adicionar jogo');
@@ -81,6 +88,9 @@ export function GamesProvider({ children }) {
         prevGames.map(g => g.id === id ? updatedGame : g)
       );
       
+      // Invalidar cache de dropdown options
+      invalidateAllCaches();
+      
       return updatedGame;
     } catch (err) {
       console.error('GamesContext - Erro ao atualizar jogo:', err);
@@ -94,6 +104,9 @@ export function GamesProvider({ children }) {
     try {
       await gamesService.delete(id);
       setGames(prevGames => prevGames.filter(g => g.id !== id));
+      
+      // Invalidar cache de dropdown options
+      invalidateAllCaches();
     } catch (err) {
       setError('Erro ao remover jogo');
       throw err;
@@ -105,6 +118,9 @@ export function GamesProvider({ children }) {
     try {
       await gamesService.clearAll();
       setGames([]);
+      
+      // Invalidar cache de dropdown options
+      invalidateAllCaches();
     } catch (err) {
       setError('Erro ao limpar jogos');
       throw err;

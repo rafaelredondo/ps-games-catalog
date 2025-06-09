@@ -1,7 +1,35 @@
 import { promises as fs } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const DB_FILE = join(process.cwd(), 'db.json');
+// Determinar o caminho correto do banco independente de onde é executado
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Procurar o db.json em possíveis localizações
+function getDBPath() {
+  // Se executado do backend/ → db.json
+  const backendPath = join(process.cwd(), 'db.json');
+  // Se executado da raiz → backend/db.json
+  const rootPath = join(process.cwd(), 'backend', 'db.json');
+  // Caminho relativo ao arquivo atual
+  const relativePath = join(__dirname, '..', '..', 'db.json');
+  
+  // Retornar o primeiro que existir
+  try {
+    require('fs').accessSync(backendPath);
+    return backendPath;
+  } catch {
+    try {
+      require('fs').accessSync(rootPath);
+      return rootPath;
+    } catch {
+      return relativePath; // fallback
+    }
+  }
+}
+
+const DB_FILE = getDBPath();
 
 // Função para ler o banco de dados
 async function readDB() {

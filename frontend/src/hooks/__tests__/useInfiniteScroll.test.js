@@ -38,7 +38,11 @@ describe('🚀 useInfiniteScroll Hook - TDD Baby Steps', () => {
         loadMore: expect.any(Function),
         refresh: expect.any(Function),
         sentinelRef: expect.any(Object),
-        pagination: expect.any(Object)
+        pagination: expect.any(Object),
+        currentPage: 1,
+        totalPages: 0,
+        isInfiniteScrollEnabled: true,
+        totalGames: 0
       })
     })
 
@@ -57,7 +61,14 @@ describe('🚀 useInfiniteScroll Hook - TDD Baby Steps', () => {
         page: 1,
         limit: 20,
         search: '',
-        platform: ''
+        platform: '',
+        orderBy: 'name',
+        order: 'asc',
+        minMetacritic: '',
+        genre: '',
+        publisher: '',
+        status: '',
+        infiniteScrollEnabled: true
       })
     })
 
@@ -122,7 +133,14 @@ describe('🚀 useInfiniteScroll Hook - TDD Baby Steps', () => {
         page: 2,
         limit: 1,
         search: '',
-        platform: ''
+        platform: '',
+        orderBy: 'name',
+        order: 'asc',
+        minMetacritic: '',
+        genre: '',
+        publisher: '',
+        status: '',
+        infiniteScrollEnabled: true
       })
     })
 
@@ -144,7 +162,14 @@ describe('🚀 useInfiniteScroll Hook - TDD Baby Steps', () => {
         page: 1,
         limit: 20,
         search: 'batman',
-        platform: 'PlayStation 4'
+        platform: 'PlayStation 4',
+        orderBy: 'name',
+        order: 'asc',
+        minMetacritic: '',
+        genre: '',
+        publisher: '',
+        status: '',
+        infiniteScrollEnabled: true
       })
     })
 
@@ -176,8 +201,57 @@ describe('🚀 useInfiniteScroll Hook - TDD Baby Steps', () => {
         page: 1,
         limit: 20,
         search: '',
-        platform: ''
+        platform: '',
+        orderBy: 'name',
+        order: 'asc',
+        minMetacritic: '',
+        genre: '',
+        publisher: '',
+        status: '',
+        infiniteScrollEnabled: true
       })
+    })
+
+    test('should handle infinite scroll disabled', async () => {
+      // Mock do backend retornando array simples (sem paginação)
+      const mockGames = [
+        { id: 1, name: 'Game 1' },
+        { id: 2, name: 'Game 2' },
+        { id: 3, name: 'Game 3' }
+      ]
+      
+      const mockFetchFunction = vi.fn().mockResolvedValue(mockGames)
+
+      const { result } = renderHook(() => 
+        useInfiniteScroll(mockFetchFunction, { 
+          limit: 20, 
+          enabled: false 
+        })
+      )
+
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
+
+      // Verificar que não enviou parâmetros de paginação
+      expect(mockFetchFunction).toHaveBeenCalledWith({
+        search: '',
+        platform: '',
+        orderBy: 'name',
+        order: 'asc',
+        minMetacritic: '',
+        genre: '',
+        publisher: '',
+        status: '',
+        infiniteScrollEnabled: false
+      })
+
+      // Verificar que carregou todos os jogos
+      expect(result.current.games).toEqual(mockGames)
+      expect(result.current.hasMore).toBe(false)
+      expect(result.current.isInfiniteScrollEnabled).toBe(false)
+      expect(result.current.totalGames).toBe(3)
+      expect(result.current.loading).toBe(false)
     })
 
   })

@@ -11,7 +11,9 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
     minMetacritic = '',
     genre = '',
     publisher = '',
-    status = ''
+    status = '',
+    // Nova opção para controlar infinite scroll
+    enabled = true
   } = options
 
   // Estados
@@ -64,9 +66,12 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
     }
 
     try {
-      const response = await fetchFunction({
-        page,
-        limit,
+      // Quando infinite scroll desabilitado, não enviar parâmetros de paginação
+      const requestParams = {
+        ...(enabled && { 
+          page: page,
+          limit: limit 
+        }),
         search,
         platform,
         orderBy,
@@ -75,25 +80,47 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
         minMetacritic,
         genre,
         publisher,
-        status
-      })
+        status,
+        // Controle do infinite scroll no service
+        infiniteScrollEnabled: enabled
+      }
+
+      const response = await fetchFunction(requestParams)
+
+      // Validar resposta
+      if (!response) {
+        throw new Error('Resposta vazia do servidor')
+      }
+
+      // Tratar resposta baseada no tipo de dados retornados
+      const gamesData = enabled ? response.games : response
+      const gamesArray = Array.isArray(gamesData) ? gamesData : []
+      const paginationData = enabled ? response.pagination : {
+        page: 1,
+        limit: gamesArray.length,
+        total: gamesArray.length,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false
+      }
 
       setGames(prevGames => {
-        if (reset || page === 1) {
-          return response.games
+        if (reset || page === 1 || !enabled) {
+          return gamesArray
         }
-        // Usar uma abordagem mais eficiente para adicionar novos jogos
-        const newGames = response.games.filter(newGame => 
+        
+        // Infinite scroll habilitado: acumular jogos
+        const newGames = gamesArray.filter(newGame => 
           !prevGames.some(existingGame => existingGame.id === newGame.id)
         )
         return [...prevGames, ...newGames]
       })
 
-      setPagination(response.pagination)
-      currentPageRef.current = page
+      setPagination(paginationData)
+      currentPageRef.current = enabled ? page : 1
 
-      // Restaurar posição se necessário
-      if (!reset && page > 1) {
+      // Restaurar posição se necessário (apenas para infinite scroll)
+      if (!reset && page > 1 && enabled) {
         setTimeout(restoreScrollPosition, 50)
       }
 
@@ -103,15 +130,15 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
       setLoading(false)
       isLoadingRef.current = false
     }
-  }, [fetchFunction, limit, search, platform, orderBy, order, minMetacritic, genre, publisher, status, preserveScrollPosition, restoreScrollPosition])
+  }, [fetchFunction, limit, search, platform, orderBy, order, minMetacritic, genre, publisher, status, enabled, preserveScrollPosition, restoreScrollPosition])
 
-  // Função para carregar mais jogos
+  // Função para carregar mais jogos (infinite scroll)
   const loadMore = useCallback(async () => {
-    if (hasMore && !isLoadingRef.current) {
+    if (hasMore && !isLoadingRef.current && enabled) {
       const nextPage = currentPageRef.current + 1
       await fetchGames(nextPage, false)
     }
-  }, [hasMore, fetchGames])
+  }, [hasMore, fetchGames, enabled])
 
   // Função para refresh (resetar)
   const refresh = useCallback(async () => {
@@ -121,7 +148,10 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
   }, [fetchGames])
 
   // IntersectionObserver melhorado com throttling para detectar fim da lista
+  // Só ativo quando infinite scroll está habilitado
   useEffect(() => {
+    if (!enabled) return // Não configurar observer se infinite scroll está desabilitado
+    
     const sentinel = sentinelRef.current
     if (!sentinel) return
 
@@ -160,22 +190,27 @@ export function useInfiniteScroll(fetchFunction, options = {}) {
       observer.unobserve(sentinel)
       observer.disconnect()
     }
-  }, [hasMore, loadMore])
+  }, [hasMore, loadMore, enabled])
 
   // Carregamento inicial
   useEffect(() => {
     currentPageRef.current = 1
     fetchGames(1, true)
-  }, [search, platform, orderBy, order, minMetacritic, genre, publisher, status]) // Recarrega quando filtros ou ordenação mudam (reset para página 1)
+  }, [search, platform, orderBy, order, minMetacritic, genre, publisher, status, enabled]) // Adicionei enabled nas dependências
 
   return {
     games,
     loading,
-    hasMore,
+    hasMore: enabled ? hasMore : false, // Se infinite scroll desabilitado, não há "mais páginas"
     error,
     loadMore,
     refresh,
     sentinelRef,
-    pagination
+    pagination,
+    // Informações úteis
+    currentPage: pagination.page,
+    totalPages: pagination.totalPages,
+    isInfiniteScrollEnabled: enabled,
+    totalGames: games.length // Total de jogos carregados
   }
 } 

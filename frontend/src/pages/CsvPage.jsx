@@ -1,10 +1,8 @@
 import { useState, useContext } from 'react';
+import { useNotification } from '../contexts/NotificationContext';
 import { 
-  Container, 
   Typography, 
   Box, 
-  Paper, 
-  Button, 
   Table,
   TableBody,
   TableCell,
@@ -23,6 +21,12 @@ import {
   Tooltip,
   AlertTitle
 } from '@mui/material';
+
+// Componentes padronizados
+import ActionButton from '../components/ActionButton';
+import NavigationButton from '../components/NavigationButton';
+import FilterButton from '../components/FilterButton';
+import FormCard from '../components/FormCard';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import SaveIcon from '@mui/icons-material/Save';
 import InfoIcon from '@mui/icons-material/Info';
@@ -32,6 +36,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import Papa from 'papaparse';
 import axios from 'axios';
 import { useGames } from '../contexts/GamesContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function CsvPage() {
   const [csvData, setCsvData] = useState(null);
@@ -52,6 +57,7 @@ function CsvPage() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   
   const { games, loadGames } = useGames();
+  const { notify } = useNotification();
   
   // Configuração para a API RAWG
   const API_KEY = 'eb88977d653e45eb951a54fb21c02a4b'; // Chave de API do RAWG
@@ -333,6 +339,16 @@ function CsvPage() {
       return;
     }
     
+    // Notificação de início com progress tracking
+    const progressNotificationId = notify.custom({
+      message: `Iniciando importação de ${csvData.length} jogos...`,
+      title: 'Importação CSV',
+      severity: 'info',
+      showProgress: true,
+      progress: 0,
+      duration: null // Não fechar automaticamente
+    });
+    
     setActiveStep(2);
     setProcessingResults({
       ...processingResults,
@@ -468,6 +484,18 @@ function CsvPage() {
       }
       
       // Atualizar status após cada processo
+      const currentProgress = Math.round(((i + 1) / csvData.length) * 100);
+      
+      // Atualizar notificação de progresso
+      notify.custom({
+        message: `Processando jogo ${i + 1} de ${csvData.length}: ${gameName}`,
+        title: 'Importação CSV',
+        severity: 'info',
+        showProgress: true,
+        progress: currentProgress,
+        duration: null
+      });
+      
       setProcessingResults({
         total: csvData.length,
         success: successCount,
@@ -490,6 +518,28 @@ function CsvPage() {
     // Recarregar lista de jogos
     await loadGames();
     
+    // Notificação final de sucesso com resultados
+    if (successCount > 0) {
+      notify.success(
+        `${successCount} de ${csvData.length} jogos importados com sucesso!`,
+        {
+          title: 'Importação Concluída',
+          duration: 6000
+        }
+      );
+    }
+    
+    // Notificar se houve falhas
+    if (failedCount > 0) {
+      notify.warning(
+        `${failedCount} jogos não puderam ser importados. Verifique o log para detalhes.`,
+        {
+          title: 'Atenção',
+          duration: 8000
+        }
+      );
+    }
+    
     setActiveStep(3);
     setSnackbarMessage(`Importação concluída: ${successCount} de ${csvData.length} jogos importados com sucesso`);
     setSnackbarOpen(true);
@@ -507,8 +557,8 @@ function CsvPage() {
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper sx={{ p: 4, bgcolor: '#222', color: 'white', borderRadius: 2 }}>
+    <>
+      <FormCard maxWidth="lg" sx={{ bgcolor: '#222', color: 'white' }}>
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Importação CSV
@@ -537,16 +587,11 @@ function CsvPage() {
               </Typography>
               
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
-                <Button
-                  variant="contained"
+                <FilterButton
+                  variant="upload"
                   component="label"
                   startIcon={<UploadFileIcon />}
-                  sx={{ 
-                    bgcolor: '#0096FF',
-                    '&:hover': { bgcolor: '#0077cc' },
-                    mb: 1,
-                    cursor: 'pointer'
-                  }}
+                  sx={{ mb: 1 }}
                 >
                   Selecionar Arquivo CSV
                   <input
@@ -555,17 +600,13 @@ function CsvPage() {
                     hidden
                     onChange={handleFileUpload}
                   />
-                </Button>
+                </FilterButton>
               </Box>
             </Box>
           )}
         </Box>
         
-        {loading && (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        )}
+        {loading && <LoadingSpinner variant="section" />}
         
         {error && (
           <Alert severity="error" sx={{ mb: 3, bgcolor: 'rgba(211, 47, 47, 0.1)' }}>
@@ -580,19 +621,14 @@ function CsvPage() {
               <Typography variant="h5" component="h2">
                 Dados do Arquivo ({csvData.length} registros)
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
+              <ActionButton
+                variant="primary"
                 startIcon={<SaveIcon />}
                 onClick={processImport}
                 disabled={!csvData}
-                sx={{ 
-                  bgcolor: '#0096FF',
-                  '&:hover': { bgcolor: '#0077cc' }
-                }}
               >
                 Importar Jogos
-              </Button>
+              </ActionButton>
             </Box>
             
             <Typography variant="body2" sx={{ mb: 2, color: 'rgba(255,255,255,0.7)' }}>
@@ -757,18 +793,13 @@ function CsvPage() {
                 </Box>
               </Box>
               
-              <Button
-                variant="contained"
-                color="primary"
+              <NavigationButton
+                variant="primary"
                 onClick={() => window.location.href = '/'}
-                sx={{ 
-                  bgcolor: '#0096FF',
-                  '&:hover': { bgcolor: '#0077cc' },
-                  mt: 3
-                }}
+                sx={{ mt: 3 }}
               >
                 Ir para o Catálogo
-              </Button>
+              </NavigationButton>
             </Box>
             
             <Divider sx={{ mb: 3, bgcolor: 'rgba(255,255,255,0.1)' }} />
@@ -819,7 +850,7 @@ function CsvPage() {
             </TableContainer>
           </Box>
         )}
-      </Paper>
+    </FormCard>
       
       <Snackbar
         open={snackbarOpen}
@@ -827,7 +858,7 @@ function CsvPage() {
         onClose={handleSnackbarClose}
         message={snackbarMessage}
       />
-    </Container>
+    </>
   );
 }
 

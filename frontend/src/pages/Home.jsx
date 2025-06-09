@@ -1,60 +1,63 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../contexts/NotificationContext';
 import {
   Container,
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
   Typography,
   Box,
   CircularProgress,
   Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Chip,
-  Button,
-  TextField,
-  InputAdornment,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   ToggleButtonGroup,
   ToggleButton,
-  TableSortLabel,
   Tooltip,
   useMediaQuery,
   useTheme
 } from '@mui/material';
 
+// Componentes padronizados
+import ActionButton from '../components/ActionButton';
+import CancelButton from '../components/CancelButton';
+import FilterButton from '../components/FilterButton';
+import GameCard from '../components/GameCard';
+import ConfirmDialog from '../components/ConfirmDialog';
+import EmptyState from '../components/EmptyState';
+import DataTable from '../components/DataTable';
+import SkeletonLoader from '../components/SkeletonLoader';
+import RetryErrorState from '../components/RetryErrorState';
+
+// Componentes de Input padronizados
+import SearchInput from '../components/SearchInput';
+import FilterSelect from '../components/FilterSelect';
+
+// Custom hooks
+import useDropdownOptions from '../hooks/useDropdownOptions';
+
 import DeleteIcon from '@mui/icons-material/Delete';
 import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
-import SearchIcon from '@mui/icons-material/Search';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DoneIcon from '@mui/icons-material/Done';
 import { useGames } from '../contexts/GamesContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { gamesService } from '../services/gamesService';
+import TraditionalPagination from '../components/TraditionalPagination';
+import AlphabetNavigation from '../components/AlphabetNavigation';
+import { getMetacriticColor } from '../utils/metacriticUtils';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function Home() {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Contexto de configurações
+  const { settings } = useSettings();
   
   // Estados dos filtros  
   const [searchTerm, setSearchTerm] = useState(() => {
@@ -86,16 +89,20 @@ function Home() {
     return localStorage.getItem('filter_status') || 'all';
   });
   
-  // Hook de infinite scroll com todos os filtros
+  // Hook de infinite scroll com todos os filtros e configuração enabled
   const {
     games: filteredGames,
     loading,
     hasMore,
     error,
     sentinelRef,
-    refresh
+    refresh,
+    totalGames,
+    currentPage,
+    totalPages,
+    pagination
   } = useInfiniteScroll(gamesService.getPaginated, {
-    limit: 20,
+    limit: settings.itemsPerPage || 20,
     search: searchTerm,
     platform: platform === 'all' ? '' : platform,
     orderBy,
@@ -104,18 +111,22 @@ function Home() {
     minMetacritic: minMetacritic !== '' ? minMetacritic : '',
     genre: selectedGenre === 'all' ? '' : selectedGenre,
     publisher: selectedPublisher === 'all' ? '' : selectedPublisher,
-    status: selectedStatus === 'all' ? '' : selectedStatus
+    status: selectedStatus === 'all' ? '' : selectedStatus,
+    // Configuração do infinite scroll
+    infiniteScrollEnabled: settings.infiniteScrollEnabled,
+    enabled: settings.infiniteScrollEnabled
   });
   
   // Contexto para operações de CRUD
   const { deleteGame, updateGame } = useGames();
+  const { notify } = useNotification();
+  
+  // Hook otimizado para opções de dropdown
+  const { options: dropdownOptions, loading: optionsLoading } = useDropdownOptions();
   
   // Estados de UI
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [gameToDelete, setGameToDelete] = useState(null);
-  const [availablePublishers, setAvailablePublishers] = useState([]);
-  const [availableGenres, setAvailableGenres] = useState([]);
-  const [availablePlatforms, setAvailablePlatforms] = useState([]);
   const [viewMode, setViewMode] = useState(() => {
     // Recuperar o modo de visualização do localStorage ou usar 'card' como padrão
     return localStorage.getItem('viewMode') || 'card';
@@ -123,55 +134,217 @@ function Home() {
   const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
   const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
 
-  // Buscar TODOS os jogos para popular os dropdowns (sem filtros)
-  useEffect(() => {
-    const fetchAllGamesForDropdowns = async () => {
-      try {
-        // Buscar apenas primeira página para ter amostras dos campos, mas com limite maior
-        const response = await gamesService.getPaginated({ 
-          page: 1, 
-          limit: 1000, // Buscar muitos jogos para ter todas as opções
-          // Sem filtros para ter todas as opções disponíveis
-        });
-        
-        const allGames = response.games;
-        
-        if (allGames && allGames.length > 0) {
-          const publishers = new Set();
-          const genres = new Set();
-          const platforms = new Set();
-          
-          allGames.forEach(game => {
-            if (game.publishers && Array.isArray(game.publishers)) {
-              game.publishers.forEach(publisher => {
-                publishers.add(publisher);
-              });
-            }
-            
-            if (game.genres && Array.isArray(game.genres)) {
-              game.genres.forEach(genre => {
-                genres.add(genre);
-              });
-            }
-            
-            if (game.platforms && Array.isArray(game.platforms)) {
-              game.platforms.forEach(platform => {
-                platforms.add(platform);
-              });
-            }
-          });
-          
-          setAvailablePublishers(Array.from(publishers).sort());
-          setAvailableGenres(Array.from(genres).sort());
-          setAvailablePlatforms(Array.from(platforms).sort());
-        }
-      } catch (error) {
-        console.error('Erro ao buscar jogos para dropdowns:', error);
-      }
-    };
+  // Funções de paginação (placeholders quando infinite scroll desabilitado)
+  const goToPage = useCallback((page) => {
+    // Quando infinite scroll desabilitado, não há paginação real
+    if (!settings.infiniteScrollEnabled) return;
+    // TODO: Implementar navegação de página se necessário
+  }, [settings.infiniteScrollEnabled]);
 
-    fetchAllGamesForDropdowns();
-  }, []); // Executar apenas uma vez no mount
+  const goToPrevPage = useCallback(() => {
+    // Quando infinite scroll desabilitado, não há paginação real
+    if (!settings.infiniteScrollEnabled) return;
+    // TODO: Implementar página anterior se necessário
+  }, [settings.infiniteScrollEnabled]);
+
+  // Função para detectar se há filtros ativos
+  const hasActiveFilters = useMemo(() => {
+    return searchTerm !== '' || 
+           platform !== 'all' || 
+           selectedGenre !== 'all' || 
+           selectedPublisher !== 'all' || 
+           selectedStatus !== 'all' || 
+           minMetacritic !== '';
+  }, [searchTerm, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic]);
+
+  // Função para determinar o tipo de empty state
+  const getEmptyStateType = () => {
+    if (hasActiveFilters) {
+      return searchTerm !== '' ? 'search' : 'filter';
+    }
+    return 'catalog';
+  };
+
+  // Configuração das colunas da tabela
+  const tableColumns = useMemo(() => [
+    {
+      id: 'name',
+      label: 'Nome do Jogo',
+      sortable: true,
+      render: (game) => (
+        <Box 
+          component="span" 
+          sx={{ 
+            color: 'white', 
+            fontWeight: 'medium', 
+            cursor: 'pointer' 
+          }}
+        >
+          {game.name}
+        </Box>
+      )
+    },
+    {
+      id: 'platforms',
+      label: 'Plataformas',
+      sortable: true,
+      hideOnMobile: false,
+      render: (game) => game.platforms ? game.platforms.join(', ') : ''
+    },
+    {
+      id: 'genres',
+      label: 'Gêneros',
+      sortable: true,
+      hideOnMobile: true,
+      render: (game) => (
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          {game.genres && game.genres.map(genre => (
+            <Chip
+              key={genre}
+              label={genre}
+              size="small"
+              sx={{ 
+                mb: 0.3,
+                bgcolor: 'rgba(100, 100, 100, 0.5)', 
+                color: 'white',
+                height: '22px',
+                fontSize: '0.7rem',
+              }}
+            />
+          ))}
+        </Box>
+      )
+    },
+    {
+      id: 'year',
+      label: 'Ano',
+      sortable: true,
+      align: 'center',
+      hideOnMobile: true,
+      render: (game) => game.released ? new Date(game.released).getFullYear() : ''
+    },
+    {
+      id: 'metacritic',
+      label: 'Metacritic',
+      sortable: true,
+      align: 'center',
+      hideOnMobile: true,
+      render: (game) => game.metacritic ? (
+        <Chip
+          label={game.metacritic}
+          size="small"
+          sx={{ 
+            bgcolor: getMetacriticColor(game.metacritic),
+            color: 'white',
+            fontWeight: 'bold',
+            minWidth: '36px',
+          }}
+        />
+      ) : ''
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      align: 'center',
+      render: (game) => {
+        // Usar o status do jogo se disponível, senão usar completed
+        let statusDisplay = game.status;
+        let statusColor = '';
+        
+        if (!statusDisplay) {
+          statusDisplay = game.completed ? "Concluído" : "Não iniciado";
+        }
+        
+        // Definir cores baseadas no status
+        switch (statusDisplay) {
+          case 'Concluído':
+            statusColor = { bgcolor: 'rgba(76, 175, 80, 0.2)', color: '#4caf50' };
+            break;
+          case 'Jogando':
+            statusColor = { bgcolor: 'rgba(33, 150, 243, 0.2)', color: '#2196f3' };
+            break;
+          case 'Abandonado':
+            statusColor = { bgcolor: 'rgba(244, 67, 54, 0.2)', color: '#f44336' };
+            break;
+          case 'Na fila':
+            statusColor = { bgcolor: 'rgba(156, 39, 176, 0.2)', color: '#9c27b0' };
+            break;
+          default:
+            statusColor = { bgcolor: 'rgba(255, 152, 0, 0.2)', color: '#ff9800' };
+        }
+        
+        return (
+          <Chip
+            label={statusDisplay}
+            size="small"
+            sx={{ 
+              ...statusColor,
+              fontWeight: 'bold',
+              fontSize: '0.7rem',
+            }}
+          />
+        );
+      }
+    },
+    {
+      id: 'actions',
+      label: 'Ações',
+      align: 'center',
+      width: '120px',
+      render: (game) => (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+          {(!game.status || game.status !== 'Concluído') && !game.completed && (
+            <Tooltip title="Marcar como concluído">
+              <IconButton
+                color="success"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setGameToMarkCompleted(game);
+                  setCompletedDialogOpen(true);
+                }}
+                sx={{ 
+                  '&:hover': { 
+                    bgcolor: 'rgba(76, 175, 80, 0.1)' 
+                  }
+                }}
+                aria-label="marcar como concluído"
+              >
+                <DoneIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Excluir jogo">
+            <IconButton
+              color="error"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setGameToDelete(game);
+                setDeleteDialogOpen(true);
+              }}
+              sx={{ 
+                '&:hover': { 
+                  bgcolor: 'rgba(211, 47, 47, 0.1)' 
+                }
+              }}
+              aria-label="excluir jogo"
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )
+    }
+  ], []);
+
+  const goToNextPage = useCallback(() => {
+    // Quando infinite scroll desabilitado, não há paginação real
+    if (!settings.infiniteScrollEnabled) return;
+    // TODO: Implementar próxima página se necessário
+  }, [settings.infiniteScrollEnabled]);
+
+
 
   // Funções de manipulação otimizadas com useCallback
   const handlePlatformChange = useCallback((event) => {
@@ -222,12 +395,7 @@ function Home() {
     }
   }, []);
 
-  const getMetacriticColor = useCallback((score) => {
-    if (!score) return '#888';
-    if (score >= 75) return '#6c3';
-    if (score >= 50) return '#fc3';
-    return '#f00';
-  }, []);
+
 
   // Funções de ordenação de tabela
   const handleRequestSort = useCallback((property) => {
@@ -268,17 +436,40 @@ function Home() {
     if (gameToDelete) {
       deleteGame(gameToDelete.id)
         .then(() => {
+          // Notificação de sucesso
+          notify.success(
+            `Jogo "${gameToDelete.name}" excluído com sucesso!`,
+            {
+              title: 'Jogo Excluído',
+              duration: 3000
+            }
+          );
+          
           setDeleteDialogOpen(false);
           setGameToDelete(null);
           refresh(); // Atualizar lista após exclusão
         })
         .catch((err) => {
           console.error('Erro ao excluir jogo:', err);
+          
+          // Notificação de erro
+          notify.error(
+            'Não foi possível excluir o jogo. Tente novamente.',
+            {
+              title: 'Erro na Exclusão',
+              allowRetry: true,
+              retryText: 'Tentar Novamente',
+              onRetry: () => {
+                handleDeleteConfirm();
+              }
+            }
+          );
+          
           setDeleteDialogOpen(false);
           setGameToDelete(null);
         });
     }
-  }, [gameToDelete, deleteGame, refresh]);
+  }, [gameToDelete, deleteGame, refresh, notify]);
 
   // Função para exportar os jogos filtrados para CSV
   const handleExportCsv = useCallback(() => {
@@ -345,6 +536,16 @@ function Home() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }, [filteredGames]);
 
+  // Detectar se o AlphabetNavigation está ativo
+  const isAlphabetNavigationActive = useMemo(() => {
+    return (
+      orderBy === 'name' && 
+      !settings.infiniteScrollEnabled && 
+      filteredGames.length > 20 &&
+      (isMobile || viewMode === 'card') // Mobile ou modo card
+    );
+  }, [orderBy, settings.infiniteScrollEnabled, filteredGames.length, isMobile, viewMode]);
+
   // Função para marcar um jogo como concluído
   const handleMarkCompleted = useCallback(async () => {
     if (gameToMarkCompleted) {
@@ -364,6 +565,15 @@ function Home() {
         // Usar await para garantir que a operação seja concluída
         const result = await updateGame(gameToMarkCompleted.id, updatedGame);
         
+        // Notificação de sucesso
+        notify.success(
+          `"${gameToMarkCompleted.name}" marcado como concluído!`,
+          {
+            title: 'Parabéns! 🎉',
+            duration: 4000
+          }
+        );
+        
         // Fechar o diálogo e limpar o estado
         setCompletedDialogOpen(false);
         setGameToMarkCompleted(null);
@@ -372,426 +582,149 @@ function Home() {
         refresh();
       } catch (err) {
         console.error('Erro ao marcar jogo como concluído:', err);
+        
+        // Notificação de erro
+        notify.error(
+          'Não foi possível marcar o jogo como concluído.',
+          {
+            title: 'Erro ao Atualizar',
+            allowRetry: true,
+            retryText: 'Tentar Novamente',
+            onRetry: () => {
+              handleMarkCompleted();
+            }
+          }
+        );
+        
         setCompletedDialogOpen(false);
         setGameToMarkCompleted(null);
       }
     }
-  }, [gameToMarkCompleted, updateGame, refresh]);
+  }, [gameToMarkCompleted, updateGame, refresh, notify]);
 
   // Renderização dos cards
   const renderCardView = () => {
+    // Se não há jogos e não está carregando, mostrar empty state
+    if (filteredGames.length === 0 && !loading) {
+      return (
+        <EmptyState
+          type={getEmptyStateType()}
+          action={
+            hasActiveFilters ? (
+              <FilterButton
+                variant="filter"
+                onClick={handleClearFilters}
+                startIcon={<FilterAltOffIcon />}
+              >
+                Limpar Filtros
+              </FilterButton>
+            ) : (
+              <ActionButton
+                variant="primary"
+                onClick={() => navigate('/add')}
+                startIcon={<VideogameAssetIcon />}
+              >
+                Adicionar Primeiro Jogo
+              </ActionButton>
+            )
+          }
+        />
+      );
+    }
+
     return (
       <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="flex-start">
         {filteredGames.map((game) => (
           <Grid key={game.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            <Card 
-              sx={{ 
-                bgcolor: '#222',
-                color: 'white',
-                height: '100%',
-                width: '100%',
-                maxWidth: '100%',
-                minWidth: 0,
-                overflow: 'hidden',
-                position: 'relative',
-                cursor: 'pointer',
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'all 0.2s ease-in-out', // Suavizar transições
-                '&:hover': {
-                  boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
-                  transform: 'translateY(-2px)',
-                }
-              }}
+            <GameCard 
+              game={game}
               onClick={() => handleCardClick(game.id)}
-            >
-              {game.metacritic && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    bgcolor: getMetacriticColor(game.metacritic),
-                    color: 'white',
-                    minWidth: 40,
-                    height: 28,
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 'bold',
-                    fontSize: '0.9rem',
-                    zIndex: 2,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
-                    px: 1
-                  }}
-                >
-                  {game.metacritic}
-                </Box>
-              )}
-              <CardMedia
-                component="img"
-                image={game.coverUrl || 'https://via.placeholder.com/300x200?text=No+Cover'}
-                alt={game.name}
-                sx={{ 
-                  height: { xs: 180, sm: 150, md: 160 },
-                  width: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                  flexShrink: 0
-                }}
-              />
-              <CardContent sx={{ 
-                py: { xs: 1.5, sm: 1.5 }, 
-                px: { xs: 2, sm: 1.5 }, 
-                flex: 1,
-                display: 'flex', 
-                flexDirection: 'column',
-                minWidth: 0,
-                overflow: { xs: 'visible', sm: 'hidden' },
-                width: '100%'
-              }}>
-                <Typography
-                  variant="h6"
-                  component="h2"
-                  sx={{ 
-                    fontWeight: 'bold', 
-                    fontSize: { xs: '1.1rem', sm: '1rem' },
-                    mb: { xs: 0.5, sm: 0.75 },
-                    lineHeight: 1.3,
-                    // Mobile: altura dinâmica para quebra de linha
-                    height: { xs: 'auto', sm: '2.4em' },
-                    minHeight: { xs: '1.3em', sm: '2.4em' },
-                    maxHeight: { xs: 'none', sm: '2.4em' },
-                    // Mobile: sem truncamento, Desktop: com truncamento
-                    overflow: { xs: 'visible', sm: 'hidden' },
-                    textOverflow: { xs: 'unset', sm: 'ellipsis' },
-                    display: { xs: 'block', sm: '-webkit-box' },
-                    WebkitLineClamp: { xs: 'unset', sm: 2 },
-                    WebkitBoxOrient: { xs: 'unset', sm: 'vertical' },
-                    width: '100%',
-                    wordBreak: 'break-word'
-                  }}
-                >
-                  {game.name} {game.released && `(${new Date(game.released).getFullYear()})`}
-                </Typography>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 0.25, sm: 0.5 } }}>
-                  <VideogameAssetIcon 
-                    fontSize="small" 
-                    sx={{ 
-                      mr: 0.5, 
-                      color: 'rgba(255,255,255,0.7)', 
-                      fontSize: { xs: '0.85rem', sm: '0.95rem' }
-                    }} 
-                  />
-                  <Typography 
-                    sx={{ 
-                      fontSize: { xs: '0.95rem', sm: '0.94rem' }, 
-                      color: 'rgba(255,255,255,0.7)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      minWidth: 0,
-                      flex: 1,
-                      width: '100%'
-                    }}
-                  >
-                    {game.platforms && game.platforms.join(', ')}
-                  </Typography>
-                </Box>
-                
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    flexWrap: 'wrap', 
-                    gap: { xs: 0.25, sm: 0.5 }, 
-                    mt: { xs: 0.25, sm: 0.5 },
-                    overflow: 'hidden',
-                    maxHeight: { xs: '50px', sm: '60px' }
-                  }}
-                >
-                  {game.genres && game.genres.slice(0, 3).map(genre => (
-                    <Chip
-                      key={genre}
-                      label={genre}
-                      size="small"
-                      sx={{ 
-                        mb: { xs: 0.5, sm: 0.5 },
-                        bgcolor: 'rgba(100, 100, 100, 0.5)', 
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: { xs: '0.85rem', sm: '0.84rem' },
-                        height: { xs: '28px', sm: '24px' }
-                      }}
-                    />
-                  ))}
-                  {game.genres && game.genres.length > 3 && (
-                    <Chip
-                      label={`+${game.genres.length - 3}`}
-                      size="small"
-                      sx={{ 
-                        mb: { xs: 0.5, sm: 0.5 },
-                        bgcolor: 'rgba(150, 150, 150, 0.5)', 
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: { xs: '0.85rem', sm: '0.84rem' },
-                        height: { xs: '28px', sm: '24px' }
-                      }}
-                    />
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
+              isAlphabetNavigationActive={isAlphabetNavigationActive}
+            />
           </Grid>
         ))}
       </Grid>
     );
   };
 
-  // Renderização da tabela
+  // Renderização da tabela usando DataTable
   const renderTableView = () => {
-    // Agora os jogos já vêm ordenados do backend
-    const gamesToShow = filteredGames;
-    
     return (
-      <TableContainer component={Paper} sx={{ bgcolor: '#111', borderRadius: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ '& th': { borderBottom: '2px solid rgba(255,255,255,0.1)' } }}>
-              <TableCell sx={{ color: 'white' }}>
-                <TableSortLabel
-                  active={orderBy === 'name'}
-                  direction={orderBy === 'name' ? order : 'asc'}
-                  onClick={() => handleRequestSort('name')}
-                  sx={{
-                    color: 'white !important',
-                    '&.MuiTableSortLabel-active': {
-                      color: 'white !important',
-                    },
-                    '& .MuiTableSortLabel-icon': {
-                      color: 'white !important',
-                    },
-                  }}
-                >
-                  Nome do Jogo
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ color: 'white' }}>
-                <TableSortLabel
-                  active={orderBy === 'platforms'}
-                  direction={orderBy === 'platforms' ? order : 'asc'}
-                  onClick={() => handleRequestSort('platforms')}
-                  sx={{
-                    color: 'white !important',
-                    '&.MuiTableSortLabel-active': {
-                      color: 'white !important',
-                    },
-                    '& .MuiTableSortLabel-icon': {
-                      color: 'white !important',
-                    },
-                  }}
-                >
-                  Plataformas
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ color: 'white' }}>
-                <TableSortLabel
-                  active={orderBy === 'genres'}
-                  direction={orderBy === 'genres' ? order : 'asc'}
-                  onClick={() => handleRequestSort('genres')}
-                  sx={{
-                    color: 'white !important',
-                    '&.MuiTableSortLabel-active': {
-                      color: 'white !important',
-                    },
-                    '& .MuiTableSortLabel-icon': {
-                      color: 'white !important',
-                    },
-                  }}
-                >
-                  Gêneros
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center" sx={{ color: 'white' }}>
-                <TableSortLabel
-                  active={orderBy === 'year'}
-                  direction={orderBy === 'year' ? order : 'asc'}
-                  onClick={() => handleRequestSort('year')}
-                  sx={{
-                    color: 'white !important',
-                    '&.MuiTableSortLabel-active': {
-                      color: 'white !important',
-                    },
-                    '& .MuiTableSortLabel-icon': {
-                      color: 'white !important',
-                    },
-                  }}
-                >
-                  Ano
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center" sx={{ color: 'white' }}>
-                <TableSortLabel
-                  active={orderBy === 'metacritic'}
-                  direction={orderBy === 'metacritic' ? order : 'asc'}
-                  onClick={() => handleRequestSort('metacritic')}
-                  sx={{
-                    color: 'white !important',
-                    '&.MuiTableSortLabel-active': {
-                      color: 'white !important',
-                    },
-                    '& .MuiTableSortLabel-icon': {
-                      color: 'white !important',
-                    },
-                  }}
-                >
-                  Metacritic
-                </TableSortLabel>
-              </TableCell>
-              <TableCell align="center" sx={{ color: 'white' }}>
-                Status
-              </TableCell>
-              <TableCell align="center" sx={{ color: 'white', width: '120px' }}>
-                Ações
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {gamesToShow.map((game) => (
-              <TableRow 
-                key={game.id}
-                hover
-                sx={{ 
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
-                  '& td': { color: 'rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.1)' }
-                }}
-              >
-                <TableCell 
-                  component="th" 
-                  scope="row" 
-                  sx={{ color: 'white', fontWeight: 'medium', cursor: 'pointer' }}
-                  onClick={() => handleCardClick(game.id)}
-                >
-                  {game.name}
-                </TableCell>
-                <TableCell onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
-                  {game.platforms ? game.platforms.join(', ') : ''}
-                </TableCell>
-                <TableCell onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {game.genres && game.genres.map(genre => (
-                      <Chip
-                        key={genre}
-                        label={genre}
-                        size="small"
-                        sx={{ 
-                          mb: 0.3,
-                          bgcolor: 'rgba(100, 100, 100, 0.5)', 
-                          color: 'white',
-                          height: '22px',
-                          fontSize: '0.7rem',
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </TableCell>
-                <TableCell align="center" onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
-                  {game.released ? new Date(game.released).getFullYear() : ''}
-                </TableCell>
-                <TableCell align="center" onClick={() => handleCardClick(game.id)} sx={{ cursor: 'pointer' }}>
-                  {game.metacritic ? (
-                    <Chip
-                      label={game.metacritic}
-                      size="small"
-                      sx={{ 
-                        bgcolor: getMetacriticColor(game.metacritic),
-                        color: 'white',
-                        fontWeight: 'bold',
-                        minWidth: '36px',
-                      }}
-                    />
-                  ) : ''}
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={game.completed ? "Concluído" : "Não Concluído"}
-                    size="small"
-                    sx={{ 
-                      bgcolor: game.completed ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)', 
-                      color: game.completed ? '#4caf50' : '#ff9800',
-                      fontWeight: 'bold',
-                      fontSize: '0.7rem',
-                    }}
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    {!game.completed && (
-                      <Tooltip title="Marcar como concluído">
-                        <IconButton
-                          color="success"
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setGameToMarkCompleted(game);
-                            setCompletedDialogOpen(true);
-                          }}
-                          sx={{ 
-                            '&:hover': { 
-                              bgcolor: 'rgba(76, 175, 80, 0.1)' 
-                            }
-                          }}
-                          aria-label="marcar como concluído"
-                        >
-                          <DoneIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    <Tooltip title="Excluir jogo">
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setGameToDelete(game);
-                          setDeleteDialogOpen(true);
-                        }}
-                        sx={{ 
-                          '&:hover': { 
-                            bgcolor: 'rgba(211, 47, 47, 0.1)' 
-                          }
-                        }}
-                        aria-label="excluir jogo"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        data={filteredGames}
+        columns={tableColumns}
+        loading={loading}
+        onRowClick={(game) => handleCardClick(game.id)}
+        onSort={handleRequestSort}
+        orderBy={orderBy}
+        order={order}
+        emptyState={{
+          type: getEmptyStateType(),
+          action: hasActiveFilters ? (
+            <FilterButton
+              variant="filter"
+              onClick={handleClearFilters}
+              startIcon={<FilterAltOffIcon />}
+            >
+              Limpar Filtros
+            </FilterButton>
+          ) : (
+            <ActionButton
+              variant="primary"
+              onClick={() => navigate('/add')}
+              startIcon={<VideogameAssetIcon />}
+            >
+              Adicionar Primeiro Jogo
+            </ActionButton>
+          )
+        }}
+      />
     );
   };
 
   if (loading && filteredGames.length === 0) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress />
-      </Box>
+      <Container>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Catálogo de Jogos PlayStation
+          </Typography>
+          
+          {/* Skeleton para filtros */}
+          <SkeletonLoader 
+            variant="custom" 
+            customConfig={{
+              elements: [
+                { variant: 'rounded', width: '100%', height: 56, marginBottom: 2 },
+                { variant: 'rounded', width: '100%', height: 200, marginBottom: 2 }
+              ]
+            }}
+          />
+        </Box>
+        
+        {/* Skeleton para conteúdo baseado no modo de visualização */}
+        <SkeletonLoader 
+          variant={viewMode === 'card' ? 'card' : 'table'}
+          count={viewMode === 'card' ? 6 : 8}
+        />
+      </Container>
     );
   }
 
   if (error) {
     return (
       <Container>
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
+        <RetryErrorState 
+          error={error}
+          onRetry={() => window.location.reload()}
+          title="Erro ao Carregar Jogos"
+          message="Não foi possível carregar o catálogo de jogos"
+          suggestions={[
+            'Verifique sua conexão com a internet',
+            'Tente recarregar a página',
+            'Verifique se o servidor está funcionando'
+          ]}
+        />
       </Container>
     );
   }
@@ -860,270 +793,202 @@ function Home() {
       <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }} alignItems="center">
         {/* Search - Prioridade máxima em mobile */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Buscar por nome"
-            variant="outlined"
+          <SearchInput
             value={searchTerm}
             onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
+            label="Buscar por nome"
           />
         </Grid>
 
         {/* Platform - Segunda prioridade */}
         <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="platform-select-label">Plataforma</InputLabel>
-            <Select
-              labelId="platform-select-label"
-              value={platform}
-              label="Plataforma"
-              onChange={handlePlatformChange}
-            >
-              <MenuItem value="all">Todas as Plataformas</MenuItem>
-              {availablePlatforms.map(platform => (
-                <MenuItem key={platform} value={platform}>
-                  {platform}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <FilterSelect
+            value={platform}
+            onChange={handlePlatformChange}
+            label="Plataforma"
+            options={dropdownOptions.platforms}
+            disabled={optionsLoading}
+          />
         </Grid>
         
         {/* Genre - Terceira prioridade */}
         <Grid size={{ xs: 6, sm: 4, md: 2 }}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="genre-select-label">Gênero</InputLabel>
-            <Select
-              labelId="genre-select-label"
-              value={selectedGenre}
-              label="Gênero"
-              onChange={handleGenreChange}
-            >
-              <MenuItem value="all">Todos os Gêneros</MenuItem>
-              {availableGenres.map(genre => (
-                <MenuItem key={genre} value={genre}>
-                  {genre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <FilterSelect
+            value={selectedGenre}
+            onChange={handleGenreChange}
+            label="Gênero"
+            options={dropdownOptions.genres}
+            disabled={optionsLoading}
+          />
         </Grid>
 
         {/* Status - Quarta prioridade */}
         <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="status-select-label">Status</InputLabel>
-            <Select
-              labelId="status-select-label"
-              value={selectedStatus}
-              label="Status"
-              onChange={handleStatusChange}
-            >
-              <MenuItem value="all">Todos</MenuItem>
-              <MenuItem value="completed">✅ Completado</MenuItem>
-              <MenuItem value="not_completed">⏳ Pendente</MenuItem>
-            </Select>
-          </FormControl>
+          <FilterSelect
+            value={selectedStatus}
+            onChange={handleStatusChange}
+            label="Status"
+            options={dropdownOptions.statuses}
+            allOptionLabel="Todos"
+            disabled={optionsLoading}
+          />
         </Grid>
         
         {/* Metacritic - Menos usado, mas importante */}
         <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-          <TextField
-            fullWidth
-            size="small"
-            label="Metacritic ≥"
-            variant="outlined"
+          <SearchInput
             value={minMetacritic}
             onChange={handleMinMetacriticChange}
+            label="Metacritic ≥"
             type="number"
             inputProps={{ min: 0, max: 100 }}
+            startAdornment={null}
           />
         </Grid>
         
         {/* Publisher - Hidden em xs, menos prioritário */}
         <Grid size={{ xs: 6, sm: 6, md: 1.5 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
-          <FormControl fullWidth variant="outlined" size="small">
-            <InputLabel id="publisher-select-label">Publisher</InputLabel>
-            <Select
-              labelId="publisher-select-label"
-              value={selectedPublisher}
-              label="Publisher"
-              onChange={handlePublisherChange}
-            >
-              <MenuItem value="all">Todos os Publishers</MenuItem>
-              {availablePublishers.map(publisher => (
-                <MenuItem key={publisher} value={publisher}>
-                  {publisher}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <FilterSelect
+            value={selectedPublisher}
+            onChange={handlePublisherChange}
+            label="Publisher"
+            options={dropdownOptions.publishers}
+            disabled={optionsLoading}
+          />
         </Grid>
 
         {/* Botões de ação */}
         <Grid size={{ xs: 6, sm: 3, md: 1 }}>
-          <Tooltip title="Limpar todos os filtros">
-            <Button 
-              variant="outlined" 
-              color="error" 
-              fullWidth
-              onClick={handleClearFilters}
-              startIcon={<FilterAltOffIcon fontSize="small" />}
-              sx={{ 
-                height: { xs: '36px', sm: '40px' },
-                fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                px: { xs: 1, sm: 2 }
-              }}
-            >
-              Limpar
-            </Button>
-          </Tooltip>
+          <FilterButton 
+            variant="filter"
+            fullWidth
+            onClick={handleClearFilters}
+            startIcon={<FilterAltOffIcon fontSize="small" />}
+            tooltip="Limpar todos os filtros"
+          >
+            Limpar
+          </FilterButton>
         </Grid>
 
         {/* Export - Hidden em mobile muito pequeno */}
         <Grid size={{ xs: 6, sm: 3, md: 1 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
-          <Tooltip title="Exportar jogos para CSV">
-            <Button 
-              variant="outlined" 
-              color="info" 
-              fullWidth
-              onClick={handleExportCsv}
-              startIcon={<FileDownloadIcon fontSize="small" />}
-              sx={{ 
-                height: { xs: '36px', sm: '40px' },
-                fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                px: { xs: 1, sm: 2 }
-              }}
-              disabled={filteredGames.length === 0}
-            >
-              CSV
-            </Button>
-          </Tooltip>
+          <FilterButton 
+            variant="export"
+            fullWidth
+            onClick={handleExportCsv}
+            startIcon={<FileDownloadIcon fontSize="small" />}
+            tooltip="Exportar jogos para CSV"
+            disabled={filteredGames.length === 0}
+          >
+            CSV
+          </FilterButton>
         </Grid>
       </Grid>
+
+      {/* Navegação Alfabética */}
+      <AlphabetNavigation 
+        games={filteredGames}
+        orderBy={orderBy}
+        infiniteScrollEnabled={settings.infiniteScrollEnabled}
+      />
 
       {/* Container com ID para controle de scroll */}
       <Box id="games-container">
         {/* Renderizar a visualização selecionada - Mobile sempre usa cards */}
         {(isMobile || viewMode === 'card') ? renderCardView() : renderTableView()}
         
-        {/* Sentinela universal para infinite scroll com transições suaves */}
-        {(hasMore || loading) && (
-          <Box
-            ref={sentinelRef}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              py: 4,
-              mt: 3,
-              minHeight: '80px', // Altura mínima aumentada para melhor detecção
-              backgroundColor: 'transparent',
-              opacity: loading ? 1 : 0.7,
-              transition: 'opacity 0.3s ease-in-out', // Transição suave
-              willChange: 'opacity' // Otimização de performance
-            }}
-          >
-            {loading && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  animation: 'fadeIn 0.3s ease-in',
-                  '@keyframes fadeIn': {
-                    from: { opacity: 0, transform: 'translateY(10px)' },
-                    to: { opacity: 1, transform: 'translateY(0)' }
-                  }
-                }}
-              >
-                <CircularProgress size={32} color="primary" sx={{ mb: 2 }} />
+        {/* Condicional: Infinite Scroll OU Paginação Tradicional */}
+        {settings.infiniteScrollEnabled ? (
+          /* Sentinela universal para infinite scroll com transições suaves */
+          (hasMore || loading) && (
+            <Box
+              ref={sentinelRef}
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                py: 4,
+                mt: 3,
+                minHeight: '80px', // Altura mínima aumentada para melhor detecção
+                backgroundColor: 'transparent',
+                opacity: loading ? 1 : 0.7,
+                transition: 'opacity 0.3s ease-in-out', // Transição suave
+                willChange: 'opacity' // Otimização de performance
+              }}
+            >
+              {loading && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    animation: 'fadeIn 0.3s ease-in',
+                    '@keyframes fadeIn': {
+                      from: { opacity: 0, transform: 'translateY(10px)' },
+                      to: { opacity: 1, transform: 'translateY(0)' }
+                    }
+                  }}
+                >
+                  <LoadingSpinner variant="center" size="medium" />
+                  <Typography 
+                    variant="body2" 
+                    color="primary.main" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textAlign: 'center'
+                    }}
+                  >
+                    🔄 Carregando mais jogos...
+                  </Typography>
+                </Box>
+              )}
+              {!loading && hasMore && (
                 <Typography 
                   variant="body2" 
-                  color="primary.main" 
+                  color="text.secondary" 
                   sx={{ 
-                    fontWeight: 600,
+                    fontWeight: 500,
+                    opacity: 0.5,
                     textAlign: 'center'
                   }}
                 >
-                  🔄 Carregando mais jogos...
+                  Role para carregar mais...
                 </Typography>
-              </Box>
-            )}
-            {!loading && hasMore && (
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
-                sx={{ 
-                  fontWeight: 500,
-                  opacity: 0.5,
-                  textAlign: 'center'
-                }}
-              >
-                Role para carregar mais...
-              </Typography>
-            )}
-          </Box>
+              )}
+            </Box>
+          )
+        ) : (
+          /* Quando infinite scroll desabilitado, todos os jogos são carregados de uma vez */
+          /* Não há necessidade de paginação tradicional */
+          null
         )}
       </Box>
       
       {/* Diálogo de confirmação de exclusão */}
-      <Dialog
+      <ConfirmDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirmar exclusão
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Tem certeza que deseja excluir o jogo "{gameToDelete?.name}"? Esta ação não pode ser desfeita.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
-            Cancelar
-          </Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
-            Excluir
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleDeleteConfirm}
+        title="Confirmar exclusão"
+        message={`Tem certeza que deseja excluir o jogo "${gameToDelete?.name}"? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        severity="error"
+        titleId="delete-dialog-title"
+        descriptionId="delete-dialog-description"
+      />
 
       {/* Diálogo de confirmação para marcar como concluído */}
-      <Dialog
+      <ConfirmDialog
         open={completedDialogOpen}
         onClose={() => setCompletedDialogOpen(false)}
-        aria-labelledby="completed-dialog-title"
-        aria-describedby="completed-dialog-description"
-      >
-        <DialogTitle id="completed-dialog-title">
-          Marcar como concluído
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="completed-dialog-description">
-            Deseja marcar o jogo "{gameToMarkCompleted?.name}" como concluído?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCompletedDialogOpen(false)} color="primary">
-            Cancelar
-          </Button>
-          <Button onClick={handleMarkCompleted} color="success" variant="contained" autoFocus>
-            Confirmar
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleMarkCompleted}
+        title="Marcar como concluído"
+        message={`Deseja marcar o jogo "${gameToMarkCompleted?.name}" como concluído?`}
+        confirmText="Confirmar"
+        severity="success"
+        titleId="completed-dialog-title"
+        descriptionId="completed-dialog-description"
+      />
     </Container>
   );
 }

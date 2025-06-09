@@ -5,7 +5,6 @@ import {
   Typography,
   Box,
   Grid,
-  Button,
   Card,
   CardContent,
   List,
@@ -27,6 +26,10 @@ import {
   IconButton,
   LinearProgress
 } from '@mui/material';
+
+// Componentes padronizados
+import NavigationButton from '../components/NavigationButton';
+import StatsCard from '../components/StatsCard';
 import { 
   EmojiEvents as TrophyIcon,
   Schedule as ScheduleIcon,
@@ -40,18 +43,16 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   RadioButtonChecked as DotIcon,
-  RadioButtonUnchecked as EmptyDotIcon
+  RadioButtonUnchecked as EmptyDotIcon,
+  PlaylistAddCheck as StatusIcon
 } from '@mui/icons-material';
 import { useGames } from '../contexts/GamesContext';
+import { getMetacriticColor } from '../utils/metacriticUtils';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const COLORS = ['#FF6AD5', '#C774E8', '#AD8CFF', '#4D96FF', '#00C49F', '#FFBB28', '#FF8042', '#6BCB77', '#FFD700', '#F9A825'];
 
-function getMetacriticColor(score) {
-  if (!score) return '#888';
-  if (score >= 75) return '#6c3';
-  if (score >= 50) return '#fc3';
-  return '#f00';
-}
+
 
 function formatPlayTime(hours) {
   if (hours === null || hours === undefined) return '?';
@@ -72,7 +73,8 @@ export default function GameWrapped() {
     topRatedGames: [],
     publishers: [],
     platforms: [],
-    format: { physical: 0, digital: 0 }
+    format: { physical: 0, digital: 0 },
+    status: []
   });
 
   // Swipe navigation state
@@ -92,7 +94,8 @@ export default function GameWrapped() {
     { title: "Mais Curtos", icon: <SpeedIcon /> },
     { title: "Gêneros & Publishers", icon: <CategoryIcon /> },
     { title: "Plataformas", icon: <PlatformIcon /> },
-    { title: "Físico vs Digital", icon: <PhysicalIcon /> }
+    { title: "Físico vs Digital", icon: <PhysicalIcon /> },
+    { title: "Status dos Jogos", icon: <StatusIcon /> }
   ];
 
   useEffect(() => {
@@ -107,7 +110,7 @@ export default function GameWrapped() {
       
       // Stagger card animations
       const cardTimers = [];
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < sections.length; i++) {
         const timer = setTimeout(() => {
           setVisibleCards(prev => new Set([...prev, i]));
         }, (i + 1) * 150); // 150ms delay between cards, starting after header
@@ -116,7 +119,7 @@ export default function GameWrapped() {
       
       return () => cardTimers.forEach(clearTimeout);
     }
-  }, [games, loading]);
+  }, [games, loading, sections.length]);
 
   // Swipe navigation functions
   const minSwipeDistance = 50;
@@ -289,6 +292,37 @@ export default function GameWrapped() {
       return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
     };
 
+    // Count by status
+    const countStatus = (games) => {
+      const statusCounts = {};
+      const statusOrder = ["Jogando", "Concluído", "Na fila", "Abandonado", "Não iniciado"];
+      
+      // Contar jogos por status
+      games.forEach(game => {
+        const status = game.status || "Não iniciado";
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+      
+      // Converter para array ordenado por uma ordem específica
+      return statusOrder
+        .filter(status => statusCounts[status]) // Só incluir status que existem
+        .map(status => ({ 
+          name: status, 
+          value: statusCounts[status],
+          // Adicionar cores e emojis para cada status
+          color: status === "Jogando" ? "#4caf50" : 
+                status === "Concluído" ? "#2196f3" : 
+                status === "Na fila" ? "#ff9800" : 
+                status === "Abandonado" ? "#f44336" : 
+                "#9e9e9e",
+          emoji: status === "Jogando" ? "🎮" : 
+                status === "Concluído" ? "🏆" : 
+                status === "Na fila" ? "⏱️" : 
+                status === "Abandonado" ? "⛔" : 
+                "🆕"
+        }));
+    };
+
     // Count physical vs digital games
     const physical = gamesData.filter(game => game.mediaTypes && game.mediaTypes.includes("Físico")).length;
     const digital = gamesData.filter(game => game.mediaTypes && game.mediaTypes.includes("Digital")).length;
@@ -300,7 +334,8 @@ export default function GameWrapped() {
       topRatedGames: [...gamesData].filter(g => g.metacritic != null).sort((a, b) => b.metacritic - a.metacritic).slice(0, 16),
       publishers: count(gamesData, 'publishers').slice(0, 4),
       platforms: count(gamesData, 'platforms'),
-      format: { physical, digital }
+      format: { physical, digital },
+      status: countStatus(gamesData)
     });
   }
 
@@ -427,72 +462,9 @@ export default function GameWrapped() {
     </Box>
   );
 
-  // Card component with clean design and animations
-  const CleanCard = ({ icon, title, children, color, cardIndex = 0, ...props }) => {
-    const isCardVisible = visibleCards.has(cardIndex);
-    
-    return (
-    <Paper elevation={2} {...props} sx={{
-      borderRadius: 3,
-      overflow: 'hidden',
-      height: '100%',
-        transform: isCardVisible ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.95)',
-        opacity: isCardVisible ? 1 : 0,
-        transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-        '&:hover': {
-          transform: isCardVisible ? 'translateY(-8px) scale(1.02)' : 'translateY(30px) scale(0.95)',
-          boxShadow: isCardVisible ? '0 12px 24px rgba(0,0,0,0.15)' : 'none',
-          transition: 'all 0.3s ease'
-        },
-      ...props.sx
-    }}>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 1.5, 
-        p: 2,
-        bgcolor: color,
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-            transition: 'left 0.8s ease',
-            left: isCardVisible ? '100%' : '-100%'
-          }
-        }}>
-          <Box sx={{ 
-            transform: isCardVisible ? 'rotate(0deg) scale(1)' : 'rotate(-10deg) scale(0.8)',
-            transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
-      }}>
-        {icon}
-      </Box>
-          <Typography variant="h6" sx={{ 
-            fontWeight: 700,
-            transform: isCardVisible ? 'translateX(0)' : 'translateX(-20px)',
-            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s'
-          }}>
-            {title}
-          </Typography>
-        </Box>
-        <Box sx={{ 
-          p: 2,
-          transform: isCardVisible ? 'translateY(0)' : 'translateY(20px)',
-          opacity: isCardVisible ? 1 : 0,
-          transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s'
-        }}>
-        {children}
-      </Box>
-    </Paper>
-  );
-  };
 
-  if (loading) return <Box minHeight="80vh" display="flex" alignItems="center" justifyContent="center"><CircularProgress size={40} /></Box>;
+
+  if (loading) return <LoadingSpinner variant="page" size="large" />;
   if (error) return <Container><Box mt={2}><Typography color="error">{error}</Typography></Box></Container>;
 
   // Calculate total and percentages for physical/digital
@@ -528,7 +500,7 @@ export default function GameWrapped() {
           >
             {/* Section 0: Top Metacritic */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]} cardIndex={0}>
+              <StatsCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]} cardIndex={0} isVisible={visibleCards.has(0)}>
                 <List disablePadding>
                   {stats.topRatedGames.slice(0, 8).map((game, idx) => (
                     <ListItem key={game.id} divider={idx < 7} disablePadding sx={{ py: 1.5 }}>
@@ -556,12 +528,12 @@ export default function GameWrapped() {
                     </ListItem>
                   ))}
                 </List>
-              </CleanCard>
+              </StatsCard>
             </Box>
 
             {/* Section 1: Mais Longos */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1}>
+              <StatsCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1} isVisible={visibleCards.has(1)}>
                 <List disablePadding>
                   {stats.longestGames.map((game, idx) => (
                     <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
@@ -589,12 +561,12 @@ export default function GameWrapped() {
                     </ListItem>
                   ))}
                 </List>
-              </CleanCard>
+              </StatsCard>
             </Box>
 
             {/* Section 2: Mais Curtos */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2}>
+              <StatsCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2} isVisible={visibleCards.has(2)}>
                 <List disablePadding>
                   {stats.shortestGames.map((game, idx) => (
                     <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
@@ -622,12 +594,12 @@ export default function GameWrapped() {
                     </ListItem>
                   ))}
                 </List>
-              </CleanCard>
+              </StatsCard>
             </Box>
 
             {/* Section 3: Gêneros & Publishers */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]} cardIndex={3}>
+              <StatsCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]} cardIndex={3}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, color: COLORS[0] }}>
                   🎯 Gêneros Favoritos
                 </Typography>
@@ -667,12 +639,12 @@ export default function GameWrapped() {
                     />
                   ))}
                 </Box>
-              </CleanCard>
+              </StatsCard>
             </Box>
 
             {/* Section 4: Plataformas */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
+              <StatsCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
                 <Box>
                   {stats.platforms.map((platform, idx) => {
                     const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
@@ -689,12 +661,12 @@ export default function GameWrapped() {
                     );
                   })}
                 </Box>
-              </CleanCard>
+              </StatsCard>
             </Box>
 
             {/* Section 5: Físico vs Digital */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
+              <StatsCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {/* Physical Card */}
                   <Paper elevation={3} sx={{ 
@@ -774,7 +746,67 @@ export default function GameWrapped() {
                     </Typography>
                   </Paper>
                 </Box>
-              </CleanCard>
+              </StatsCard>
+            </Box>
+
+            {/* Section 6: Status dos Jogos */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={6}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {stats.status.map((statusItem, idx) => (
+                    <Paper key={statusItem.name} elevation={2} sx={{ 
+                      p: 2.5,
+                      background: `linear-gradient(135deg, ${statusItem.color}15 0%, ${statusItem.color}25 100%)`,
+                      borderRadius: 3,
+                      border: `2px solid ${statusItem.color}40`,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: `0 4px 15px ${statusItem.color}30`
+                      }
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography sx={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {statusItem.emoji} {statusItem.name}
+                        </Typography>
+                        <Typography variant="h6" sx={{ color: statusItem.color, fontWeight: 700 }}>
+                          {statusItem.value}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ mb: 1 }}>
+                        <Box 
+                          sx={{ 
+                            height: 10, 
+                            width: '100%',
+                            bgcolor: 'rgba(0,0,0,0.1)',
+                            borderRadius: 2,
+                            overflow: 'hidden'
+                          }}
+                        >
+                          <Box 
+                            sx={{ 
+                              height: '100%', 
+                              width: `${(statusItem.value / games.length) * 100}%`, 
+                              bgcolor: statusItem.color,
+                              transition: 'width 0.8s ease',
+                              borderRadius: 2
+                            }} 
+                          />
+                        </Box>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" textAlign="right" fontWeight="medium">
+                        {((statusItem.value / games.length) * 100).toFixed(1)}% da coleção
+                      </Typography>
+                    </Paper>
+                  ))}
+                  
+                  <Box sx={{ textAlign: 'center', mt: 1, p: 1.5, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
+                    <Typography variant="h6" fontWeight="bold" color="text.primary">
+                      Total: {games.length} jogos
+                    </Typography>
+                  </Box>
+                </Box>
+              </StatsCard>
             </Box>
           </Box>
         </Box>
@@ -783,7 +815,7 @@ export default function GameWrapped() {
         <Grid container spacing={3} justifyContent="center" sx={{ display: isMobile ? 'none' : 'flex' }}>
           {/* Top Metacritic adaptativo */}
           <Grid size={{ xs: 12 }}>
-            <CleanCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]} cardIndex={0}>
+            <StatsCard icon={<TrophyIcon />} title="Top Metacritic" color={COLORS[8]} cardIndex={0}>
               {isMobile ? (
                 // Mobile: Lista vertical simples
                 <List disablePadding>
@@ -922,12 +954,12 @@ export default function GameWrapped() {
                 </Box>
               </Box>
               )}
-            </CleanCard>
+            </StatsCard>
           </Grid>
 
           {/* Mais Longos e Mais Curtos - layout adaptativo */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1}>
+            <StatsCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1}>
               <List disablePadding>
                 {stats.longestGames.map((game, idx) => (
                   <ListItem key={game.id} divider={idx < stats.longestGames.length-1} disablePadding sx={{ 
@@ -969,10 +1001,10 @@ export default function GameWrapped() {
                   </ListItem>
                 ))}
               </List>
-            </CleanCard>
+            </StatsCard>
           </Grid>
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2}>
+            <StatsCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2}>
               <List disablePadding>
                 {stats.shortestGames.map((game, idx) => (
                   <ListItem key={game.id} divider={idx < stats.shortestGames.length-1} disablePadding sx={{ 
@@ -1014,12 +1046,12 @@ export default function GameWrapped() {
                   </ListItem>
                 ))}
               </List>
-            </CleanCard>
+            </StatsCard>
           </Grid>
 
           {/* Gêneros e Publishers Favoritos - layout adaptativo */}
           <Grid size={{ xs: 12 }}>
-            <CleanCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]} cardIndex={3}>
+            <StatsCard icon={<CategoryIcon />} title="Gêneros & Publishers Favoritos" color={COLORS[0]} cardIndex={3}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 2.5 : 3 }}>
                 <Box>
                   <Typography variant="subtitle1" sx={{ 
@@ -1082,12 +1114,12 @@ export default function GameWrapped() {
                   </Box>
                 </Box>
               </Box>
-            </CleanCard>
+            </StatsCard>
           </Grid>
           
           {/* Número de Jogos por Plataforma - layout adaptativo */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <CleanCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
+            <StatsCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
               {isMobile ? (
                 // Mobile: Lista vertical mais touch-friendly
                 <List disablePadding>
@@ -1181,12 +1213,12 @@ export default function GameWrapped() {
                 </Table>
               </TableContainer>
               )}
-            </CleanCard>
+            </StatsCard>
           </Grid>
 
           {/* Físico vs Digital - layout adaptativo */}
           <Grid size={{ xs: 12, md: 6 }}>
-                          <CleanCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
+                          <StatsCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
               {isMobile ? (
                 // Mobile: Cards visuais em vez de tabela
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1304,25 +1336,81 @@ export default function GameWrapped() {
                 </Table>
               </TableContainer>
               )}
-            </CleanCard>
+            </StatsCard>
+          </Grid>
+
+          {/* Status dos Jogos - layout desktop */}
+          <Grid size={{ xs: 12 }}>
+            <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={6}>
+              {isMobile ? (
+                // Mobile view is handled in the swipe container above
+                <div></div>
+              ) : (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'space-between' }}>
+                  {stats.status.map((statusItem, idx) => (
+                    <Paper key={statusItem.name} elevation={2} sx={{ 
+                      p: 3,
+                      width: 'calc(33.333% - 16px)',
+                      background: `linear-gradient(135deg, ${statusItem.color}15 0%, ${statusItem.color}25 100%)`,
+                      borderRadius: 3,
+                      border: `2px solid ${statusItem.color}40`,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: `0 8px 20px ${statusItem.color}30`
+                      }
+                    }}>
+                      <Box sx={{ textAlign: 'center', mb: 2 }}>
+                        <Typography sx={{ fontSize: '2.5rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>
+                          {statusItem.emoji}
+                        </Typography>
+                        <AnimatedNumber value={statusItem.value} delay={idx * 100} />
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2c3e50' }}>
+                          {statusItem.name}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        width: '100%', 
+                        height: 8, 
+                        bgcolor: 'rgba(0,0,0,0.1)', 
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        mb: 1
+                      }}>
+                        <Box sx={{ 
+                          width: `${(statusItem.value / games.length) * 100}%`, 
+                          height: '100%', 
+                          background: `linear-gradient(90deg, ${statusItem.color} 0%, ${statusItem.color}cc 100%)`,
+                          transition: 'width 0.8s ease',
+                          borderRadius: 4
+                        }} />
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: statusItem.color, fontSize: '0.95rem', textAlign: 'center' }}>
+                        {((statusItem.value / games.length) * 100).toFixed(1)}%
+                      </Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              )}
+            </StatsCard>
           </Grid>
         </Grid>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Button 
-            variant="contained" 
+          <NavigationButton 
+            variant="primary"
             startIcon={<ArrowBackIcon />} 
             onClick={() => navigate('/')} 
+            size={isMobile ? 'large' : 'medium'}
             sx={{ 
               fontWeight: 600, 
               borderRadius: 2, 
               px: isMobile ? 4 : 3,
               py: isMobile ? 1.5 : 1,
-              fontSize: isMobile ? '1.1rem' : '1rem',
               minHeight: isMobile ? 52 : 'auto'
             }}
           >
             Voltar para o Catálogo
-          </Button>
+          </NavigationButton>
         </Box>
       </Container>
     </Box>

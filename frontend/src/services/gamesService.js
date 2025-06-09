@@ -19,12 +19,17 @@ export const gamesService = {
     minMetacritic = '',
     genre = '',
     publisher = '',
-    status = ''
+    status = '',
+    // Controle do infinite scroll
+    infiniteScrollEnabled = true
   }) {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString()
-    });
+    const params = new URLSearchParams();
+    
+    // Adicionar parâmetros de paginação apenas se infinite scroll estiver habilitado
+    if (infiniteScrollEnabled) {
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+    }
     
     if (search) {
       params.append('search', search);
@@ -139,5 +144,16 @@ export const gamesService = {
   async clearAll() {
     const response = await api.delete('/games/clear');
     return response.data;
+  },
+
+  // Buscar opções para dropdowns (otimizado)
+  async getDropdownOptions() {
+    try {
+      const response = await api.get('/games/dropdown-options');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar opções de dropdown:', error);
+      throw error;
+    }
   }
 }; 

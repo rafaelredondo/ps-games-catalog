@@ -3,7 +3,12 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { GamesProvider } from './contexts/GamesContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { SettingsProvider } from './contexts/SettingsContext';
+import { DropdownCacheProvider } from './contexts/DropdownCacheContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import ConnectionErrorBoundary from './components/ConnectionErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import Home from './pages/Home';
 import AddGame from './pages/AddGame';
 import EditGame from './pages/EditGame';
@@ -11,6 +16,7 @@ import GameDetails from './pages/GameDetails';
 import CsvPage from './pages/CsvPage';
 import GameWrapped from './pages/GameWrapped';
 import Navbar from './components/Navbar';
+import ScrollToTop from './components/ScrollToTop';
 
 
 // Creating a custom theme
@@ -116,26 +122,49 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ErrorBoundary 
+      showErrorDetails={import.meta.env.DEV}
+      onError={(error, errorInfo) => {
+        // Log em produção para monitoring
+        console.error('🚨 App Error:', error, errorInfo);
+      }}
+    >
       <AuthProvider>
-        <GamesProvider>
-          <Router>
-            <ProtectedRoute>
-              <Navbar />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/add" element={<AddGame />} />
-                <Route path="/edit/:id" element={<EditGame />} />
-                <Route path="/game/:id" element={<GameDetails />} />
-                <Route path="/csv" element={<CsvPage />} />
-                <Route path="/wrapped" element={<GameWrapped />} />
-              </Routes>
-            </ProtectedRoute>
-          </Router>
-        </GamesProvider>
+        <SettingsProvider>
+          <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <NotificationProvider>
+              <ConnectionErrorBoundary>
+                <DropdownCacheProvider>
+                  <GamesProvider>
+                    <Router>
+                      <ScrollToTop />
+                      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                        <ProtectedRoute>
+                          <Navbar />
+                          <main style={{ flex: 1 }}>
+                            <ErrorBoundary>
+                              <Routes>
+                                <Route path="/" element={<Home />} />
+                                <Route path="/add" element={<AddGame />} />
+                                <Route path="/edit/:id" element={<EditGame />} />
+                                <Route path="/game/:id" element={<GameDetails />} />
+                                <Route path="/csv" element={<CsvPage />} />
+                                <Route path="/wrapped" element={<GameWrapped />} />
+                              </Routes>
+                            </ErrorBoundary>
+                          </main>
+                        </ProtectedRoute>
+                      </div>
+                    </Router>
+                  </GamesProvider>
+                </DropdownCacheProvider>
+              </ConnectionErrorBoundary>
+            </NotificationProvider>
+          </ThemeProvider>
+        </SettingsProvider>
       </AuthProvider>
-    </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

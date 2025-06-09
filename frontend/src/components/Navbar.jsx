@@ -1,10 +1,14 @@
 import { AppBar, Toolbar, Typography, Button, Box, SvgIcon, IconButton, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import InsightsIcon from '@mui/icons-material/Insights';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsIcon from '@mui/icons-material/Settings';
+import HomeIcon from '@mui/icons-material/Home';
 import { useAuth } from '../contexts/AuthContext';
+import SettingsModal from './SettingsModal';
 
 // Componente de logotipo inspirado no PlayStation
 const PlayStationLogo = (props) => (
@@ -84,162 +88,229 @@ function Navbar() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const Logo = RetroPixelLogo;
   const { logout } = useAuth();
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
   };
+
+  const handleSettingsClick = () => {
+    setSettingsModalOpen(true);
+  };
+
+  const handleSettingsClose = () => {
+    setSettingsModalOpen(false);
+  };
   
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#1a1a1a', boxShadow: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-      <Toolbar sx={{ 
-        height: 64, 
-        px: { xs: 1, sm: 3 },
-        minHeight: { xs: '56px', sm: '64px' }
-      }}>
-        <Typography
-          variant="h6"
-          component={RouterLink}
-          to="/"
-          sx={{
-            flexGrow: 1,
-            textDecoration: 'none',
-            color: 'inherit',
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: { xs: '1rem', sm: '1.1rem' },
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          <Box 
+    <>
+      <AppBar 
+        position="sticky" 
+        sx={{ 
+          backgroundColor: 'rgba(26, 26, 26, 0.95)', 
+          boxShadow: 'none', 
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          top: 0,
+          zIndex: 1100,
+          backdropFilter: 'blur(10px)'
+        }}
+      >
+        <Toolbar sx={{ 
+          height: 64, 
+          px: { xs: 1, sm: 3 },
+          minHeight: { xs: '56px', sm: '64px' }
+        }}>
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/"
             sx={{
+              flexGrow: 1,
+              textDecoration: 'none',
+              color: 'inherit',
               display: 'flex',
               alignItems: 'center',
-              gap: { xs: 1, sm: 1.5 },
-              cursor: 'pointer',
-              '&:hover': {
-                '& .game-logo': {
-                  transform: 'scale(1.1)',
-                  filter: 'drop-shadow(0 0 8px rgba(0, 150, 255, 0.8))'
-                }
-              }
-            }}
-          >
-            <Logo 
-              className="game-logo"
-              sx={{ 
-                fontSize: { xs: 32, sm: 40 },
-                transition: 'all 0.3s ease',
-                filter: 'drop-shadow(0 0 4px rgba(0, 150, 255, 0.5))'
-              }} 
-            />
-            <span style={{ 
-              background: 'linear-gradient(90deg, #fff, #0096FF)', 
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 600,
-              display: isMobile ? 'none' : 'inline' // Esconder texto em mobile muito pequeno
-            }}>
-              Games Catalog
-            </span>
-          </Box>
-        </Typography>
-        
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5 } }}>
-          {/* Botão Adicionar - sempre visível mas compacto em mobile */}
-          <Button
-            variant="contained"
-            color="primary"
-            component={RouterLink}
-            to="/add"
-            startIcon={isMobile ? null : <AddIcon />}
-            sx={{ 
-              bgcolor: '#0096FF',
-              textTransform: 'none', 
+              fontSize: { xs: '1rem', sm: '1.1rem' },
               fontWeight: 500,
-              borderRadius: '6px',
-              px: { xs: 1, sm: 2 },
-              fontSize: { xs: '0.8rem', sm: '0.875rem' },
-              minWidth: { xs: '40px', sm: 'auto' },
-              '&:hover': { 
-                bgcolor: '#0077cc',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-              },
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              cursor: 'pointer',
             }}
           >
-            {isMobile ? <AddIcon fontSize="small" /> : 'Adicionar'}
-          </Button>
-
-          {/* Botão CSV - escondido em mobile */}
-          {!isMobile && (
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/csv"
-              sx={{ 
-                bgcolor: '#0096FF',
-                textTransform: 'none', 
-                fontWeight: 500,
-                borderRadius: '6px',
-                px: 2,
-                fontSize: '0.875rem',
-                '&:hover': { 
-                  bgcolor: '#0077cc',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                },
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-              }}
-              startIcon={<UploadFileIcon fontSize="small" />}
-            >
-              CSV
-            </Button>
-          )}
-
-          {/* Botão GameWrapped */}
-          <Button
-            color="inherit"
-            component={RouterLink}
-            to="/wrapped"
-            sx={{ 
-              opacity: 0.85, 
-              textTransform: 'none', 
-              fontWeight: 400,
-              fontSize: { xs: '0.8rem', sm: '0.9rem' },
-              background: 'linear-gradient(45deg, #FF6AD5 0%, #C774E8 50%, #AD8CFF 100%)',
-              color: 'white',
-              borderRadius: '6px',
-              px: { xs: 1, sm: 2 },
-              minWidth: { xs: '40px', sm: 'auto' },
-              '&:hover': { 
-                opacity: 1,
-                boxShadow: '0 2px 8px rgba(173, 140, 255, 0.5)'
-              }
-            }}
-            startIcon={isMobile ? null : <InsightsIcon fontSize="small" />}
-          >
-            {isMobile ? <InsightsIcon fontSize="small" /> : 'Wrapped'}
-          </Button>
-          
-          <Tooltip title="Sair">
-            <IconButton
-              onClick={handleLogout}
-              sx={{ 
-                ml: { xs: 0.5, sm: 2 },
-                color: 'rgba(255, 255, 255, 0.7)',
-                p: { xs: 1, sm: 1 },
-                '&:hover': { 
-                  color: '#ff5252',
-                  backgroundColor: 'rgba(255, 82, 82, 0.1)'
+            <Box 
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 1, sm: 1.5 },
+                cursor: 'pointer',
+                '&:hover': {
+                  '& .game-logo': {
+                    transform: 'scale(1.1)',
+                    filter: 'drop-shadow(0 0 8px rgba(0, 150, 255, 0.8))'
+                  }
                 }
               }}
             >
-              <LogoutIcon fontSize={isMobile ? 'small' : 'medium'} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Toolbar>
-    </AppBar>
+              <Logo 
+                className="game-logo"
+                sx={{ 
+                  fontSize: { xs: 32, sm: 40 },
+                  transition: 'all 0.3s ease',
+                  filter: 'drop-shadow(0 0 4px rgba(0, 150, 255, 0.5))'
+                }} 
+              />
+              <span style={{ 
+                background: 'linear-gradient(90deg, #fff, #0096FF)', 
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 600,
+                display: isMobile ? 'none' : 'inline' // Esconder texto em mobile muito pequeno
+              }}>
+                Games Catalog
+              </span>
+            </Box>
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.5 } }}>
+            {/* Botão Home */}
+            <Tooltip title="Início">
+              <IconButton
+                component={RouterLink}
+                to="/"
+                sx={{ 
+                  bgcolor: 'rgba(0, 150, 255, 0.1)',
+                  border: '1px solid rgba(0, 150, 255, 0.3)',
+                  color: '#0096FF',
+                  p: { xs: 1, sm: 1 },
+                  '&:hover': { 
+                    bgcolor: 'rgba(0, 150, 255, 0.2)',
+                    border: '1px solid rgba(0, 150, 255, 0.5)',
+                    color: '#ffffff'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <HomeIcon fontSize={isMobile ? 'small' : 'medium'} />
+              </IconButton>
+            </Tooltip>
+
+            {/* Botão Adicionar */}
+            <Tooltip title="Adicionar Jogo">
+              <IconButton
+                component={RouterLink}
+                to="/add"
+                sx={{ 
+                  bgcolor: 'rgba(0, 150, 255, 0.1)',
+                  border: '1px solid rgba(0, 150, 255, 0.3)',
+                  color: '#0096FF',
+                  p: { xs: 1, sm: 1 },
+                  '&:hover': { 
+                    bgcolor: 'rgba(0, 150, 255, 0.2)',
+                    border: '1px solid rgba(0, 150, 255, 0.5)',
+                    color: '#ffffff'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <AddIcon fontSize={isMobile ? 'small' : 'medium'} />
+              </IconButton>
+            </Tooltip>
+
+            {/* Botão CSV - escondido em mobile */}
+            {!isMobile && (
+              <Tooltip title="Import/Export CSV">
+                <IconButton
+                  component={RouterLink}
+                  to="/csv"
+                  sx={{ 
+                    bgcolor: 'rgba(0, 150, 255, 0.1)',
+                    border: '1px solid rgba(0, 150, 255, 0.3)',
+                    color: '#0096FF',
+                    p: 1,
+                    '&:hover': { 
+                      bgcolor: 'rgba(0, 150, 255, 0.2)',
+                      border: '1px solid rgba(0, 150, 255, 0.5)',
+                      color: '#ffffff'
+                    },
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <UploadFileIcon fontSize="medium" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {/* Botão GameWrapped */}
+            <Tooltip title="Game Wrapped">
+              <IconButton
+                component={RouterLink}
+                to="/wrapped"
+                sx={{ 
+                  background: 'linear-gradient(45deg, rgba(255, 106, 213, 0.1) 0%, rgba(199, 116, 232, 0.1) 50%, rgba(173, 140, 255, 0.1) 100%)',
+                  border: '1px solid rgba(173, 140, 255, 0.3)',
+                  color: '#AD8CFF',
+                  p: { xs: 1, sm: 1 },
+                  '&:hover': { 
+                    background: 'linear-gradient(45deg, rgba(255, 106, 213, 0.2) 0%, rgba(199, 116, 232, 0.2) 50%, rgba(173, 140, 255, 0.2) 100%)',
+                    border: '1px solid rgba(173, 140, 255, 0.5)',
+                    color: '#ffffff'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <InsightsIcon fontSize={isMobile ? 'small' : 'medium'} />
+              </IconButton>
+            </Tooltip>
+
+            {/* Botão Configurações */}
+            <Tooltip title="Configurações">
+              <IconButton
+                onClick={handleSettingsClick}
+                sx={{ 
+                  bgcolor: 'rgba(128, 128, 128, 0.1)',
+                  border: '1px solid rgba(128, 128, 128, 0.3)',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  p: { xs: 1, sm: 1 },
+                  '&:hover': { 
+                    bgcolor: 'rgba(0, 150, 255, 0.2)',
+                    border: '1px solid rgba(0, 150, 255, 0.5)',
+                    color: '#0096FF',
+                    transform: 'rotate(180deg)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <SettingsIcon fontSize={isMobile ? 'small' : 'medium'} />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Sair">
+              <IconButton
+                onClick={handleLogout}
+                sx={{ 
+                  bgcolor: 'rgba(255, 82, 82, 0.1)',
+                  border: '1px solid rgba(255, 82, 82, 0.3)',
+                  color: 'rgba(255, 82, 82, 0.8)',
+                  p: { xs: 1, sm: 1 },
+                  '&:hover': { 
+                    bgcolor: 'rgba(255, 82, 82, 0.2)',
+                    border: '1px solid rgba(255, 82, 82, 0.5)',
+                    color: '#ff5252'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <LogoutIcon fontSize={isMobile ? 'small' : 'medium'} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Modal de Configurações */}
+      <SettingsModal 
+        open={settingsModalOpen} 
+        onClose={handleSettingsClose} 
+      />
+    </>
   );
 }
 

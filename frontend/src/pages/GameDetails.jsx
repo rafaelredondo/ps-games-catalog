@@ -5,22 +5,27 @@ import {
   Paper,
   Typography,
   Box,
-  Button,
   CircularProgress,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Chip,
   Divider,
   Grid,
   Link,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
 import { Edit as EditIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { VideogameAsset as VideogameAssetIcon, Save as SaveIcon, CalendarMonth as CalendarIcon, Timer as TimerIcon, Flag as FlagIcon } from '@mui/icons-material';
+import { getMetacriticColor, getMetacriticClassification } from '../utils/metacriticUtils';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+// Componentes padronizados
+import ActionButton from '../components/ActionButton';
+import CancelButton from '../components/CancelButton';
+import NavigationButton from '../components/NavigationButton';
+import DetailsCard from '../components/DetailsCard';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 function GameDetails() {
   const { id } = useParams();
@@ -28,6 +33,8 @@ function GameDetails() {
   const { games, loading, error, deleteGame } = useGames();
   const [game, setGame] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const foundGame = games.find(g => g.id === id);
@@ -45,39 +52,10 @@ function GameDetails() {
     }
   };
 
-  const getMetacriticColor = (score) => {
-    if (!score) return '#888';
-    if (score >= 75) return '#6c3';
-    if (score >= 50) return '#fc3';
-    return '#f00';
-  };
 
-  // Função para determinar a classificação baseada no Metacritic
-  const getClassificacao = (score) => {
-    if (!score) return '❓ Desconhecido';
-    if (score >= 95) return '🏆 Obra-Prima';
-    if (score >= 85) return '🌟 Lendário';
-    if (score >= 70) return '👍 Jogável';
-    if (score >= 50) return '😐 Genérico';
-    return '🐞 Bugado';
-  };
-  
-  // Função para determinar a cor da classificação
-  const getClassificacaoColor = (score) => {
-    if (!score) return '#888';
-    if (score >= 95) return '#9c27b0'; // Roxo para Obra-Prima
-    if (score >= 85) return '#2196f3'; // Azul para Lendário
-    if (score >= 70) return '#4caf50'; // Verde para Jogável
-    if (score >= 50) return '#ff9800'; // Laranja para Genérico
-    return '#f44336'; // Vermelho para Bugado
-  };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner variant="page" />;
   }
 
   if (error) {
@@ -136,62 +114,15 @@ function GameDetails() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper 
-        elevation={3} 
-        sx={{ 
-          bgcolor: '#222', 
-          borderRadius: 2,
-          boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-          overflow: 'hidden',
-          maxWidth: { sm: '650px', md: '750px' },
-          mx: 'auto'
-        }}
+    <>
+      <DetailsCard
+        title={game.name}
+        subtitle={game.released ? `(${new Date(game.released).getFullYear()})` : ''}
+        imageUrl={game.coverUrl || 'https://via.placeholder.com/1200x500?text=No+Cover'}
+        imageAlt={game.name}
+        maxWidth="md"
+        darkTheme={true}
       >
-        {/* Área da Imagem - Ocupando toda a largura */}
-        <Box sx={{ position: 'relative', width: '100%' }}>
-          <Box
-            component="img"
-            src={game.coverUrl || 'https://via.placeholder.com/1200x500?text=No+Cover'}
-            alt={game.name}
-            sx={{
-              width: '100%',
-              height: { xs: '180px', sm: '250px' },
-              objectFit: 'cover',
-              filter: 'brightness(0.85)',
-            }}
-          />
-          
-          {/* Título sobreposto na imagem */}
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              p: 2,
-              background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%)',
-            }}
-          >
-            <Typography variant="h5" component="h1" sx={{ 
-              fontWeight: 'bold', 
-              textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              {game.name}
-              {game.released && (
-                <Typography component="span" variant="subtitle1" sx={{ 
-                  opacity: 0.8,
-                  fontWeight: 'normal'
-                }}>
-                  ({new Date(game.released).getFullYear()})
-                </Typography>
-              )}
-            </Typography>
-          </Box>
-        </Box>
         
         {/* Botões de ação e Chip Metacritic */}
         <Box 
@@ -217,9 +148,9 @@ function GameDetails() {
                   }}
                 />
                 <Chip
-                  label={getClassificacao(game.metacritic)}
-                  sx={{
-                    bgcolor: getClassificacaoColor(game.metacritic),
+                                  label={getMetacriticClassification(game.metacritic)}
+                sx={{ 
+                  bgcolor: getMetacriticColor(game.metacritic),
                     color: 'white',
                     fontWeight: 'bold',
                     height: 28,
@@ -233,24 +164,40 @@ function GameDetails() {
 
           {/* Botões */}
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              color="primary"
+            <NavigationButton
+              variant="secondary"
               onClick={() => navigate(`/edit/${id}`)}
               startIcon={<EditIcon />}
               size="small"
+              sx={isMobile ? { 
+                minWidth: 40,
+                width: 40,
+                height: 40,
+                padding: 1,
+                '& .MuiButton-startIcon': {
+                  margin: 0
+                }
+              } : {}}
             >
-              Editar
-            </Button>
-            <Button
-              variant="outlined"
-              color="error"
+              {!isMobile && 'Editar'}
+            </NavigationButton>
+            <ActionButton
+              variant="error"
               onClick={() => setDeleteDialogOpen(true)}
               startIcon={<DeleteIcon />}
               size="small"
+              sx={isMobile ? { 
+                minWidth: 40,
+                width: 40,
+                height: 40,
+                padding: 1,
+                '& .MuiButton-startIcon': {
+                  margin: 0
+                }
+              } : {}}
             >
-              Excluir
-            </Button>
+              {!isMobile && 'Excluir'}
+            </ActionButton>
           </Box>
         </Box>
 
@@ -431,39 +378,31 @@ function GameDetails() {
           justifyContent: 'center',
           borderTop: '1px solid rgba(255,255,255,0.1)'
         }}>
-          <Button
-            variant="contained"
+          <NavigationButton
+            variant="primary"
             onClick={() => navigate('/')}
             startIcon={<ArrowBackIcon />}
             size="small"
             sx={{ textTransform: 'none', fontWeight: 500 }}
           >
             Voltar para o Catálogo
-          </Button>
+          </NavigationButton>
         </Box>
-      </Paper>
+    </DetailsCard>
 
       {/* Diálogo de confirmação de exclusão */}
-      <Dialog
+      <ConfirmDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>Confirmar Exclusão</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Tem certeza que deseja excluir o jogo "{game.name}"? Esta ação não pode ser desfeita.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
-            Excluir
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+        onConfirm={handleDelete}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir o jogo "${game.name}"? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        severity="error"
+        titleId="delete-dialog-title"
+        descriptionId="delete-dialog-description"
+      />
+    </>
   );
 }
 

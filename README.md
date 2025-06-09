@@ -35,6 +35,7 @@ Este projeto agora possui **deploy automático** configurado:
 - 📊 JSON Database
 - 🔒 CORS configurado
 - ⚡ PM2 Process Manager
+- 🕷️ **Metacritic Crawler** (Novo!)
 
 ### **Infraestrutura:**
 - ☁️ AWS EC2 (Free Tier)
@@ -62,6 +63,29 @@ ps-games-catalog/
 - **🎮 Aplicação**: https://gamescatalog.net
 - **📊 GitHub Actions**: [Ver deploys automáticos](../../actions)
 - **📱 Status da App**: Online 24/7
+- **🕷️ Metacritic Crawler**: [Documentação completa](docs/metacritic-crawler.md)
+
+## 🆕 **Novidades**
+
+### 🕷️ Metacritic Crawler
+Sistema automatizado para buscar notas do Metacritic para jogos sem avaliação:
+
+```bash
+# Comandos npm (recomendado)
+npm run crawler:help    # Ver ajuda completa
+npm run crawler:dry     # Simular sem salvar no banco
+npm run crawler         # Executar crawler (10 jogos)
+
+# Ou diretamente
+node scripts/metacritic-crawler.js --max-games 5
+```
+
+**Features:**
+- ✅ Busca automática de notas no Metacritic
+- 🔍 Modo de simulação (dry-run)
+- 🌐 API REST para integração web
+- ⏰ Rate limiting respeitoso
+- 🧪 Desenvolvido com TDD
 
 ---
 
