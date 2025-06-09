@@ -1,38 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useNotification } from '../contexts/NotificationContext';
 import {
+  Container,
+  Paper,
   Typography,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Box,
   Alert,
   CircularProgress,
-  Container,
+  Chip,
+  Autocomplete,
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
-import LoadingSpinner from '../components/LoadingSpinner';
-
-// Componentes padronizados
-import ActionButton from '../components/ActionButton';
-import CancelButton from '../components/CancelButton';
-import FormCard from '../components/FormCard';
-
-// Componentes de Input padronizados
-import FormField from '../components/FormField';
-import ChipSelect from '../components/ChipSelect';
-import FilterSelect from '../components/FilterSelect';
-
-// Custom hooks otimizados
-import useDropdownOptions from '../hooks/useDropdownOptions';
 
 function EditGame() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { games, loading, error, updateGame } = useGames();
-  const { notify } = useNotification();
-  
-  // Hook otimizado para opções de dropdown
-  const { options: dropdownOptions, loading: optionsLoading } = useDropdownOptions();
-  
   const [game, setGame] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -48,10 +37,12 @@ function EditGame() {
     playTime: 0,
   });
   const [updateError, setUpdateError] = useState(null);
+  const [availablePublishers, setAvailablePublishers] = useState([]);
   const [inputPublishers, setInputPublishers] = useState([]);
 
-  // Opções locais para campos que não dependem do backend
+  const platformOptions = ["PlayStation 4", "PlayStation 5", "Nintendo Switch"];
   const mediaTypeOptions = ["Físico", "Digital"];
+  const statusOptions = ["Não iniciado", "Jogando", "Concluído", "Abandonado", "Na fila"];
 
   useEffect(() => {
     const foundGame = games.find(g => g.id === id);
@@ -79,7 +70,22 @@ function EditGame() {
     }
   }, [games, id]);
 
+  // Extrair publishers disponíveis do catálogo
+  useEffect(() => {
+    if (games && games.length > 0) {
+      const publishersSet = new Set();
 
+      games.forEach(game => {
+        if (game.publishers && Array.isArray(game.publishers)) {
+          game.publishers.forEach(publisher => {
+            publishersSet.add(publisher);
+          });
+        }
+      });
+
+      setAvailablePublishers(Array.from(publishersSet).sort());
+    }
+  }, [games]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -125,34 +131,18 @@ function EditGame() {
       console.log('Dados sendo enviados para atualização:', formData);
       console.log('Status do jogo sendo atualizado:', formData.status);
       await updateGame(id, formData);
-      
-      // Notificação de sucesso com detalhes
-      notify.success(
-        `Jogo "${formData.name}" atualizado com sucesso!`,
-        {
-          title: 'Atualização Concluída',
-          duration: 4000
-        }
-      );
-      
       navigate(`/game/${id}`);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Erro ao atualizar jogo';
-      
-      // Usar apenas notificação (sem duplicação)
-      notify.error(errorMessage, {
-        title: 'Erro na Atualização',
-        allowRetry: true,
-        retryText: 'Tentar Novamente',
-        onRetry: () => {
-          handleSubmit(event);
-        }
-      });
+      setUpdateError(err.response?.data?.message || 'Erro ao atualizar jogo');
     }
   };
 
   if (loading) {
-    return <LoadingSpinner variant="page" />;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (error) {
@@ -176,56 +166,116 @@ function EditGame() {
   }
 
   return (
-    <FormCard maxWidth="sm">
-      <Typography variant="h4" component="h1" gutterBottom>
-        Editar Jogo
-      </Typography>
+    <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Editar Jogo
+        </Typography>
 
+        {updateError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {updateError}
+          </Alert>
+        )}
 
-
-      <form onSubmit={handleSubmit}>
-          <FormField
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
             label="Nome do Jogo"
             name="name"
             value={formData.name}
             onChange={handleChange}
             required
+            margin="normal"
           />
 
-          <ChipSelect
-            value={formData.platforms}
-            onChange={handlePlatformsChange}
-            label="Plataformas"
-            options={dropdownOptions.platforms}
-            required
-          />
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Plataformas</InputLabel>
+            <Select
+              multiple
+              name="platforms"
+              value={formData.platforms}
+              onChange={handlePlatformsChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              label="Plataformas"
+            >
+              {platformOptions.map((platform) => (
+                <MenuItem key={platform} value={platform}>
+                  {platform}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <ChipSelect
-            value={formData.mediaTypes}
-            onChange={handleMediaTypesChange}
-            label="Tipos de Mídia"
-            options={mediaTypeOptions}
-            required
-          />
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel>Tipos de Mídia</InputLabel>
+            <Select
+              multiple
+              name="mediaTypes"
+              value={formData.mediaTypes}
+              onChange={handleMediaTypesChange}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip key={value} label={value} />
+                  ))}
+                </Box>
+              )}
+              label="Tipos de Mídia"
+            >
+              {mediaTypeOptions.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <FilterSelect
-            value={formData.status}
-            onChange={handleChange}
-            label="Status do Jogo"
-            name="status"
-            options={dropdownOptions.statuses}
-            allOptionValue=""
-            allOptionLabel="Nenhum"
-          />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Status do Jogo</InputLabel>
+            <Select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              label="Status do Jogo"
+            >
+              <MenuItem value="">
+                <em>Nenhum</em>
+              </MenuItem>
+              {statusOptions.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-          <ChipSelect
+          <Autocomplete
+            multiple
             freeSolo
+            options={availablePublishers}
             value={inputPublishers}
             onChange={handlePublishersChange}
-            options={dropdownOptions.publishers}
-            label="Publishers"
-            placeholder="Adicione publishers"
-            helperText="Selecione da lista ou digite um novo e pressione Enter"
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Publishers"
+                placeholder="Adicione publishers"
+                margin="normal"
+                helperText="Selecione da lista ou digite um novo e pressione Enter"
+              />
+            )}
             onBlur={() => {
               // Atualizar formData quando o campo perde o foco
               setFormData(prev => ({
@@ -235,59 +285,71 @@ function EditGame() {
             }}
           />
 
-          <FormField
+          <TextField
+            fullWidth
             label="Tempo de Jogo (horas)"
             name="playTime"
             type="number"
             value={formData.playTime || ''}
             onChange={handleChange}
+            margin="normal"
             inputProps={{ min: 0 }}
             helperText="Quanto tempo você jogou este jogo (em horas)"
           />
 
-          <FormField
+          <TextField
+            fullWidth
             label="URL da Capa"
             name="coverUrl"
             value={formData.coverUrl}
             onChange={handleChange}
+            margin="normal"
             helperText="URL da imagem da capa do jogo (opcional)"
           />
 
-          <FormField
+          <TextField
+            fullWidth
             label="Data de Lançamento"
             name="released"
             type="date"
             value={formData.released ? formData.released.substring(0, 10) : ''}
             onChange={handleChange}
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
           />
 
-          <FormField
+          <TextField
+            fullWidth
             label="Pontuação Metacritic"
             name="metacritic"
             type="number"
             value={formData.metacritic || ''}
             onChange={handleChange}
+            margin="normal"
             inputProps={{ min: 0, max: 100 }}
           />
 
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <ActionButton
-              variant="primary"
+            <Button
+              variant="contained"
+              color="primary"
               type="submit"
               fullWidth
             >
               Salvar Alterações
-            </ActionButton>
-            <CancelButton
-              variant="back"
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
               onClick={() => navigate(`/game/${id}`)}
               fullWidth
             >
               Cancelar
-            </CancelButton>
+            </Button>
           </Box>
         </form>
-    </FormCard>
+      </Paper>
+    </Container>
   );
 }
 

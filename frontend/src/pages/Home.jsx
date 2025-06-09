@@ -59,10 +59,24 @@ function Home() {
   // Contexto de configurações
   const { settings } = useSettings();
   
-  // Estados dos filtros  
+  // Estados dos filtros com debounce para busca
+  const [searchInput, setSearchInput] = useState(() => {
+    return localStorage.getItem('filter_search') || '';
+  });
   const [searchTerm, setSearchTerm] = useState(() => {
     return localStorage.getItem('filter_search') || '';
   });
+  
+  // Debounce para busca - 500ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+      localStorage.setItem('filter_search', searchInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+  
   const [platform, setPlatform] = useState(() => {
     return localStorage.getItem('filter_platform') || 'all';
   });
@@ -149,18 +163,18 @@ function Home() {
 
   // Função para detectar se há filtros ativos
   const hasActiveFilters = useMemo(() => {
-    return searchTerm !== '' || 
+    return searchInput !== '' || 
            platform !== 'all' || 
            selectedGenre !== 'all' || 
            selectedPublisher !== 'all' || 
            selectedStatus !== 'all' || 
            minMetacritic !== '';
-  }, [searchTerm, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic]);
+  }, [searchInput, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic]);
 
   // Função para determinar o tipo de empty state
   const getEmptyStateType = () => {
     if (hasActiveFilters) {
-      return searchTerm !== '' ? 'search' : 'filter';
+      return searchInput !== '' ? 'search' : 'filter';
     }
     return 'catalog';
   };
@@ -355,8 +369,7 @@ function Home() {
 
   const handleSearch = useCallback((event) => {
     const value = event.target.value;
-    setSearchTerm(value);
-    localStorage.setItem('filter_search', value);
+    setSearchInput(value);
   }, []);
 
   const handleMinMetacriticChange = useCallback((event) => {
@@ -413,7 +426,7 @@ function Home() {
   const handleClearFilters = useCallback(() => {
     // Redefine todos os estados para valores padrão
     setPlatform('all');
-    setSearchTerm('');
+    setSearchInput('');
     setMinMetacritic('');
     setSelectedGenre('all');
     setSelectedPublisher('all');
@@ -794,7 +807,7 @@ function Home() {
         {/* Search - Prioridade máxima em mobile */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <SearchInput
-            value={searchTerm}
+            value={searchInput}
             onChange={handleSearch}
             label="Buscar por nome"
           />

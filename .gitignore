@@ -53,6 +53,7 @@ pids/
 # 💻 IDEs E EDITORES
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 *~
