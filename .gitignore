@@ -96,6 +96,12 @@ script/
 secrets.json
 config/local.json
 
+# 🔐 CONFIGURAÇÕES E SCRIPTS DE PRODUÇÃO
+scripts/production-config.sh
+scripts/download-production-db.sh
+production-config.sh
+*.example
+
 # 📊 ARQUIVOS DE ANÁLISE
 *.tgz
 *.tar.gz
