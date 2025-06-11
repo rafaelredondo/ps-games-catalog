@@ -28,19 +28,16 @@ USO:
   node scripts/howlongtobeat-crawler.js [opções]
 
 OPÇÕES:
-  --max-games <número>    Máximo de jogos para processar por execução (padrão: 10)
-  --dry-run              Apenas simula o processo, não salva no banco de dados
-  --help                 Mostra esta mensagem de ajuda
+  --max-games <número>    Máximo de jogos para processar por execução (padrão: 400)
+  --dry-run               Executa sem modificar o banco de dados (apenas visualização)
+  --help                  Exibe esta mensagem de ajuda
+  --clear-cooldown        Remove cooldown de todos os jogos (permite reprocessar tudo)
 
 EXEMPLOS:
-  # Processar até 5 jogos
-  node scripts/howlongtobeat-crawler.js --max-games 5
-
-  # Simular o processo sem salvar
+  node scripts/howlongtobeat-crawler.js
+  node scripts/howlongtobeat-crawler.js --max-games 50
   node scripts/howlongtobeat-crawler.js --dry-run
-
-  # Processar até 20 jogos
-  node scripts/howlongtobeat-crawler.js --max-games 20
+  node scripts/howlongtobeat-crawler.js --clear-cooldown
 
 IMPORTANTE:
   - O script adiciona um delay de 3 segundos entre requisições para ser respeitoso
@@ -60,9 +57,10 @@ DICAS:
 function parseArguments() {
   const args = process.argv.slice(2);
   const options = {
-    maxGames: 10,
+    maxGames: 400,
     dryRun: false,
-    help: false
+    help: false,
+    clearCooldown: false
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -91,6 +89,10 @@ function parseArguments() {
       case '--help':
       case '-h':
         options.help = true;
+        break;
+        
+      case '--clear-cooldown':
+        options.clearCooldown = true;
         break;
         
       default:
@@ -126,6 +128,7 @@ async function main() {
     console.log('📊 Configuração:');
     console.log(`   Máximo de jogos: ${options.maxGames}`);
     console.log(`   Dry Run: ${options.dryRun ? 'Sim' : 'Não'}`);
+    console.log(`   Clear Cooldown: ${options.clearCooldown ? 'Sim' : 'Não'}`);
     console.log('');
 
     // Inicializar crawler
@@ -159,7 +162,8 @@ async function main() {
     // Executar crawler
     const result = await crawler.crawlAndUpdatePlayTimes({
       maxGames: options.maxGames,
-      dryRun: options.dryRun
+      dryRun: options.dryRun,
+      clearCooldown: options.clearCooldown
     });
 
     // Exibir resultados finais

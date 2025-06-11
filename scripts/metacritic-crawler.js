@@ -10,7 +10,7 @@ import { gamesDb } from '../backend/src/db/database.js';
  * node scripts/metacritic-crawler.js [opções]
  * 
  * Opções:
- * --max-games <número>  : Máximo de jogos para processar (padrão: 10)
+ * --max-games <número>  : Máximo de jogos para processar (padrão: todos)
  * --dry-run            : Apenas simula, não salva no banco
  * --help               : Mostra esta ajuda
  */
@@ -27,7 +27,7 @@ USO:
   node scripts/metacritic-crawler.js [opções]
 
 OPÇÕES:
-  --max-games <número>    Máximo de jogos para processar por execução (padrão: 10)
+  --max-games <número>    Máximo de jogos para processar por execução (padrão: 400)
   --dry-run              Apenas simula o processo, não salva no banco de dados
   --help                 Mostra esta mensagem de ajuda
 
@@ -58,7 +58,7 @@ DICAS:
 function parseArguments() {
   const args = process.argv.slice(2);
   const options = {
-    maxGames: 10,
+    maxGames: 400,
     dryRun: false,
     help: false
   };
@@ -160,20 +160,13 @@ async function main() {
       dryRun: options.dryRun
     });
 
-    // Exibir resultados finais
+    // Resumo final simplificado
     console.log('\n' + '='.repeat(50));
     console.log('📊 RESUMO FINAL');
     console.log('='.repeat(50));
     console.log(`✅ Jogos processados: ${result.processed}`);
     console.log(`🔄 Jogos atualizados: ${result.updated}`);
     console.log(`❌ Jogos falharam: ${result.failed}`);
-    
-    if (result.errors.length > 0) {
-      console.log('\n⚠️ Erros encontrados:');
-      result.errors.forEach((error, index) => {
-        console.log(`   ${index + 1}. ${error}`);
-      });
-    }
 
     // Taxa de sucesso
     const successRate = result.processed > 0 ? (result.updated / result.processed * 100).toFixed(1) : 0;

@@ -335,6 +335,38 @@ describe('🚀 API Paginação - TDD Baby Steps', () => {
       }
     });
 
+    test('should sort games by playTime in ascending order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=playTime&order=asc')
+        .expect(200);
+
+      const games = response.body.games;
+      const gamesWithPlayTime = games.filter(game => game.playTime != null && game.playTime > 0);
+      
+      if (gamesWithPlayTime.length > 1) {
+        // Verificar se está ordenado por playTime (menor para maior)
+        for (let i = 1; i < gamesWithPlayTime.length; i++) {
+          expect(gamesWithPlayTime[i].playTime).toBeGreaterThanOrEqual(gamesWithPlayTime[i-1].playTime);
+        }
+      }
+    });
+
+    test('should sort games by playTime in descending order', async () => {
+      const response = await request(app)
+        .get('/api/games?page=1&limit=10&orderBy=playTime&order=desc')
+        .expect(200);
+
+      const games = response.body.games;
+      const gamesWithPlayTime = games.filter(game => game.playTime != null && game.playTime > 0);
+      
+      if (gamesWithPlayTime.length > 1) {
+        // Verificar se está ordenado por playTime (maior para menor)
+        for (let i = 1; i < gamesWithPlayTime.length; i++) {
+          expect(gamesWithPlayTime[i].playTime).toBeLessThanOrEqual(gamesWithPlayTime[i-1].playTime);
+        }
+      }
+    });
+
     test('should combine sorting with filtering and pagination', async () => {
       const response = await request(app)
         .get('/api/games?page=1&limit=5&search=a&orderBy=metacritic&order=desc')

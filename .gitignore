@@ -77,7 +77,14 @@ tmp/
 temp/
 script/
 
+# 🧪 DESENVOLVIMENTO E DEBUG
+backend/experiments/
+backend/debug/
+experiments/
+debug/
+
 # 🔄 BACKUP E ARQUIVOS TEMPORÁRIOS
+backups/
 *.bak
 *.backup
 *.tmp
@@ -97,6 +104,7 @@ secrets.json
 config/local.json
 
 # 🔐 CONFIGURAÇÕES E SCRIPTS DE PRODUÇÃO
+scripts/
 scripts/production-config.sh
 scripts/download-production-db.sh
 production-config.sh

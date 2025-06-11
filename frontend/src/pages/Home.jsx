@@ -238,6 +238,26 @@ function Home() {
       render: (game) => game.released ? new Date(game.released).getFullYear() : ''
     },
     {
+      id: 'playTime',
+      label: 'Tempo de Jogo',
+      sortable: true,
+      align: 'center',
+      hideOnMobile: true,
+      render: (game) => {
+        if (!game.playTime) return '';
+        
+        // Se o tempo está em horas (número), formatar adequadamente
+        if (typeof game.playTime === 'number') {
+          return game.playTime >= 1 
+            ? `${game.playTime}h`
+            : `${Math.round(game.playTime * 60)}min`;
+        }
+        
+        // Se já é uma string formatada, retornar como está
+        return game.playTime;
+      }
+    },
+    {
       id: 'metacritic',
       label: 'Metacritic',
       sortable: true,

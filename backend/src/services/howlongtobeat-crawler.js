@@ -1,33 +1,147 @@
-import axios from 'axios';
+import puppeteer from 'puppeteer';
 import { gamesDb } from '../db/database.js';
 
 /**
- * HowLongToBeat Crawler Service
+ * HowLongToBeat Crawler Service com Puppeteer
  * 
- * Busca automaticamente tempos de jogo do HowLongToBeat para jogos que não possuem playTime
+ * Busca automaticamente tempos de jogo do HowLongToBeat usando automação de browser
  */
 export class HowLongToBeatCrawler {
   constructor() {
-    this.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-    this.delay = 3000; // 3 segundos entre requisições para ser respeitoso
+    this.delay = 3000; // 3 segundos entre buscas para ser respeitoso
     this.baseUrl = 'https://howlongtobeat.com';
+    this.browser = null;
+    this.page = null;
   }
 
   /**
-   * Busca jogos no banco que não possuem tempo de jogo
-   * @returns {Promise<Array>} Array de jogos sem playTime
+   * Inicializa o browser Puppeteer
+   */
+  async initBrowser() {
+    if (!this.browser) {
+      console.log('🚀 Iniciando browser...');
+      this.browser = await puppeteer.launch({
+        headless: true, // Usar headless para produção
+        defaultViewport: { width: 1280, height: 720 },
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
+      });
+      this.page = await this.browser.newPage();
+      
+      // Configurar User-Agent
+      await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+      
+      console.log('✅ Browser iniciado com sucesso');
+    }
+  }
+
+  /**
+   * Fecha o browser Puppeteer
+   */
+  async closeBrowser() {
+    if (this.browser) {
+      console.log('🔒 Fechando browser...');
+      await this.browser.close();
+      this.browser = null;
+      this.page = null;
+    }
+  }
+
+  /**
+   * Busca jogos sem tempo de jogo e que não estão em cooldown
+   * @returns {Promise<Array>} Lista de jogos para processar
    */
   async findGamesWithoutPlayTime() {
     try {
       const allGames = await gamesDb.getAll();
-      return allGames.filter(game => 
+      const gamesWithoutPlayTime = allGames.filter(game => 
         game.playTime === null || 
         game.playTime === undefined || 
         game.playTime === 0
       );
+      
+      // Filtrar jogos que não estão em cooldown
+      const availableGames = gamesWithoutPlayTime.filter(game => !this.isGameInCooldown(game));
+      
+      console.log(`📊 Estatísticas:`);
+      console.log(`   • Jogos sem tempo: ${gamesWithoutPlayTime.length}`);
+      console.log(`   • Em cooldown: ${gamesWithoutPlayTime.length - availableGames.length}`);
+      console.log(`   • Disponíveis para processar: ${availableGames.length}`);
+      
+      return availableGames;
     } catch (error) {
       console.error('Erro ao buscar jogos sem tempo de jogo:', error);
       throw error;
+    }
+  }
+  
+  /**
+   * Verifica se um jogo está em cooldown (teve 1 tentativa falhada recente)
+   * @param {Object} game - Objeto do jogo
+   * @returns {boolean} True se está em cooldown
+   */
+  isGameInCooldown(game) {
+    // Se não tem contadores, não está em cooldown
+    if (!game.playTimeAttemptCount || !game.playTimeLastAttempt) {
+      return false;
+    }
+    
+    // Se já tentou 1 vez (máximo permitido), está em cooldown
+    if (game.playTimeAttemptCount >= 1) {
+      const lastAttempt = new Date(game.playTimeLastAttempt);
+      const now = new Date();
+      const daysSinceLastAttempt = (now - lastAttempt) / (1000 * 60 * 60 * 24);
+      
+      // Cooldown de 7 dias após 1 tentativa falhada
+      if (daysSinceLastAttempt < 7) {
+        console.log(`⏸️ Jogo "${game.name}" em cooldown (${Math.ceil(7 - daysSinceLastAttempt)} dias restantes)`);
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Atualiza contador de tentativas no banco
+   * @param {number} gameId - ID do jogo
+   * @param {boolean} success - Se a busca foi bem-sucedida
+   */
+  async updateAttemptCounter(gameId, success) {
+    try {
+      const game = await gamesDb.getById(gameId);
+      if (!game) return false;
+      
+      const now = new Date().toISOString();
+      
+      if (success) {
+        // Se encontrou, limpar contadores de falha
+        await gamesDb.update(gameId, {
+          playTimeLastAttempt: now,
+          playTimeAttemptCount: 0
+        });
+        console.log(`✅ Contadores de tentativa limpos para "${game.name}"`);
+      } else {
+        // Se falhou, incrementar contador
+        const newAttemptCount = (game.playTimeAttemptCount || 0) + 1;
+        await gamesDb.update(gameId, {
+          playTimeLastAttempt: now,
+          playTimeAttemptCount: newAttemptCount
+        });
+        console.log(`❌ Tentativa ${newAttemptCount} registrada para "${game.name}" (entrará em cooldown de 7 dias)`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao atualizar contador de tentativas:', error);
+      return false;
     }
   }
 
@@ -38,20 +152,25 @@ export class HowLongToBeatCrawler {
    */
   async searchGamePlayTime(gameName) {
     try {
-      // Tentar diferentes estratégias de busca
-      const strategies = [
-        () => this.searchByDirectURL(gameName),
-        () => this.searchBySearchAPI(gameName),
-        () => this.searchWithVariations(gameName)
-      ];
-
-      for (const strategy of strategies) {
-        const playTime = await strategy();
+      await this.initBrowser();
+      
+      // Estratégia: gerar variações do nome e tentar cada uma
+      const originalYear = this.extractYearFromGameName(gameName);
+      const searchVariations = this.generateSearchVariations(gameName, originalYear);
+      
+      console.log(`🔍 Buscando "${gameName}" - ${searchVariations.length} variações para testar`);
+      
+      for (const searchTerm of searchVariations) {
+        console.log(`\n🎯 Testando variação: "${searchTerm}"`);
+        
+        const playTime = await this.searchWithPuppeteer(searchTerm, originalYear);
         if (playTime !== null) {
+          console.log(`✅ Encontrado! Tempo: ${playTime}h para "${searchTerm}"`);
           return playTime;
         }
       }
 
+      console.log(`❌ Nenhuma variação de "${gameName}" encontrada`);
       return null;
     } catch (error) {
       console.error(`❌ Erro ao buscar "${gameName}" no HowLongToBeat:`, error.message);
@@ -60,607 +179,737 @@ export class HowLongToBeatCrawler {
   }
 
   /**
-   * Busca por URL direta (método principal)
+   * Busca usando Puppeteer - simula digitação real
+   * @param {string} searchTerm - Termo de busca
+   * @param {string|null} preferredYear - Ano preferido para priorizar
+   * @returns {Promise<number|null>} Tempo em horas ou null
    */
-  async searchByDirectURL(gameName) {
+  async searchWithPuppeteer(searchTerm, preferredYear = null) {
     try {
-      // Sanitizar nome para URL do HowLongToBeat
-      const urlName = gameName
-        .toLowerCase()
-        .replace(/[™®]/g, '')
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+      console.log(`🌐 Navegando para ${this.baseUrl}...`);
+      await this.page.goto(this.baseUrl, { waitUntil: 'networkidle2', timeout: 30000 });
       
-      const directUrl = `${this.baseUrl}/game/${urlName}`;
+      // Fechar pop-up de privacidade se aparecer
+      await this.closePivacyPopup();
       
-      const config = {
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Cache-Control': 'max-age=0',
-          'DNT': '1'
-        },
-        timeout: 15000,
-        maxRedirects: 5
-      };
-
-      console.log(`🔍 Buscando "${gameName}" no HowLongToBeat...`);
-      console.log(`🌐 URL: ${directUrl}`);
+      // Encontrar caixa de busca
+      const searchSelector = 'input[placeholder*="Search"], input[name*="search"], input[type="search"], .search_box input';
+      await this.page.waitForSelector(searchSelector, { timeout: 10000 });
       
-      const response = await axios.get(directUrl, config);
-      const html = response.data;
+      console.log(`⌨️ Digitando "${searchTerm}" na caixa de busca...`);
       
-      console.log(`📊 Response Status: ${response.status}`);
-      console.log(`📊 Response Size: ${html.length} chars`);
+      // Limpar e digitar na caixa de busca
+      await this.page.click(searchSelector);
+      await this.page.keyboard.down('Control');
+      await this.page.keyboard.press('KeyA');
+      await this.page.keyboard.up('Control');
+      await this.page.type(searchSelector, searchTerm);
       
-      return this.extractPlayTimeFromHTML(html, gameName);
-
-    } catch (error) {
-      console.log(`❌ Erro na requisição direta para "${gameName}":`, error.message);
+      // PRESSIONAR ENTER para submeter a busca
+      console.log('🔍 Pressionando Enter para submeter a busca...');
+      await this.page.keyboard.press('Enter');
       
-      if (error.response?.status === 404) {
-        console.log(`❌ Página não encontrada para "${gameName}"`);
+      // Aguardar navegação para página de resultados
+      await this.page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 });
+      console.log('✅ Navegação para página de resultados concluída');
+      
+      // Aguardar resultados aparecerem
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Garantir que estamos na aba "Games"
+      await this.ensureGamesTab();
+      
+      // Aguardar mais um pouco para carregar os resultados da aba Games
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      
+      // Extrair jogos diretamente da página de resultados (não precisamos navegar)
+      const gamesData = await this.extractGamesFromSearchResults();
+      
+      if (gamesData.length === 0) {
+        console.log(`❌ Nenhum resultado encontrado para "${searchTerm}"`);
+        return null;
       }
       
+      console.log(`🔗 Encontrados ${gamesData.length} resultados, testando até 5...`);
+      
+      // Testar até 5 resultados
+      const maxTests = Math.min(gamesData.length, 5);
+      const candidateGames = [];
+      
+      for (let i = 0; i < maxTests; i++) {
+        const gameData = gamesData[i];
+        console.log(`🎮 Testando jogo ${i + 1}/${maxTests}: "${gameData.title}"`);
+        
+        try {
+          console.log(`📖 Título encontrado: "${gameData.title}"`);
+          
+          // Verificar se é um match válido
+          if (this.isGameNameMatch(searchTerm, gameData.title)) {
+            console.log(`✅ Match confirmado!`);
+            
+            // Extrair ano do título encontrado
+            const foundYearMatch = gameData.title.match(/\((\d{4})\)/);
+            const foundYear = foundYearMatch ? foundYearMatch[1] : null;
+            
+            if (gameData.mainStoryTime !== null) {
+              candidateGames.push({
+                title: gameData.title,
+                year: foundYear,
+                playTime: gameData.mainStoryTime,
+                isPreferredYear: preferredYear && foundYear === preferredYear
+              });
+              
+              console.log(`⏱️ Tempo encontrado: ${gameData.mainStoryTime}h para "${gameData.title}" (${foundYear || 'ano não identificado'})`);
+              
+              // Se é o ano preferido, retornar imediatamente
+              if (preferredYear && foundYear === preferredYear) {
+                console.log(`🎯 Encontrado jogo do ano preferido ${preferredYear}!`);
+                return gameData.mainStoryTime;
+              }
+            }
+          } else {
+            console.log(`❌ Não é o jogo procurado. Buscando: "${searchTerm}" vs Encontrado: "${gameData.title}"`);
+          }
+        } catch (error) {
+          console.log(`❌ Erro ao processar jogo:`, error.message);
+        }
+      }
+      
+      // Se encontrou candidatos mas nenhum do ano preferido, retornar o primeiro
+      if (candidateGames.length > 0) {
+        const bestCandidate = candidateGames[0];
+        console.log(`🏆 Melhor candidato: "${bestCandidate.title}" - ${bestCandidate.playTime}h`);
+        return bestCandidate.playTime;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`❌ Erro na busca com Puppeteer:`, error.message);
       return null;
     }
   }
 
   /**
-   * Busca usando a página de busca HTML do HowLongToBeat
+   * Garante que estamos na aba "Games"
    */
-  async searchBySearchAPI(gameName) {
+  async ensureGamesTab() {
     try {
-      // Usar a página de busca HTML em vez da API que está sendo bloqueada
-      const searchUrl = `${this.baseUrl}/?q=${encodeURIComponent(gameName)}`;
+      // Procurar pelo botão da aba Games
+      const gamesTabSelector = 'button.SearchOptions_search_tab__iDtf_';
+      const gamesTabElements = await this.page.$$(gamesTabSelector);
       
-      const config = {
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1',
-          'Cache-Control': 'max-age=0',
-          'DNT': '1'
-        },
-        timeout: 15000
-      };
+      for (const element of gamesTabElements) {
+        const text = await element.evaluate(el => el.textContent.trim());
+        if (text === 'Games') {
+          console.log('🎯 Clicando na aba "Games"...');
+          await element.click();
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return;
+        }
+      }
+      
+      console.log('ℹ️ Aba "Games" não encontrada ou já ativa');
+    } catch (error) {
+      console.log('❌ Erro ao tentar clicar na aba Games:', error.message);
+    }
+  }
 
-      console.log(`🔍 Buscando "${gameName}" na página de busca...`);
-      const response = await axios.get(searchUrl, config);
-      
-      // Procurar links para jogos nos resultados
-      const gameLinks = this.extractGameLinksFromSearchHTML(response.data);
-      
-      if (gameLinks.length > 0) {
-        // Tentar múltiplos resultados até encontrar um match válido
-        for (let i = 0; i < Math.min(gameLinks.length, 3); i++) {
-          const gameUrl = `${this.baseUrl}${gameLinks[i]}`;
-          console.log(`🔗 Tentando jogo ${i + 1}/${gameLinks.length}: ${gameUrl}`);
-          
-          const gameResponse = await axios.get(gameUrl, config);
-          const gameTitle = this.extractGameTitleFromHTML(gameResponse.data);
-          
-          if (gameTitle) {
-            console.log(`📖 Título encontrado: "${gameTitle}"`);
-            
-            // Verificar se é realmente o jogo que procuramos
-            if (this.isGameNameMatch(gameName, gameTitle)) {
-              console.log(`✅ Match confirmado! Extraindo tempo...`);
-              return this.extractPlayTimeFromHTML(gameResponse.data, gameName);
-            } else {
-              console.log(`❌ Não é o jogo procurado. Buscando: "${gameName}" vs Encontrado: "${gameTitle}"`);
-            }
-          }
-          
-          // Delay entre tentativas
-          if (i < gameLinks.length - 1) {
-            await this.sleep(1000); // 1 segundo entre tentativas
-          }
+  /**
+   * Extrai jogos diretamente da página de resultados
+   * @returns {Promise<Array>} Array de objetos com dados dos jogos
+   */
+  async extractGamesFromSearchResults() {
+    try {
+      const gamesData = await this.page.evaluate(() => {
+        const games = [];
+        
+        // Procurar especificamente dentro do container de resultados
+        const searchResultsContainer = document.querySelector('#search-results-header');
+        if (!searchResultsContainer) {
+          console.log('❌ Container #search-results-header não encontrado');
+          return [];
         }
         
-        console.log(`❌ Nenhum dos ${Math.min(gameLinks.length, 3)} resultados corresponde a "${gameName}"`);
-      }
-
-      return null;
-    } catch (error) {
-      console.log(`❌ Erro na busca via página para "${gameName}":`, error.message);
-      return null;
-    }
-  }
-
-  /**
-   * Busca usando variações do nome
-   */
-  async searchWithVariations(gameName) {
-    try {
-      const variations = [
-        gameName.replace(/[™®]/g, '').trim(),
-        gameName.replace(/\s*:\s*/g, ' ').replace(/[™®]/g, '').trim(),
-        gameName.replace(/remastered/i, '').trim(),
-        gameName.replace(/edition/i, '').trim(),
-        gameName.replace(/\s+/g, ' ').trim()
-      ];
-
-      for (const variation of variations) {
-        if (variation !== gameName && variation.length > 3) {
-          console.log(`🔄 Tentando variação: "${variation}"`);
-          const result = await this.searchBySearchAPI(variation);
-          if (result !== null) {
-            return result;
-          }
+        console.log('✅ Container #search-results-header encontrado');
+        
+        // Verificar se existe o título "We Found X games"
+        const titleElement = searchResultsContainer.querySelector('.SearchOptions_search_title__83U9o');
+        if (titleElement) {
+          console.log(`📊 Título encontrado: "${titleElement.textContent}"`);
         }
-      }
-
-      return null;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  /**
-   * Extrai links de jogos da página de busca HTML
-   */
-  extractGameLinksFromSearchHTML(html) {
-    try {
-      const links = [];
+        
+        // Procurar por elementos de jogos APENAS dentro do container correto
+        const gameElements = searchResultsContainer.querySelectorAll('li.GameCard_search_list__IuMbi');
+        console.log(`🔍 Encontrados ${gameElements.length} elementos de jogos no container correto`);
+        
+        gameElements.forEach(gameElement => {
+          try {
+            // Extrair título e link
+            const titleElement = gameElement.querySelector('h2 a');
+            if (!titleElement) return;
+            
+            const title = titleElement.textContent.trim();
+            const href = titleElement.getAttribute('href');
+            
+            // Extrair ano se presente
+            const yearElement = gameElement.querySelector('h2');
+            const fullTitle = yearElement ? yearElement.textContent.trim() : title;
+            
+            // Extrair tempo de "Main Story"
+            let mainStoryTime = null;
+            const tidbits = gameElement.querySelectorAll('.GameCard_search_list_tidbit__0r_OP');
+            
+            for (let i = 0; i < tidbits.length - 1; i++) {
+              const labelElement = tidbits[i];
+              const valueElement = tidbits[i + 1];
+              
+              if (labelElement && labelElement.textContent.includes('Main Story')) {
+                const timeText = valueElement ? valueElement.textContent.trim() : '';
+                if (timeText && timeText !== '--') {
+                  // Converter tempo para número
+                  const timeMatch = timeText.match(/(\d+(?:\.\d+)?(?:½)?)\s*Hours?/i);
+                  if (timeMatch) {
+                    let hours = parseFloat(timeMatch[1]);
+                    if (timeText.includes('½')) {
+                      hours += 0.5;
+                    }
+                    mainStoryTime = hours;
+                  }
+                }
+                break;
+              }
+            }
+            
+            if (title) {
+              games.push({
+                title: fullTitle,
+                href: href,
+                mainStoryTime: mainStoryTime
+              });
+            }
+          } catch (error) {
+            console.log('Erro ao processar elemento do jogo:', error);
+          }
+        });
+        
+        return games;
+      });
       
-      // Procurar por links para páginas de jogos
-      const linkPatterns = [
-        /href="(\/game\/[^"]+)"/g,
-        /href="(\/game\?id=\d+)"/g
-      ];
-
-      for (const pattern of linkPatterns) {
-        let match;
-        while ((match = pattern.exec(html)) !== null) {
-          const link = match[1];
-          if (!links.includes(link)) {
-            links.push(link);
-          }
-        }
+      console.log(`📊 Extraídos ${gamesData.length} jogos da página de resultados`);
+      
+      // Debug: mostrar os primeiros jogos encontrados
+      if (gamesData.length > 0) {
+        console.log('🎮 Primeiros jogos encontrados:');
+        gamesData.slice(0, 3).forEach((game, i) => {
+          console.log(`  ${i + 1}. "${game.title}" - ${game.mainStoryTime || 'sem tempo'}h`);
+        });
       }
-
-      console.log(`🔗 Encontrados ${links.length} links de jogos`);
-      return links.slice(0, 5); // Máximo 5 resultados
+      
+      return gamesData;
     } catch (error) {
-      console.error('Erro ao extrair links da busca:', error);
+      console.error('Erro ao extrair jogos da página de resultados:', error.message);
       return [];
     }
   }
 
   /**
-   * Extrai o título do jogo da página HTML
+   * Fecha pop-up de privacidade se aparecer
    */
-  extractGameTitleFromHTML(html) {
+  async closePivacyPopup() {
     try {
-      // Padrões para extrair o título do jogo
-      const titlePatterns = [
-        // Título na tag title
-        /<title[^>]*>([^<]+)/i,
-        
-        // Título em h1
-        /<h1[^>]*>([^<]+)<\/h1>/i,
-        
-        // Título em elementos específicos do HowLongToBeat
-        /<div[^>]*class="[^"]*GameHeader_profile_header[^"]*"[^>]*>[\s\S]*?<h1[^>]*>([^<]+)<\/h1>/i,
-        /<div[^>]*class="[^"]*profile_header[^"]*"[^>]*>[\s\S]*?<h1[^>]*>([^<]+)<\/h1>/i,
-        
-        // Fallback para outras estruturas
-        /<h2[^>]*>([^<]+)<\/h2>/i
+      // Aguardar um pouco para o pop-up aparecer
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Seletores possíveis para o botão de fechar
+      const closeSelectors = [
+        '[data-testid="close-tour"]',
+        '.tour-close',
+        '.close-tour',
+        '.privacy-close',
+        '.modal-close',
+        'button[aria-label*="close"]',
+        'button[aria-label*="Close"]',
+        '.close-btn',
+        '[class*="close"]'
       ];
-
-      for (const pattern of titlePatterns) {
-        const match = html.match(pattern);
-        if (match && match[1]) {
-          let title = match[1].trim();
-          
-          // Limpar título
-          title = title.replace(/\s*\|\s*HowLongToBeat/i, '');
-          title = title.replace(/^\s*HowLongToBeat\s*[\|\-]\s*/i, '');
-          title = title.trim();
-          
-          if (title.length > 2) {
-            return title;
+      
+      for (const selector of closeSelectors) {
+        try {
+          const element = await this.page.$(selector);
+          if (element) {
+            console.log(`🔒 Fechando pop-up com seletor: ${selector}`);
+            await element.click();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return;
           }
+        } catch (error) {
+          // Continuar tentando outros seletores
         }
       }
-
-      return null;
+      
+      console.log('ℹ️ Nenhum pop-up de privacidade encontrado');
     } catch (error) {
-      console.error('Erro ao extrair título:', error);
+      console.log('❌ Erro ao tentar fechar pop-up:', error.message);
+    }
+  }
+
+  /**
+   * Extrai links de jogos da página de resultados
+   * @returns {Promise<Array<string>>} Array de URLs de jogos
+   */
+  async extractGameLinksFromPage() {
+    try {
+      const gameLinks = await this.page.evaluate(() => {
+        const links = [];
+        
+        // Procurar por links que levam a páginas de jogos
+        const linkElements = document.querySelectorAll('a[href*="/game/"]');
+        
+        linkElements.forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && href.includes('/game/') && !links.includes(href)) {
+            links.push(href.startsWith('http') ? href : `https://howlongtobeat.com${href}`);
+          }
+        });
+        
+        return links;
+      });
+      
+      return gameLinks;
+    } catch (error) {
+      console.error('Erro ao extrair links de jogos:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Extrai o título do jogo da página atual
+   * @returns {Promise<string|null>} Título do jogo ou null
+   */
+  async extractGameTitleFromPage() {
+    try {
+      const title = await this.page.evaluate(() => {
+        // Procurar por seletores comuns de título
+        const selectors = [
+          'h1',
+          '.game_title',
+          '.GameHeader_profile_header__c_h_L h1',
+          '[class*="title"]',
+          '[class*="Title"]'
+        ];
+        
+        for (const selector of selectors) {
+          const element = document.querySelector(selector);
+          if (element && element.textContent) {
+            return element.textContent.trim();
+          }
+        }
+        
+        // Fallback: título da página
+        return document.title.replace(/- HowLongToBeat/g, '').trim();
+      });
+      
+      return title || null;
+    } catch (error) {
+      console.error('Erro ao extrair título do jogo:', error.message);
       return null;
     }
   }
 
   /**
-   * Verifica se o nome do jogo encontrado é um match válido
+   * Extrai tempo de jogo da página atual
+   * @param {string} gameName - Nome do jogo para logs
+   * @returns {Promise<number|null>} Tempo em horas ou null
+   */
+  async extractPlayTimeFromPage(gameName) {
+    try {
+      const playTime = await this.page.evaluate(() => {
+        // Procurar por elementos que contenham tempo de jogo
+        const timeElements = document.querySelectorAll('*');
+        
+        for (const element of timeElements) {
+          const text = element.textContent;
+          if (!text) continue;
+          
+          // Procurar por padrões de tempo
+          const timePatterns = [
+            /(\d+(?:\.\d+)?)\s*(?:½|hours?|hrs?|h)\b/i,
+            /(\d+)\s*(?:½|hours?|hrs?|h)\s*(\d+)\s*(?:minutes?|mins?|m)\b/i,
+            /(\d+(?:\.\d+)?)\s*(?:½)?\s*Hours?/i
+          ];
+          
+          for (const pattern of timePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+              let hours = parseFloat(match[1]);
+              
+              // Se tem ½, adicionar 0.5
+              if (text.includes('½')) {
+                hours += 0.5;
+              }
+              
+              // Se tem minutos, converter e adicionar
+              if (match[2]) {
+                hours += parseFloat(match[2]) / 60;
+              }
+              
+              if (hours > 0 && hours < 1000) { // Sanity check
+                return hours;
+              }
+            }
+          }
+        }
+        
+        return null;
+      });
+      
+      return playTime;
+    } catch (error) {
+      console.error('Erro ao extrair tempo de jogo:', error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Extrai ano do nome do jogo
+   * @param {string} gameName - Nome do jogo
+   * @returns {string|null} Ano extraído ou null
+   */
+  extractYearFromGameName(gameName) {
+    const yearMatch = gameName.match(/\((\d{4})\)/);
+    return yearMatch ? yearMatch[1] : null;
+  }
+
+  /**
+   * Gera variações do nome para busca progressiva
+   * @param {string} gameName - Nome original do jogo
+   * @param {string|null} originalYear - Ano extraído do nome original
+   * @returns {Array<string>} Array de variações para testar
+   */
+  generateSearchVariations(gameName, originalYear) {
+    const variations = [];
+    
+    // 1. Nome limpo sem símbolos (prioridade máxima)
+    const cleanName = gameName.replace(/[™®]/g, '').trim();
+    variations.push(cleanName);
+    
+    // 2. Nome original apenas se for diferente do limpo
+    if (cleanName !== gameName) {
+      variations.push(gameName);
+    }
+    
+    // 3. Remove ano entre parênteses se houver
+    if (originalYear) {
+      const withoutYear = cleanName.replace(/\s*\(\d{4}\)\s*/g, '').trim();
+      if (withoutYear !== cleanName && withoutYear.length > 3) {
+        variations.push(withoutYear);
+        console.log(`📅 Detectado ano ${originalYear}, buscando sem ano: "${withoutYear}"`);
+      }
+    }
+    
+    // 4. Remove edições conhecidas
+    const editionPatterns = [
+      /\s*-?\s*(definitive|complete|goty|game\s+of\s+the\s+year|deluxe|ultimate|special|collector's?|limited|enhanced|remastered|director's?\s+cut|anniversary|\d+th\s+anniversary)\s+edition\s*/gi,
+      /\s*-?\s*(definitive|complete|goty|deluxe|ultimate|special|enhanced|remastered|anniversary|\d+th\s+anniversary)\s*/gi
+    ];
+    
+    for (const pattern of editionPatterns) {
+      const withoutEdition = cleanName.replace(pattern, ' ').replace(/\s+/g, ' ').trim();
+      if (withoutEdition !== cleanName && withoutEdition.length > 3) {
+        variations.push(withoutEdition);
+        console.log(`📦 Removendo edição: "${withoutEdition}"`);
+      }
+    }
+    
+    // 5. Remove tanto ano quanto edição (busca mais genérica)
+    let baseGame = cleanName;
+    if (originalYear) {
+      baseGame = baseGame.replace(/\s*\(\d{4}\)\s*/g, '');
+    }
+    for (const pattern of editionPatterns) {
+      baseGame = baseGame.replace(pattern, ' ');
+    }
+    baseGame = baseGame.replace(/\s+/g, ' ').trim();
+    if (baseGame !== cleanName && baseGame.length > 3) {
+      variations.push(baseGame);
+      console.log(`🎮 Busca base: "${baseGame}"`);
+    }
+
+    // Remove duplicatas mantendo ordem
+    return [...new Set(variations)];
+  }
+
+  /**
+   * Verifica se dois nomes de jogos são equivalentes
+   * @param {string} searchedName - Nome buscado
+   * @param {string} foundName - Nome encontrado
+   * @returns {boolean} True se forem equivalentes
    */
   isGameNameMatch(searchedName, foundName) {
-    try {
-      if (!searchedName || !foundName) return false;
+    if (!searchedName || !foundName) return false;
+    
+    const normalizeGameName = (name) => {
+      return name
+        .toLowerCase()
+        // Remover prefixos do HowLongToBeat
+        .replace(/^how\s+long\s+is\s+/i, '')
+        .replace(/\?+$/g, '') // Remover ? do final
+        // Remover símbolos e pontuação (EXCETO números romanos e anos)
+        .replace(/[™®©]/g, '')
+        .replace(/[:\-–—]/g, ' ')
+        .replace(/['"]/g, '')
+        .replace(/[\.!]/g, '')
+        // Remover stop words (artigos, preposições, conectivos)
+        .replace(/\b(the|a|an|of|in|on|at|to|for|with|by|from|into|onto|upon|over|under|above|below|between|among|through|during|before|after|while|since|until|and|or|but|nor|so|yet)\b/g, '')
+        // Remover anos entre parênteses APENAS
+        .replace(/\s*\(\d{4}\)\s*/g, '')
+        // Remover edições especiais (preservando números romanos e anos)
+        .replace(/\b(definitive|complete|goty|game\s+of\s+the\s+year|deluxe|ultimate|special|collector's?|limited|enhanced|remastered|director's?\s+cut|anniversary|\d+th\s+anniversary)\s+edition\b/gi, '')
+        .replace(/\b(definitive|complete|goty|deluxe|ultimate|special|enhanced|remastered|anniversary|\d+th\s+anniversary)\b/gi, '')
+        // Normalizar espaços
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
 
-      // Normalizar ambos os nomes
-      const normalizeGameName = (name) => {
-        return name
-          .toLowerCase()
-          .replace(/[™®©]/g, '') // Remover símbolos de marca
-          .replace(/[^\w\s]/g, ' ') // Remover pontuação
-          .replace(/\s+/g, ' ') // Normalizar espaços
-          .replace(/\b(the|a|an)\b/g, '') // Remover artigos
-          .replace(/\b(edition|remastered|definitive|enhanced|deluxe|goty|complete)\b/g, '') // Remover palavras especiais
-          .trim();
-      };
-
-      const normalizedSearched = normalizeGameName(searchedName);
-      const normalizedFound = normalizeGameName(foundName);
-
-      // Match exato após normalização
-      if (normalizedSearched === normalizedFound) {
-        return true;
-      }
-
-      // Verificar se um contém o outro (pelo menos 70% de sobreposição)
-      const searchWords = normalizedSearched.split(/\s+/).filter(w => w.length > 2);
-      const foundWords = normalizedFound.split(/\s+/).filter(w => w.length > 2);
-
-      if (searchWords.length === 0 || foundWords.length === 0) return false;
-
-      // Contar palavras em comum
-      const commonWords = searchWords.filter(word => 
-        foundWords.some(fWord => 
-          fWord.includes(word) || word.includes(fWord) || 
-          this.calculateLevenshteinDistance(word, fWord) <= 2
-        )
-      );
-
-      const similarity = commonWords.length / Math.max(searchWords.length, foundWords.length);
-      
-      // Aceitar se similaridade >= 65%
-      return similarity >= 0.65;
-      
-    } catch (error) {
-      console.error('Erro na verificação de match:', error);
-      return false;
+    const normalizedSearched = normalizeGameName(searchedName);
+    const normalizedFound = normalizeGameName(foundName);
+    
+    console.log(`🔍 Comparando: "${normalizedSearched}" vs "${normalizedFound}"`);
+    
+    // REGRA 1: Match exato (após normalização) - prioridade máxima
+    if (normalizedSearched === normalizedFound) {
+      console.log(`✅ Match EXATO encontrado`);
+      return true;
     }
+    
+    // REGRA 2: Verificar se há números romanos ou anos - ser mais rigoroso
+    const hasRomanNumerals = /\b(i|ii|iii|iv|v|vi|vii|viii|ix|x|xi|xii|xiii|xiv|xv|xvi|xvii|xviii|xix|xx)\b/i;
+    const hasYearNumbers = /\b(19|20)\d{2}\b|\b\d{1,2}\b/; // Anos ou números como FIFA 19, 18, etc.
+    
+    const searchedHasNumbers = hasRomanNumerals.test(normalizedSearched) || hasYearNumbers.test(normalizedSearched);
+    const foundHasNumbers = hasRomanNumerals.test(normalizedFound) || hasYearNumbers.test(normalizedFound);
+    
+    if (searchedHasNumbers || foundHasNumbers) {
+      console.log(`🔢 Números/Romanos detectados - aplicando match rigoroso`);
+      
+      // Para jogos com números, exigir match muito alto (90%+)
+      const distance = this.calculateLevenshteinDistance(normalizedSearched, normalizedFound);
+      const maxLength = Math.max(normalizedSearched.length, normalizedFound.length);
+      const similarity = ((maxLength - distance) / maxLength) * 100;
+      
+      console.log(`📊 Similaridade (modo rigoroso): ${similarity.toFixed(1)}%`);
+      
+      // Match rigoroso: 90% para jogos com números
+      return similarity >= 90;
+    }
+    
+    // REGRA 3: Para jogos sem números, usar similaridade padrão mais permissiva
+    const distance = this.calculateLevenshteinDistance(normalizedSearched, normalizedFound);
+    const maxLength = Math.max(normalizedSearched.length, normalizedFound.length);
+    const similarity = ((maxLength - distance) / maxLength) * 100;
+    
+    console.log(`📊 Similaridade (modo padrão): ${similarity.toFixed(1)}%`);
+    
+    // Match padrão: 75% para jogos sem números (mais rigoroso que antes)
+    return similarity >= 75;
   }
 
   /**
-   * Calcula distância de Levenshtein para matching fuzzy
+   * Calcula a distância de Levenshtein entre duas strings
+   * @param {string} str1 - Primeira string
+   * @param {string} str2 - Segunda string
+   * @returns {number} Distância de Levenshtein
    */
   calculateLevenshteinDistance(str1, str2) {
     const matrix = [];
-
+    
     for (let i = 0; i <= str2.length; i++) {
       matrix[i] = [i];
     }
-
+    
     for (let j = 0; j <= str1.length; j++) {
       matrix[0][j] = j;
     }
-
+    
     for (let i = 1; i <= str2.length; i++) {
       for (let j = 1; j <= str1.length; j++) {
         if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
           matrix[i][j] = matrix[i - 1][j - 1];
         } else {
           matrix[i][j] = Math.min(
-            matrix[i - 1][j - 1] + 1, // substitution
-            matrix[i][j - 1] + 1,     // insertion
-            matrix[i - 1][j] + 1      // deletion
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
           );
         }
       }
     }
-
+    
     return matrix[str2.length][str1.length];
   }
 
   /**
-   * Extrai tempo de jogo do HTML da página
-   */
-  extractPlayTimeFromHTML(html, gameName) {
-    try {
-      // Padrão específico para a estrutura atual do HowLongToBeat
-      // <div class="GameCard_search_list_tidbit__0r_OP text_white shadow_text">Main Story</div>
-      // <div class="GameCard_search_list_tidbit__0r_OP center time_100">26½ Hours</div>
-      
-      const patterns = [
-        // Padrão para o novo layout com GameCard_search_list_tidbit
-        /<div[^>]*GameCard_search_list_tidbit[^>]*>Main Story<\/div>[\s\S]*?<div[^>]*GameCard_search_list_tidbit[^>]*>([^<]+)<\/div>/i,
-        
-        // Padrão mais flexível para o mesmo layout
-        /<div[^>]*>Main Story<\/div>[\s\S]*?<div[^>]*time_\d+[^>]*>([^<]+)<\/div>/i,
-        
-        // Padrões para layouts de resultado de busca
-        /<div[^>]*search_list_tidbit[^>]*>Main Story<\/div>[\s\S]*?<div[^>]*search_list_tidbit[^>]*>([^<]+)<\/div>/i,
-        
-        // Padrões para páginas individuais de jogos
-        /<h5[^>]*>Main Story<\/h5>[\s\S]*?<div[^>]*>([^<]+)<\/div>/i,
-        /<li[^>]*>\s*<h5[^>]*>Main Story<\/h5>\s*<div[^>]*>([^<]+)<\/div>/i,
-        
-        // Padrões para tabelas
-        /<td[^>]*>Main Story<\/td>[\s\S]*?<td[^>]*>([^<]+)<\/td>/i,
-        /<tr[^>]*>[\s\S]*?Main Story[\s\S]*?<td[^>]*>([^<]+)<\/td>/i,
-        
-        // Padrões mais genéricos como fallback
-        /Main Story[\s\S]*?(\d+(?:\.5|½)?\s*Hours?)/i,
-        /Main[\s\S]*?(\d+(?:\.5|½)?\s*Hours?)/i
-      ];
-
-      for (const pattern of patterns) {
-        const match = html.match(pattern);
-        if (match && match[1]) {
-          const timeStr = match[1].trim();
-          const hours = this.parseTimeStringToHours(timeStr);
-          
-          if (hours > 0) {
-            console.log(`✅ Tempo encontrado para "${gameName}": ${hours} horas (${timeStr})`);
-            return hours;
-          }
-        }
-      }
-
-      // Debug: Se não encontrou, mostrar um pouco do HTML para ajudar a debug
-      console.log(`❌ Não foi possível extrair tempo da página HTML para "${gameName}"`);
-      
-      // Mostrar se existe "Main Story" no HTML
-      if (html.includes('Main Story')) {
-        console.log('🔍 HTML contém "Main Story", mas não conseguiu extrair o tempo');
-        
-        // Extrair contexto ao redor de "Main Story" para debug
-        const mainStoryIndex = html.indexOf('Main Story');
-        if (mainStoryIndex !== -1) {
-          const context = html.substring(mainStoryIndex - 200, mainStoryIndex + 500);
-          console.log('📄 Contexto ao redor de "Main Story":', context.replace(/\s+/g, ' '));
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error(`❌ Erro ao extrair tempo do HTML para "${gameName}":`, error);
-      return null;
-    }
-  }
-
-  /**
-   * Encontra o melhor match nos resultados da busca
-   */
-  findBestMatch(games, searchTerm) {
-    if (!games || games.length === 0) return null;
-
-    // Calcular similaridade simples
-    const searchLower = searchTerm.toLowerCase();
-    
-    let bestMatch = null;
-    let bestScore = 0;
-
-    for (const game of games) {
-      const gameName = (game.game_name || '').toLowerCase();
-      
-      // Match exato
-      if (gameName === searchLower) {
-        return game;
-      }
-
-      // Calcular score de similaridade simples
-      let score = 0;
-      if (gameName.includes(searchLower)) {
-        score = 0.8;
-      } else if (searchLower.includes(gameName)) {
-        score = 0.7;
-      } else {
-        // Palavras em comum
-        const searchWords = searchLower.split(/\s+/);
-        const gameWords = gameName.split(/\s+/);
-        const commonWords = searchWords.filter(word => 
-          gameWords.some(gWord => gWord.includes(word) || word.includes(gWord))
-        );
-        score = commonWords.length / Math.max(searchWords.length, gameWords.length);
-      }
-
-      if (score > bestScore && score > 0.3) {
-        bestScore = score;
-        bestMatch = game;
-      }
-    }
-
-    return bestMatch;
-  }
-
-  /**
-   * Extrai tempo de jogo dos dados da API
-   */
-  parsePlayTimeFromGameData(gameData) {
-    try {
-      if (!gameData || typeof gameData !== 'object') {
-        return null;
-      }
-
-      // Procurar campo de Main Story
-      const mainStory = gameData.comp_main || gameData.comp_plus || gameData.comp_100;
-      
-      if (mainStory && mainStory > 0) {
-        // Os dados da API geralmente vêm em segundos, converter para horas
-        const hours = Math.round((mainStory / 3600) * 10) / 10; // Arredondar para 1 casa decimal
-        return hours;
-      }
-
-      return null;
-    } catch (error) {
-      console.error('Erro ao processar dados da API:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Converte string de tempo para horas
-   */
-  parseTimeStringToHours(timeStr) {
-    try {
-      if (!timeStr || typeof timeStr !== 'string') {
-        return 0;
-      }
-
-      // Preservar caracteres importantes antes de limpar
-      const originalStr = timeStr;
-      
-      // Converter ½ para .5 antes de limpar
-      timeStr = timeStr.replace(/½/g, '.5');
-      
-      // Limpar string mas preservar pontos, números e letras importantes
-      timeStr = timeStr.replace(/[^\d\.\w\s½]/g, '').trim();
-      
-      // Se o string parece ser apenas um número muito grande (provavelmente um ID), retornar 0
-      if (/^\d{5,}$/.test(timeStr)) {
-        console.log(`⚠️ String "${timeStr}" parece ser um ID, não um tempo`);
-        return 0;
-      }
-      
-      // Padrões mais específicos para diferentes formatos
-      const patterns = [
-        // "25h 30m", "1h 30m", etc. (colocar primeiro para capturar minutos)
-        /(\d+(?:\.\d+)?)\s*h(?:ours?)?\s*(\d+)?\s*m(?:in(?:utes?)?)?/i,
-        
-        // "26½ Hours", "26.5 Hours", "0.3 Hours" 
-        /(\d+(?:\.\d+|½)?)\s*(?:hours?|hrs?)\s*$/i,
-        
-        // "25.5h", "25h", "0.3h"
-        /(\d+(?:\.\d+)?)\s*h$/i,
-        
-        // Apenas números de 1-3 dígitos com decimal opcional
-        /^(\d{1,3}(?:\.\d+)?)$/
-      ];
-
-      for (const pattern of patterns) {
-        const match = timeStr.match(pattern);
-        if (match) {
-          const hours = parseFloat(match[1]);
-          const minutes = match[2] ? parseInt(match[2]) : 0;
-          
-
-          
-          // Validar se o tempo é razoável (entre 0.5 e 200 horas para história principal)
-          const totalHours = hours + (minutes / 60);
-          if (totalHours >= 0.5 && totalHours <= 200) {
-            console.log(`⏳ Convertendo "${originalStr}" → ${totalHours} horas`);
-            return totalHours;
-          } else if (totalHours > 200) {
-            console.log(`⚠️ Tempo muito alto (${totalHours}h), provavelmente não é história principal: "${originalStr}"`);
-          } else if (totalHours < 0.5) {
-            console.log(`⚠️ Tempo muito baixo (${totalHours}h): "${originalStr}"`);
-          }
-        }
-      }
-
-      console.log(`❌ Não foi possível converter tempo: "${originalStr}"`);
-      return 0;
-    } catch (error) {
-      console.error('Erro ao converter tempo:', error);
-      return 0;
-    }
-  }
-
-  /**
-   * Atualiza o tempo de jogo de um jogo no banco
+   * Atualiza o tempo de jogo de um jogo no banco de dados
+   * @param {number} gameId - ID do jogo
+   * @param {number} playTime - Tempo de jogo em horas
+   * @returns {Promise<boolean>} True se atualizado com sucesso
    */
   async updateGamePlayTime(gameId, playTime) {
     try {
-      const game = await gamesDb.getById(gameId);
-      if (!game) {
-        throw new Error(`Jogo com ID ${gameId} não encontrado`);
-      }
-
-      game.playTime = playTime;
-      await gamesDb.update(gameId, game);
-      
-      console.log(`✅ Jogo "${game.name}" atualizado com tempo: ${playTime}h`);
-      return game;
+      await gamesDb.update(gameId, { playTime });
+      console.log(`✅ Tempo de jogo atualizado: ID ${gameId} - ${playTime}h`);
+      return true;
     } catch (error) {
-      console.error(`❌ Erro ao atualizar jogo ${gameId}:`, error);
-      throw error;
+      console.error(`❌ Erro ao atualizar tempo de jogo do ID ${gameId}:`, error);
+      return false;
     }
   }
 
   /**
-   * Pausa execução por um tempo determinado
+   * Aguarda um tempo especificado
+   * @param {number} ms - Milissegundos para aguardar
    */
   async sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
-   * Executa o crawler completo
+   * Executa o crawling e atualiza tempos de jogo
+   * @param {Object} options - Opções de configuração  
+   * @param {number} options.limit - Limite de jogos para processar (padrão: 400)
+   * @param {boolean} options.dryRun - Se true, não atualiza o banco (padrão: false)
+   * @param {boolean} options.clearCooldown - Se true, limpa cooldown antes de começar (padrão: false)
+   * @returns {Promise<Object>} Estatísticas do crawling
    */
   async crawlAndUpdatePlayTimes(options = {}) {
-    const { maxGames = 10, dryRun = false } = options;
+    const { limit = 400, dryRun = false, clearCooldown = false } = options;
     
-    const result = {
+    const stats = {
       processed: 0,
+      found: 0,
       updated: 0,
-      failed: 0,
-      errors: []
+      errors: 0,
+      skippedCooldown: 0,
+      clearedCooldowns: 0
     };
 
     try {
-      console.log('🚀 Iniciando HowLongToBeat Crawler...\n');
+      console.log(`🚀 Iniciando crawling de tempos de jogo...`);
+      console.log(`📊 Limite: ${limit} jogos`);
+      console.log(`🧪 Modo: ${dryRun ? 'DRY RUN' : 'PRODUÇÃO'}`);
+      console.log(`⏸️ Sistema de cooldown: 1 tentativa → 7 dias de pausa`);
+      
+      // Limpar cooldown se solicitado
+      if (clearCooldown && !dryRun) {
+        console.log(`🧹 Limpando cooldown de todos os jogos...`);
+        stats.clearedCooldowns = await this.clearAllCooldowns();
+      }
+      
+      await this.initBrowser();
       
       const gamesWithoutPlayTime = await this.findGamesWithoutPlayTime();
+      console.log(`🎮 Encontrados ${gamesWithoutPlayTime.length} jogos disponíveis para processar`);
       
-      if (gamesWithoutPlayTime.length === 0) {
-        console.log('✅ Todos os jogos já possuem tempo de jogo!');
-        return result;
-      }
-
-      const gamesToProcess = gamesWithoutPlayTime.slice(0, maxGames);
-      console.log(`📋 Processando ${gamesToProcess.length} jogos...\n`);
-
+      const gamesToProcess = gamesWithoutPlayTime.slice(0, limit);
+      
       for (const game of gamesToProcess) {
         try {
-          console.log(`\n${'='.repeat(60)}`);
-          console.log(`🎮 Processando: ${game.name}`);
-          console.log(`🆔 ID: ${game.id}`);
-
+          console.log(`\n🔍 Processando: ${game.name} (ID: ${game.id})`);
+          stats.processed++;
+          
           const playTime = await this.searchGamePlayTime(game.name);
-          result.processed++;
-
+          
           if (playTime !== null) {
+            stats.found++;
+            console.log(`✅ Tempo encontrado: ${playTime}h`);
+            
             if (!dryRun) {
-              await this.updateGamePlayTime(game.id, playTime);
+              // Atualizar tempo de jogo no banco
+              const updated = await this.updateGamePlayTime(game.id, playTime);
+              if (updated) {
+                stats.updated++;
+              }
+              
+              // Atualizar contador de tentativas (sucesso)
+              await this.updateAttemptCounter(game.id, true);
             } else {
-              console.log(`🔍 DRY RUN: ${game.name} teria tempo atualizado para ${playTime}h`);
+              console.log(`🧪 DRY RUN: Não atualizando banco de dados`);
             }
-            result.updated++;
           } else {
-            console.log(`❌ Tempo não encontrado para "${game.name}"`);
-            result.failed++;
-            result.errors.push(`Tempo não encontrado: ${game.name}`);
+            console.log(`❌ Tempo não encontrado`);
+            
+            if (!dryRun) {
+              // Atualizar contador de tentativas (falha) - entrará em cooldown
+              await this.updateAttemptCounter(game.id, false);
+            }
           }
-
-          // Delay entre requisições
-          if (result.processed < gamesToProcess.length) {
-            console.log(`⏳ Aguardando ${this.delay/1000}s antes do próximo jogo...`);
+          
+          // Aguardar entre buscas para ser respeitoso
+          if (stats.processed < gamesToProcess.length) {
+            console.log(`⏳ Aguardando ${this.delay}ms...`);
             await this.sleep(this.delay);
           }
-
+          
         } catch (error) {
-          console.error(`❌ Erro ao processar "${game.name}":`, error.message);
-          result.failed++;
-          result.errors.push(`Erro em ${game.name}: ${error.message}`);
+          console.error(`❌ Erro ao processar jogo "${game.name}":`, error.message);
+          stats.errors++;
+          
+          if (!dryRun) {
+            // Mesmo com erro, contar como tentativa falhada
+            await this.updateAttemptCounter(game.id, false);
+          }
         }
       }
-
-      return result;
       
     } catch (error) {
-      console.error('❌ Erro fatal no crawler:', error);
+      console.error('❌ Erro no crawling:', error);
+      stats.errors++;
+    } finally {
+      await this.closeBrowser();
+    }
+
+    console.log(`\n📊 Estatísticas finais:`);
+    if (stats.clearedCooldowns > 0) {
+      console.log(`   Cooldowns limpos: ${stats.clearedCooldowns}`);
+    }
+    console.log(`   Processados: ${stats.processed}`);
+    console.log(`   Encontrados: ${stats.found}`);
+    console.log(`   Atualizados: ${stats.updated}`);
+    console.log(`   Erros: ${stats.errors}`);
+    console.log(`   Taxa de sucesso: ${stats.processed > 0 ? ((stats.found / stats.processed) * 100).toFixed(1) : 0}%`);
+    
+    if (!clearCooldown) {
+      console.log(`\n💡 Próxima execução: Jogos que falharam hoje estarão em cooldown por 7 dias`);
+      console.log(`   Para reprocessar todos os jogos: adicione --clear-cooldown`);
+    }
+
+    return stats;
+  }
+
+  /**
+   * Remove cooldown de todos os jogos (limpa contadores de tentativas)
+   * @returns {Promise<number>} Número de jogos limpos
+   */
+  async clearAllCooldowns() {
+    try {
+      const allGames = await gamesDb.getAll();
+      let clearedCount = 0;
+      
+      for (const game of allGames) {
+        if (game.playTimeAttemptCount > 0 || game.playTimeLastAttempt) {
+          await gamesDb.update(game.id, {
+            playTimeAttemptCount: 0,
+            playTimeLastAttempt: null
+          });
+          clearedCount++;
+        }
+      }
+      
+      console.log(`🧹 Cooldown limpo para ${clearedCount} jogos`);
+      return clearedCount;
+    } catch (error) {
+      console.error('Erro ao limpar cooldowns:', error);
       throw error;
     }
   }

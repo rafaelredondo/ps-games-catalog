@@ -39,6 +39,12 @@ function sortGames(games, orderBy, order) {
         valueB = b.genres ? b.genres.join(', ').toLowerCase() : '';
         break;
         
+      case 'playTime':
+        // Jogos sem tempo de jogo ficam no final (valor 0)
+        valueA = a.playTime || 0;
+        valueB = b.playTime || 0;
+        break;
+        
       default:
         // Ordenação padrão por nome para campos inválidos
         valueA = a.name.toLowerCase();
