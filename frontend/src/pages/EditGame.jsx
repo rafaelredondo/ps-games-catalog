@@ -15,8 +15,11 @@ import {
   CircularProgress,
   Chip,
   Autocomplete,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import { useGames } from '../contexts/GamesContext';
+import PsPlusIcon from '../components/PsPlusIcon';
 
 function EditGame() {
   const { id } = useParams();
@@ -35,6 +38,7 @@ function EditGame() {
     description: '',
     status: 'Não iniciado',
     playTime: 0,
+    isPsPlus: false
   });
   const [updateError, setUpdateError] = useState(null);
   const [availablePublishers, setAvailablePublishers] = useState([]);
@@ -65,6 +69,7 @@ function EditGame() {
         description: foundGame.description || '',
         status: gameStatus,
         playTime: foundGame.playTime || 0,
+        isPsPlus: foundGame.isPsPlus || false
       });
       setInputPublishers(foundGame.publishers || []);
     }
@@ -122,6 +127,13 @@ function EditGame() {
     setFormData(prev => ({
       ...prev,
       publishers: publishers
+    }));
+  };
+
+  const handlePsPlusChange = (event) => {
+    setFormData(prev => ({
+      ...prev,
+      isPsPlus: event.target.checked
     }));
   };
 
@@ -297,6 +309,27 @@ function EditGame() {
             helperText="Quanto tempo você jogou este jogo (em horas)"
           />
 
+          {/* Campo PS Plus */}
+          <Box sx={{ mt: 2, mb: 1 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isPsPlus}
+                  onChange={handlePsPlusChange}
+                  color="primary"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PsPlusIcon fontSize="small" sx={{ color: formData.isPsPlus ? '#0070f3' : 'rgba(0,0,0,0.6)' }} />
+                  <Typography>
+                    Disponível no PlayStation Plus
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
+
           <TextField
             fullWidth
             label="URL da Capa"
@@ -353,4 +386,4 @@ function EditGame() {
   );
 }
 
-export default EditGame; 
+export default EditGame;

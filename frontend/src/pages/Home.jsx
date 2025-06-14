@@ -44,6 +44,8 @@ import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DoneIcon from '@mui/icons-material/Done';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import AddIcon from '@mui/icons-material/Add';
+import PsPlusIcon from '../components/PsPlusIcon';
 import { useGames } from '../contexts/GamesContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -104,6 +106,9 @@ function Home() {
   const [selectedStatus, setSelectedStatus] = useState(() => {
     return localStorage.getItem('filter_status') || 'all';
   });
+  const [isPsPlusFilter, setIsPsPlusFilter] = useState(() => {
+    return localStorage.getItem('filter_psplus') === 'true';
+  });
   
   // Hook de infinite scroll com todos os filtros e configuração enabled
   const {
@@ -130,6 +135,7 @@ function Home() {
     genre: settings.infiniteScrollEnabled ? (selectedGenre === 'all' ? '' : selectedGenre) : '',
     publisher: settings.infiniteScrollEnabled ? (selectedPublisher === 'all' ? '' : selectedPublisher) : '',
     status: settings.infiniteScrollEnabled ? (selectedStatus === 'all' ? '' : selectedStatus) : '',
+    isPsPlus: settings.infiniteScrollEnabled ? isPsPlusFilter : false,
     // Configuração do infinite scroll
     infiniteScrollEnabled: settings.infiniteScrollEnabled,
     enabled: settings.infiniteScrollEnabled
@@ -196,6 +202,11 @@ function Home() {
       }
     }
 
+    // Aplicar filtro de PS Plus
+    if (isPsPlusFilter) {
+      filtered = filtered.filter(game => game.isPsPlus === true);
+    }
+
     // Aplicar ordenação local
     filtered.sort((a, b) => {
       let valueA, valueB;
@@ -260,7 +271,8 @@ function Home() {
     selectedStatus, 
     minMetacritic, 
     orderBy, 
-    order
+    order,
+    isPsPlusFilter
   ]);
   
   // Contexto para operações de CRUD
@@ -300,8 +312,9 @@ function Home() {
            selectedGenre !== 'all' || 
            selectedPublisher !== 'all' || 
            selectedStatus !== 'all' || 
-           minMetacritic !== '';
-  }, [searchInput, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic]);
+           minMetacritic !== '' ||
+           isPsPlusFilter;
+  }, [searchInput, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic, isPsPlusFilter]);
 
   // Função para determinar o tipo de empty state
   const getEmptyStateType = () => {
@@ -453,10 +466,21 @@ function Home() {
       }
     },
     {
+      id: 'psplus',
+      label: 'PS Plus',
+      align: 'center',
+      hideOnMobile: true,
+      render: (game) => game.isPsPlus ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <PsPlusIcon fontSize="small" sx={{ color: '#0070f3' }} />
+        </Box>
+      ) : null
+    },
+    {
       id: 'actions',
       label: 'Ações',
       align: 'center',
-      width: '160px',
+      width: '200px',
       render: (game) => (
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
           {(!game.status || game.status !== 'Concluído') && !game.completed && (
@@ -500,6 +524,33 @@ function Home() {
               </IconButton>
             </Tooltip>
           )}
+          <Tooltip title={game.isPsPlus ? "Remover do PS Plus" : "Marcar como PS Plus"}>
+            <IconButton
+              color={game.isPsPlus ? "primary" : "default"}
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTogglePsPlus(game);
+              }}
+              sx={{ 
+                '&:hover': { 
+                  bgcolor: game.isPsPlus ? 'rgba(33, 150, 243, 0.1)' : 'rgba(0, 0, 0, 0.04)' 
+                },
+                // Estilo especial para jogos PS Plus
+                ...(game.isPsPlus && {
+                  bgcolor: 'rgba(33, 150, 243, 0.1)',
+                  border: '1px solid rgba(33, 150, 243, 0.3)'
+                })
+              }}
+              aria-label={game.isPsPlus ? "remover do ps plus" : "marcar como ps plus"}
+            >
+              {game.isPsPlus ? (
+                <PsPlusIcon fontSize="small" sx={{ color: 'white' }} />
+              ) : (
+                <AddIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Excluir jogo">
             <IconButton
               color="error"
@@ -568,6 +619,12 @@ function Home() {
     localStorage.setItem('filter_status', value);
   }, []);
 
+  const handlePsPlusFilterChange = useCallback(() => {
+    const newValue = !isPsPlusFilter;
+    setIsPsPlusFilter(newValue);
+    localStorage.setItem('filter_psplus', newValue.toString());
+  }, [isPsPlusFilter]);
+
   const handleCardClick = useCallback((gameId) => {
     navigate(`/game/${gameId}`);
   }, [navigate]);
@@ -603,6 +660,7 @@ function Home() {
     setSelectedGenre('all');
     setSelectedPublisher('all');
     setSelectedStatus('all');
+    setIsPsPlusFilter(false);
     
     // Limpa os valores armazenados no localStorage
     localStorage.removeItem('filter_platform');
@@ -611,6 +669,7 @@ function Home() {
     localStorage.removeItem('filter_genre');
     localStorage.removeItem('filter_publisher');
     localStorage.removeItem('filter_status');
+    localStorage.removeItem('filter_psplus');
     
     // REMOVIDO: refresh() manual - o useEffect do useInfiniteScroll 
     // vai detectar automaticamente as mudanças dos filtros e recarregar
@@ -830,6 +889,51 @@ function Home() {
     }
   }, [updateGame, notify]);
 
+  // Função para alternar status PS Plus
+  const handleTogglePsPlus = useCallback(async (game) => {
+    try {
+      // Importante: garantir que todos os campos obrigatórios estejam presentes
+      // O backend espera name, platforms e mediaTypes como obrigatórios
+      const updatedGame = { 
+        ...game, 
+        isPsPlus: !game.isPsPlus // Alternar o status PS Plus
+      };
+      
+      // Verificar campos obrigatórios
+      if (!updatedGame.platforms) updatedGame.platforms = [];
+      if (!updatedGame.mediaTypes) updatedGame.mediaTypes = [];
+      
+      // Usar await para garantir que a operação seja concluída
+      const result = await updateGame(game.id, updatedGame);
+      
+      // Notificação de sucesso
+      const action = updatedGame.isPsPlus ? 'marcado como PS Plus' : 'removido do PS Plus';
+      const icon = updatedGame.isPsPlus ? '🎮' : '📱';
+      
+      notify.success(
+        `"${game.name}" ${action}!`,
+        {
+          title: `PS Plus ${icon}`,
+          duration: 3000
+        }
+      );
+      
+      // ✅ Otimização: updateGame já atualiza o item específico no contexto
+      // Removido refresh() para evitar recarregamento desnecessário da lista
+    } catch (err) {
+      console.error('Erro ao alternar status PS Plus:', err);
+      
+      // Notificação de erro
+      notify.error(
+        'Não foi possível alterar o status PS Plus.',
+        {
+          title: 'Erro ao Atualizar',
+          duration: 4000
+        }
+      );
+    }
+  }, [updateGame, notify]);
+
   // Renderização dos cards
   const renderCardView = () => {
     // Se não há jogos e não está carregando, mostrar empty state
@@ -1028,7 +1132,7 @@ function Home() {
       {/* Barra de filtros - Mobile First */}
       <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }} alignItems="center">
         {/* Search - Prioridade máxima em mobile */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 4, md: 2.5 }}>
           <SearchInput
             value={searchInput}
             onChange={handleSearch}
@@ -1037,7 +1141,7 @@ function Home() {
         </Grid>
 
         {/* Platform - Segunda prioridade */}
-        <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
           <FilterSelect
             value={platform}
             onChange={handlePlatformChange}
@@ -1048,7 +1152,7 @@ function Home() {
         </Grid>
         
         {/* Genre - Terceira prioridade */}
-        <Grid size={{ xs: 6, sm: 4, md: 2 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
           <FilterSelect
             value={selectedGenre}
             onChange={handleGenreChange}
@@ -1070,6 +1174,44 @@ function Home() {
           />
         </Grid>
         
+        {/* PS Plus Filter - Botão toggle estilizado */}
+        <Grid size={{ xs: 4, sm: 3, md: 1 }}>
+          <FilterButton
+            variant={isPsPlusFilter ? "primary" : "filter"}
+            fullWidth
+            onClick={handlePsPlusFilterChange}
+            startIcon={<PsPlusIcon fontSize="small" />}
+            tooltip={isPsPlusFilter ? "Remover filtro PS Plus" : "Filtrar apenas jogos PS Plus"}
+            sx={{
+              height: '56px', // Mesma altura dos outros filtros
+              color: 'white', // Força texto branco sempre
+              border: 'none', // Remove qualquer borda
+              minWidth: 'auto', // Remove largura mínima
+              px: 1, // Padding horizontal reduzido
+              ...(isPsPlusFilter && {
+                bgcolor: '#0070f3',
+                color: 'white',
+                border: '1px solid #0070f3',
+                '&:hover': {
+                  bgcolor: '#0056b3',
+                  border: '1px solid #0056b3',
+                }
+              }),
+              ...(!isPsPlusFilter && {
+                bgcolor: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                }
+              })
+            }}
+          >
+            PS+
+          </FilterButton>
+        </Grid>
+        
         {/* Metacritic - Menos usado, mas importante */}
         <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
           <SearchInput
@@ -1082,7 +1224,7 @@ function Home() {
           />
         </Grid>
         
-        {/* Publisher - Hidden em xs, menos prioritário */}
+        {/* Publisher - Aumentado para ter mais espaço */}
         <Grid size={{ xs: 6, sm: 6, md: 1.5 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
           <FilterSelect
             value={selectedPublisher}

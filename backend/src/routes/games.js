@@ -188,6 +188,7 @@ router.get('/', async (req, res) => {
     const genre = req.query.genre || '';
     const publisher = req.query.publisher || '';
     const status = req.query.status || '';
+    const isPsPlus = req.query.isPsPlus === 'true'; // Filtro PS Plus
     
     // Buscar todos os jogos
     let allGames = await gamesDb.getAll();
@@ -229,6 +230,13 @@ router.get('/', async (req, res) => {
       // Filtrar por status específico usando o campo status (string)
       allGames = allGames.filter(game => 
         game.status === status
+      );
+    }
+    
+    // Filtro PS Plus
+    if (req.query.isPsPlus !== undefined) {
+      allGames = allGames.filter(game => 
+        Boolean(game.isPsPlus) === isPsPlus
       );
     }
     
@@ -308,7 +316,8 @@ router.post('/', async (req, res) => {
       description,
       completed,
       playTime,
-      status
+      status,
+      isPsPlus
     } = req.body;
     
     if (!name || !platforms || !mediaTypes) {
@@ -344,7 +353,8 @@ router.post('/', async (req, res) => {
       description || '',
       gameCompleted,
       playTime || null,
-      status || 'Não iniciado'
+      status || 'Não iniciado',
+      isPsPlus || false
     );
 
     const createdGame = await gamesDb.create(newGame);
@@ -384,7 +394,8 @@ router.put('/:id', async (req, res) => {
       description,
       completed,
       playTime,
-      status
+      status,
+      isPsPlus
     } = req.body;
     
     if (!name || !platforms || !mediaTypes) {
@@ -425,7 +436,8 @@ router.put('/:id', async (req, res) => {
       description || '',
       gameCompleted,
       playTime || null,
-      status || 'Não iniciado'
+      status || 'Não iniciado',
+      isPsPlus || false
     );
 
     const game = await gamesDb.update(req.params.id, updatedGame);

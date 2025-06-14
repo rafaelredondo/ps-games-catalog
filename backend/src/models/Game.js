@@ -12,7 +12,8 @@ class Game {
     description = '',
     completed = false,
     playTime = null,
-    status = 'Não iniciado'
+    status = 'Não iniciado',
+    isPsPlus = false
   ) {
     this.id = id;
     this.name = name;
@@ -27,6 +28,7 @@ class Game {
     this.completed = completed;
     this.playTime = playTime;
     this.status = status;
+    this.isPsPlus = isPsPlus;
   }
 }
 

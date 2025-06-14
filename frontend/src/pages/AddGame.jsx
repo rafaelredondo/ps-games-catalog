@@ -18,12 +18,15 @@ import {
   Collapse,
   IconButton,
   Stack,
-  Tooltip
+  Tooltip,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useGames } from '../contexts/GamesContext';
 import { searchGame } from '../services/rawgApi';
 import { gamesService } from '../services/gamesService';
+import PsPlusIcon from '../components/PsPlusIcon';
 
 const AddGame = () => {
   const navigate = useNavigate();
@@ -40,7 +43,8 @@ const AddGame = () => {
     publishers: [],
     description: '',
     status: 'Não iniciado',
-    playTime: 0
+    playTime: 0,
+    isPsPlus: false
   });
   const [inputName, setInputName] = useState('');
   const [error, setError] = useState('');
@@ -223,6 +227,13 @@ const AddGame = () => {
     setFormData(prev => ({
       ...prev,
       publishers: publishers
+    }));
+  };
+
+  const handlePsPlusChange = (event) => {
+    setFormData(prev => ({
+      ...prev,
+      isPsPlus: event.target.checked
     }));
   };
 
@@ -425,6 +436,27 @@ const AddGame = () => {
             inputProps={{ min: 0 }}
             helperText="Quanto tempo você jogou este jogo (em horas)"
           />
+
+          {/* Campo PS Plus */}
+          <Box sx={{ mt: 2, mb: 1 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isPsPlus}
+                  onChange={handlePsPlusChange}
+                  color="primary"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <PsPlusIcon fontSize="small" sx={{ color: formData.isPsPlus ? '#0070f3' : 'rgba(0,0,0,0.6)' }} />
+                  <Typography>
+                    Disponível no PlayStation Plus
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
 
           <Box sx={{ mt: 2, mb: 2 }}>
             <Button

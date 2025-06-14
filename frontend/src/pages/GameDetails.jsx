@@ -19,6 +19,7 @@ import { Edit as EditIcon, Delete as DeleteIcon, ArrowBack as ArrowBackIcon } fr
 import { VideogameAsset as VideogameAssetIcon, Save as SaveIcon, CalendarMonth as CalendarIcon, Timer as TimerIcon, Flag as FlagIcon } from '@mui/icons-material';
 import { getMetacriticColor, getMetacriticClassification } from '../utils/metacriticUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PsPlusIcon from '../components/PsPlusIcon';
 
 // Componentes padronizados
 import ActionButton from '../components/ActionButton';
@@ -135,7 +136,7 @@ function GameDetails() {
           }}
         >
           {/* Metacritic Score e Classificação */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {game.metacritic ? (
               <>
                 <Chip
@@ -148,17 +149,32 @@ function GameDetails() {
                   }}
                 />
                 <Chip
-                                  label={getMetacriticClassification(game.metacritic)}
-                sx={{ 
-                  bgcolor: getMetacriticColor(game.metacritic),
+                  label={getMetacriticClassification(game.metacritic)}
+                  sx={{ 
+                    bgcolor: getMetacriticColor(game.metacritic),
                     color: 'white',
                     fontWeight: 'bold',
                     height: 28,
                   }}
                 />
               </>
-            ) : (
-              <div></div>
+            ) : null}
+            
+            {/* Chip PS Plus */}
+            {game.isPsPlus && (
+              <Chip
+                icon={<PsPlusIcon fontSize="small" sx={{ color: 'white !important' }} />}
+                label="PS Plus"
+                sx={{
+                  bgcolor: '#0070f3',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  height: 28,
+                  '& .MuiChip-icon': {
+                    color: 'white'
+                  }
+                }}
+              />
             )}
           </Box>
 
@@ -328,6 +344,32 @@ function GameDetails() {
                       color: 'white'
                     }}
                   />
+                )}
+              </CategoryValue>
+            </Grid>
+            
+            {/* PlayStation Plus */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <CategoryTitle>PlayStation Plus</CategoryTitle>
+              <CategoryValue component={Box}>
+                {game.isPsPlus ? (
+                  <Chip
+                    icon={<PsPlusIcon fontSize="small" sx={{ color: 'white !important' }} />}
+                    label="Disponível no PS Plus"
+                    size="small"
+                    sx={{
+                      bgcolor: '#0070f3',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      '& .MuiChip-icon': {
+                        color: 'white'
+                      }
+                    }}
+                  />
+                ) : (
+                  <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                    Não disponível no PS Plus
+                  </Typography>
                 )}
               </CategoryValue>
             </Grid>
