@@ -657,22 +657,99 @@ export default function GameWrapped() {
             {/* Section 4: Plataformas */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
               <StatsCard icon={<PlatformIcon />} title="Número de Jogos por Plataforma" color={COLORS[3]} cardIndex={4}>
-                <Box>
-                  {stats.platforms.map((platform, idx) => {
-                    const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
-                    const percentage = (platform.value / totalGames) * 100;
-                    
-                    return (
-                      <AnimatedProgressBar
-                        key={platform.name}
-                        value={percentage}
-                        color={COLORS[idx % COLORS.length]}
-                        delay={idx * 200}
-                        label={`${platform.name} (${platform.value})`}
-                      />
-                    );
-                  })}
-                </Box>
+                {isMobile ? (
+                  // Mobile: Lista vertical mais touch-friendly
+                  <List disablePadding>
+                    {stats.platforms.map((platform, index) => {
+                      const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
+                      const percentage = ((platform.value / totalGames) * 100).toFixed(1);
+                      
+                      return (
+                        <ListItem key={platform.name} divider={index < stats.platforms.length - 1} disablePadding sx={{ py: 2 }}>
+                          <ListItemText 
+                            primary={
+                              <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                                {platform.name}
+                              </Typography>
+                            }
+                            secondary={`${platform.value} jogos • ${percentage}%`}
+                            secondaryTypographyProps={{
+                              sx: { mt: 0.5, color: 'text.secondary', fontWeight: 'medium' }
+                            }}
+                          />
+                          {/* Barra de progresso separada para evitar aninhamento HTML inválido */}
+                          <Box sx={{ mt: 1, ml: 0 }}>
+                            <Box 
+                              sx={{ 
+                                height: 8, 
+                                width: '100%',
+                                bgcolor: 'rgba(0,0,0,0.1)',
+                                borderRadius: 2,
+                                overflow: 'hidden'
+                              }}
+                            >
+                              <Box 
+                                sx={{ 
+                                  height: '100%', 
+                                  width: `${percentage}%`, 
+                                  bgcolor: COLORS[index % COLORS.length],
+                                  transition: 'width 0.5s ease'
+                                }} 
+                              />
+                            </Box>
+                          </Box>
+                        </ListItem>
+                      );
+                    })}
+                  </List>
+                ) : (
+                  // Desktop: Tabela como antes
+                <TableContainer component={Paper} elevation={0} sx={{ maxHeight: 300 }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Plataforma</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Jogos</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', bgcolor: 'rgba(0,0,0,0.04)' }}>Proporção</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {stats.platforms.map((platform, index) => {
+                        const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
+                        const percentage = ((platform.value / totalGames) * 100).toFixed(1);
+                        
+                        return (
+                          <TableRow key={platform.name} hover>
+                            <TableCell component="th" scope="row">
+                              {platform.name}
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography variant="body2" fontWeight="medium">
+                                {platform.value}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box 
+                                  sx={{ 
+                                    height: 8, 
+                                    width: `${Math.min(percentage * 1.8, 100)}%`, 
+                                    bgcolor: COLORS[index % COLORS.length],
+                                    borderRadius: 2
+                                  }} 
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                  {percentage}%
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                )}
               </StatsCard>
             </Box>
 
@@ -1334,9 +1411,124 @@ export default function GameWrapped() {
             </StatsCard>
           </Grid>
 
+          {/* Físico vs Digital - Desktop */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <StatsCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[5]} cardIndex={5}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Paper elevation={2} sx={{ 
+                    flex: 1,
+                    p: 3, 
+                    textAlign: 'center',
+                    background: `linear-gradient(135deg, ${COLORS[0]}15 0%, ${COLORS[0]}25 100%)`,
+                    border: `2px solid ${COLORS[0]}40`,
+                    borderRadius: 3
+                  }}>
+                    <PhysicalIcon sx={{ fontSize: 40, mb: 1, color: COLORS[0] }} />
+                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                      {stats.format.physical}
+                    </Typography>
+                    <Typography variant="body1" fontWeight="600">
+                      Físicos
+                    </Typography>
+                  </Paper>
+                  
+                  <Paper elevation={2} sx={{ 
+                    flex: 1,
+                    p: 3, 
+                    textAlign: 'center',
+                    background: `linear-gradient(135deg, ${COLORS[1]}15 0%, ${COLORS[1]}25 100%)`,
+                    border: `2px solid ${COLORS[1]}40`,
+                    borderRadius: 3
+                  }}>
+                    <Box sx={{ 
+                      width: 40, 
+                      height: 40, 
+                      borderRadius: '50%', 
+                      background: `linear-gradient(45deg, ${COLORS[1]}, ${COLORS[1]}cc)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 1
+                    }}>
+                      <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
+                        D
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                      {stats.format.digital}
+                    </Typography>
+                    <Typography variant="body1" fontWeight="600">
+                      Digitais
+                    </Typography>
+                  </Paper>
+                </Box>
+              </Box>
+            </StatsCard>
+          </Grid>
+
+          {/* PlayStation Plus - Desktop */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <StatsCard icon={<PsPlusIcon />} title="PlayStation Plus" color={COLORS[6]} cardIndex={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Paper elevation={2} sx={{ 
+                    flex: 1,
+                    p: 3, 
+                    textAlign: 'center',
+                    background: `linear-gradient(135deg, #003087 15%, #0070f3 25%)`,
+                    border: `2px solid rgba(255,215,0,0.4)`,
+                    borderRadius: 3,
+                    color: 'white'
+                  }}>
+                    <PsPlusIcon sx={{ fontSize: 40, mb: 1, color: '#FFD700' }} />
+                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                      {stats.psplus.psplus}
+                    </Typography>
+                    <Typography variant="body1" fontWeight="600">
+                      PS Plus
+                    </Typography>
+                  </Paper>
+                  
+                  <Paper elevation={2} sx={{ 
+                    flex: 1,
+                    p: 3, 
+                    textAlign: 'center',
+                    background: `linear-gradient(135deg, ${COLORS[7]}15 0%, ${COLORS[7]}25 100%)`,
+                    border: `2px solid ${COLORS[7]}40`,
+                    borderRadius: 3
+                  }}>
+                    <Box sx={{ 
+                      width: 40, 
+                      height: 40, 
+                      borderRadius: '50%', 
+                      background: `linear-gradient(45deg, #666, #999)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 1
+                    }}>
+                      <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
+                        O
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                      {stats.psplus.others}
+                    </Typography>
+                    <Typography variant="body1" fontWeight="600">
+                      Outros
+                    </Typography>
+                  </Paper>
+                </Box>
+              </Box>
+            </StatsCard>
+          </Grid>
+
           {/* Status dos Jogos - layout desktop */}
           <Grid size={{ xs: 12 }}>
-            <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={6}>
+            <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={7}>
               {isMobile ? (
                 // Mobile view is handled in the swipe container above
                 <div></div>
