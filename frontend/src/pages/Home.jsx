@@ -400,7 +400,7 @@ function Home() {
     },
     {
       id: 'playTime',
-      label: 'Tempo de Jogo',
+      label: 'Tempo',
       sortable: true,
       align: 'center',
       hideOnMobile: true,
@@ -483,7 +483,7 @@ function Home() {
     },
     {
       id: 'psplus',
-      label: 'PS Plus',
+      label: 'PS+',
       align: 'center',
       hideOnMobile: true,
       render: (game) => game.isPsPlus ? (
@@ -746,7 +746,7 @@ function Home() {
       'Publishers',
       'Descrição',
       'Completado',
-      'Tempo de Jogo'
+              'Tempo'
     ];
 
     // Converter os dados para formato CSV (linhas)
