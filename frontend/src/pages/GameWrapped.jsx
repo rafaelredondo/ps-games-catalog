@@ -49,6 +49,8 @@ import {
 import { useGames } from '../contexts/GamesContext';
 import { getMetacriticColor } from '../utils/metacriticUtils';
 import LoadingSpinner from '../components/LoadingSpinner';
+import PsPlusIcon from '../components/PsPlusIcon';
+import CountUp from 'react-countup';
 
 const COLORS = ['#FF6AD5', '#C774E8', '#AD8CFF', '#4D96FF', '#00C49F', '#FFBB28', '#FF8042', '#6BCB77', '#FFD700', '#F9A825'];
 
@@ -74,6 +76,7 @@ export default function GameWrapped() {
     publishers: [],
     platforms: [],
     format: { physical: 0, digital: 0 },
+    psplus: { psplus: 0, others: 0 },
     status: []
   });
 
@@ -95,6 +98,7 @@ export default function GameWrapped() {
     { title: "Gêneros & Publishers", icon: <CategoryIcon /> },
     { title: "Plataformas", icon: <PlatformIcon /> },
     { title: "Físico vs Digital", icon: <PhysicalIcon /> },
+    { title: "PlayStation Plus", icon: <PsPlusIcon /> },
     { title: "Status dos Jogos", icon: <StatusIcon /> }
   ];
 
@@ -303,12 +307,15 @@ export default function GameWrapped() {
         statusCounts[status] = (statusCounts[status] || 0) + 1;
       });
       
+      const totalGames = games.length;
+      
       // Converter para array ordenado por uma ordem específica
       return statusOrder
         .filter(status => statusCounts[status]) // Só incluir status que existem
         .map(status => ({ 
           name: status, 
           value: statusCounts[status],
+          percentage: totalGames ? ((statusCounts[status] / totalGames) * 100).toFixed(1) : 0,
           // Adicionar cores e emojis para cada status
           color: status === "Jogando" ? "#4caf50" : 
                 status === "Concluído" ? "#2196f3" : 
@@ -327,6 +334,10 @@ export default function GameWrapped() {
     const physical = gamesData.filter(game => game.mediaTypes && game.mediaTypes.includes("Físico")).length;
     const digital = gamesData.filter(game => game.mediaTypes && game.mediaTypes.includes("Digital")).length;
 
+    // Count PS Plus vs others
+    const psplus = gamesData.filter(game => game.isPsPlus === true).length;
+    const others = gamesData.length - psplus;
+
     setStats({
       genres: count(gamesData, 'genres').slice(0, 4),
       longestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => b.playTime - a.playTime).slice(0, 4),
@@ -335,6 +346,7 @@ export default function GameWrapped() {
       publishers: count(gamesData, 'publishers').slice(0, 4),
       platforms: count(gamesData, 'platforms'),
       format: { physical, digital },
+      psplus: { psplus, others },
       status: countStatus(gamesData)
     });
   }
@@ -665,146 +677,236 @@ export default function GameWrapped() {
             </Box>
 
             {/* Section 5: Físico vs Digital */}
-            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <StatsCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[2]} cardIndex={5}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  {/* Physical Card */}
-                  <Paper elevation={3} sx={{ 
-                    p: 3, 
-                    borderRadius: 3, 
-                    textAlign: 'center', 
-                    background: `linear-gradient(135deg, ${COLORS[2]}15 0%, ${COLORS[2]}25 100%)`,
-                    border: `2px solid ${COLORS[2]}40`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 8px 25px ${COLORS[2]}30`
-                    }
-                  }}>
-                    <Typography sx={{ fontSize: '3rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>💿</Typography>
-                    <AnimatedNumber value={stats.format.physical} delay={0} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2c3e50' }}>
-                      Jogos Físicos
+            <Box ref={el => sectionRefs.current[5] = el} sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
+              <Card sx={{ 
+                maxWidth: 800, 
+                width: '100%', 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                borderRadius: 4,
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                transform: visibleCards.has(5) ? 'scale(1)' : 'scale(0.8)',
+                opacity: visibleCards.has(5) ? 1 : 0,
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <PhysicalIcon sx={{ fontSize: 40, mr: 2 }} />
+                    <Typography variant="h4" component="h2" fontWeight="bold">
+                      Físico vs Digital
                     </Typography>
-                    <Box sx={{ 
-                      width: '100%', 
-                      height: 8, 
-                      bgcolor: 'rgba(0,0,0,0.1)', 
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                      mb: 1
-                    }}>
-                      <Box sx={{ 
-                        width: `${physicalPercentage}%`, 
-                        height: '100%', 
-                        background: `linear-gradient(90deg, ${COLORS[2]} 0%, ${COLORS[2]}cc 100%)`,
-                        transition: 'width 0.8s ease',
-                        borderRadius: 4
-                      }} />
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: COLORS[2], fontSize: '1.1rem' }}>
-                      {physicalPercentage}%
-                    </Typography>
-                  </Paper>
-
-                  {/* Digital Card */}
-                  <Paper elevation={3} sx={{ 
-                    p: 3, 
-                    borderRadius: 3, 
-                    textAlign: 'center', 
-                    background: `linear-gradient(135deg, ${COLORS[4]}15 0%, ${COLORS[4]}25 100%)`,
-                    border: `2px solid ${COLORS[4]}40`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 8px 25px ${COLORS[4]}30`
-                    }
-                  }}>
-                    <Typography sx={{ fontSize: '3rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>☁️</Typography>
-                    <AnimatedNumber value={stats.format.digital} delay={200} />
-                    <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2c3e50' }}>
-                      Jogos Digitais
-                    </Typography>
-                    <Box sx={{ 
-                      width: '100%', 
-                      height: 8, 
-                      bgcolor: 'rgba(0,0,0,0.1)', 
-                      borderRadius: 4,
-                      overflow: 'hidden',
-                      mb: 1
-                    }}>
-                      <Box sx={{ 
-                        width: `${digitalPercentage}%`, 
-                        height: '100%', 
-                        background: `linear-gradient(90deg, ${COLORS[4]} 0%, ${COLORS[4]}cc 100%)`,
-                        transition: 'width 0.8s ease',
-                        borderRadius: 4
-                      }} />
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, color: COLORS[4], fontSize: '1.1rem' }}>
-                      {digitalPercentage}%
-                    </Typography>
-                  </Paper>
-                </Box>
-              </StatsCard>
+                  </Box>
+                  
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ 
+                        background: 'rgba(255,255,255,0.1)', 
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: 'center',
+                        height: '100%'
+                      }}>
+                        <PhysicalIcon sx={{ fontSize: 48, mb: 2, color: '#FFD700' }} />
+                        <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
+                          <CountUp 
+                            end={stats.format.physical} 
+                            duration={2} 
+                            preserveValue 
+                            start={visibleCards.has(5) ? 0 : stats.format.physical}
+                          />
+                        </Typography>
+                        <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                          Jogos Físicos
+                        </Typography>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ 
+                        background: 'rgba(255,255,255,0.1)', 
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: 'center',
+                        height: '100%'
+                      }}>
+                        <Box sx={{ 
+                          width: 48, 
+                          height: 48, 
+                          borderRadius: '50%', 
+                          background: 'linear-gradient(45deg, #2196F3, #21CBF3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 'auto',
+                          mb: 2
+                        }}>
+                          <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
+                            D
+                          </Typography>
+                        </Box>
+                        <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
+                          <CountUp 
+                            end={stats.format.digital} 
+                            duration={2} 
+                            preserveValue 
+                            start={visibleCards.has(5) ? 0 : stats.format.digital}
+                          />
+                        </Typography>
+                        <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                          Jogos Digitais
+                        </Typography>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
             </Box>
 
-            {/* Section 6: Status dos Jogos */}
+            {/* PlayStation Plus Section */}
+            <Box ref={el => sectionRefs.current[6] = el} sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
+              <Card sx={{ 
+                maxWidth: 800, 
+                width: '100%', 
+                background: 'linear-gradient(135deg, #003087 0%, #0070f3 100%)',
+                color: 'white',
+                borderRadius: 4,
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                transform: visibleCards.has(6) ? 'scale(1)' : 'scale(0.8)',
+                opacity: visibleCards.has(6) ? 1 : 0,
+                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <PsPlusIcon sx={{ fontSize: 40, mr: 2 }} />
+                    <Typography variant="h4" component="h2" fontWeight="bold">
+                      PlayStation Plus
+                    </Typography>
+                  </Box>
+                  
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ 
+                        background: 'rgba(255,255,255,0.1)', 
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: 'center',
+                        height: '100%'
+                      }}>
+                        <PsPlusIcon sx={{ fontSize: 48, mb: 2, color: '#FFD700' }} />
+                        <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
+                          <CountUp 
+                            end={stats.psplus.psplus} 
+                            duration={2} 
+                            preserveValue 
+                            start={visibleCards.has(6) ? 0 : stats.psplus.psplus}
+                          />
+                        </Typography>
+                        <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                          Jogos PS Plus
+                        </Typography>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <Card sx={{ 
+                        background: 'rgba(255,255,255,0.1)', 
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: 'center',
+                        height: '100%'
+                      }}>
+                        <Box sx={{ 
+                          width: 48, 
+                          height: 48, 
+                          borderRadius: '50%', 
+                          background: 'linear-gradient(45deg, #666, #999)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 'auto',
+                          mb: 2
+                        }}>
+                          <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
+                            O
+                          </Typography>
+                        </Box>
+                        <Typography variant="h3" fontWeight="bold" sx={{ mb: 1 }}>
+                          <CountUp 
+                            end={stats.psplus.others} 
+                            duration={2} 
+                            preserveValue 
+                            start={visibleCards.has(6) ? 0 : stats.psplus.others}
+                          />
+                        </Typography>
+                        <Typography variant="h6" sx={{ opacity: 0.9 }}>
+                          Outros Jogos
+                        </Typography>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Box>
+
+            {/* Section 7: Status dos Jogos */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={6}>
+              <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={7}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {stats.status.map((statusItem, idx) => (
-                    <Paper key={statusItem.name} elevation={2} sx={{ 
-                      p: 2.5,
-                      background: `linear-gradient(135deg, ${statusItem.color}15 0%, ${statusItem.color}25 100%)`,
+                  {stats.status.map((status, index) => (
+                    <Paper key={status.name} elevation={3} sx={{ 
+                      p: 3, 
                       borderRadius: 3,
-                      border: `2px solid ${statusItem.color}40`,
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, ${COLORS[index % COLORS.length]}15 0%, ${COLORS[index % COLORS.length]}25 100%)`,
+                      border: `2px solid ${COLORS[index % COLORS.length]}40`,
                       transition: 'all 0.3s ease',
                       '&:hover': {
-                        transform: 'translateY(-1px)',
-                        boxShadow: `0 4px 15px ${statusItem.color}30`
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 8px 25px ${COLORS[index % COLORS.length]}30`
                       }
                     }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography sx={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {statusItem.emoji} {statusItem.name}
-                        </Typography>
-                        <Typography variant="h6" sx={{ color: statusItem.color, fontWeight: 700 }}>
-                          {statusItem.value}
-                        </Typography>
+                      <Typography sx={{ fontSize: '2rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>
+                        {status.emoji}
+                      </Typography>
+                      <AnimatedNumber value={status.value} delay={index * 100} />
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 700, 
+                        mb: 2, 
+                        color: '#1a1a1a',
+                        fontSize: '1.1rem',
+                        textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+                      }}>
+                        {status.name}
+                      </Typography>
+                      <Box sx={{ 
+                        width: '100%', 
+                        height: 8, 
+                        bgcolor: 'rgba(0,0,0,0.1)', 
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        mb: 1
+                      }}>
+                        <Box sx={{ 
+                          width: `${status.percentage}%`, 
+                          height: '100%', 
+                          background: `linear-gradient(90deg, ${COLORS[index % COLORS.length]} 0%, ${COLORS[index % COLORS.length]}cc 100%)`,
+                          transition: 'width 0.8s ease',
+                          borderRadius: 4
+                        }} />
                       </Box>
-                      <Box sx={{ mb: 1 }}>
-                        <Box 
-                          sx={{ 
-                            height: 10, 
-                            width: '100%',
-                            bgcolor: 'rgba(0,0,0,0.1)',
-                            borderRadius: 2,
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <Box 
-                            sx={{ 
-                              height: '100%', 
-                              width: `${(statusItem.value / games.length) * 100}%`, 
-                              bgcolor: statusItem.color,
-                              transition: 'width 0.8s ease',
-                              borderRadius: 2
-                            }} 
-                          />
-                        </Box>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" textAlign="right" fontWeight="medium">
-                        {((statusItem.value / games.length) * 100).toFixed(1)}% da coleção
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: COLORS[index % COLORS.length], fontSize: '1.1rem' }}>
+                        {status.percentage}%
                       </Typography>
                     </Paper>
                   ))}
-                  
-                  <Box sx={{ textAlign: 'center', mt: 1, p: 1.5, bgcolor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
-                    <Typography variant="h6" fontWeight="bold" color="text.primary">
-                      Total: {games.length} jogos
-                    </Typography>
-                  </Box>
                 </Box>
               </StatsCard>
             </Box>
@@ -1365,7 +1467,13 @@ export default function GameWrapped() {
                           {statusItem.emoji}
                         </Typography>
                         <AnimatedNumber value={statusItem.value} delay={idx * 100} />
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#2c3e50' }}>
+                        <Typography variant="h6" sx={{ 
+                          fontWeight: 700, 
+                          mb: 2, 
+                          color: '#1a1a1a',
+                          fontSize: '1.1rem',
+                          textShadow: '0 1px 2px rgba(255,255,255,0.8)'
+                        }}>
                           {statusItem.name}
                         </Typography>
                       </Box>
