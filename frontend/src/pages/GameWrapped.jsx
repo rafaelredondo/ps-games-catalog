@@ -340,8 +340,8 @@ export default function GameWrapped() {
 
     setStats({
       genres: count(gamesData, 'genres').slice(0, 4),
-      longestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => b.playTime - a.playTime).slice(0, 8),
-      shortestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => a.playTime - b.playTime).slice(0, 8),
+      longestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => b.playTime - a.playTime).slice(0, 7),
+      shortestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => a.playTime - b.playTime).slice(0, 7),
       topRatedGames: [...gamesData].filter(g => g.metacritic != null).sort((a, b) => b.metacritic - a.metacritic).slice(0, 16),
       publishers: count(gamesData, 'publishers').slice(0, 4),
       platforms: count(gamesData, 'platforms'),
@@ -548,7 +548,7 @@ export default function GameWrapped() {
               <StatsCard icon={<ScheduleIcon />} title="Mais Longos" color={COLORS[5]} cardIndex={1} isVisible={visibleCards.has(1)}>
                 <List disablePadding>
                   {stats.longestGames.map((game, idx) => (
-                    <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
+                    <ListItem key={game.id} disablePadding sx={{ py: 1.5 }}>
                       <Typography sx={{ 
                         fontWeight: 700, 
                         color: COLORS[5], 
@@ -581,7 +581,7 @@ export default function GameWrapped() {
               <StatsCard icon={<SpeedIcon />} title="Mais Curtos" color={COLORS[6]} cardIndex={2} isVisible={visibleCards.has(2)}>
                 <List disablePadding>
                   {stats.shortestGames.map((game, idx) => (
-                    <ListItem key={game.id} disablePadding sx={{ py: 2, minHeight: 56 }}>
+                    <ListItem key={game.id} disablePadding sx={{ py: 1.5 }}>
                       <Typography sx={{ 
                         fontWeight: 700, 
                         color: COLORS[6], 
@@ -1158,8 +1158,8 @@ export default function GameWrapped() {
               <List disablePadding>
                 {stats.longestGames.map((game, idx) => (
                   <ListItem key={game.id} divider={idx < stats.longestGames.length-1} disablePadding sx={{ 
-                    py: isMobile ? 2 : 1.5,
-                    minHeight: isMobile ? 56 : 'auto'
+                    py: isMobile ? 1.5 : 1,
+                    minHeight: isMobile ? 'auto' : 'auto'
                   }}>
                     <Typography sx={{ 
                       fontWeight: 700, 
@@ -1203,8 +1203,8 @@ export default function GameWrapped() {
               <List disablePadding>
                 {stats.shortestGames.map((game, idx) => (
                   <ListItem key={game.id} divider={idx < stats.shortestGames.length-1} disablePadding sx={{ 
-                    py: isMobile ? 2 : 1.5,
-                    minHeight: isMobile ? 56 : 'auto'
+                    py: isMobile ? 1.5 : 1,
+                    minHeight: isMobile ? 'auto' : 'auto'
                   }}>
                     <Typography sx={{ 
                       fontWeight: 700, 
