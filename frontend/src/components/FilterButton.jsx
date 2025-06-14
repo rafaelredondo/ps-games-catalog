@@ -4,7 +4,7 @@ import { Button, Tooltip } from '@mui/material';
 /**
  * Botão padronizado para ações de filtro e utilitários
  * @param {Object} props 
- * @param {'filter'|'export'|'upload'|'toggle'} props.variant - Tipo da ação de filtro
+ * @param {'filter'|'primary'|'export'|'upload'|'toggle'} props.variant - Tipo da ação de filtro
  * @param {'small'|'medium'|'large'} props.size - Tamanho do botão  
  * @param {boolean} props.disabled - Se o botão está desabilitado
  * @param {boolean} props.fullWidth - Se o botão ocupa toda a largura
@@ -35,6 +35,10 @@ const FilterButton = ({
     filter: {
       color: 'error',
       muiVariant: 'outlined'
+    },
+    primary: {
+      color: 'primary',
+      muiVariant: 'contained'
     },
     export: {
       color: 'info',

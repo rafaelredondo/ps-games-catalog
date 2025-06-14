@@ -28,6 +28,7 @@ import EmptyState from '../components/EmptyState';
 import DataTable from '../components/DataTable';
 import SkeletonLoader from '../components/SkeletonLoader';
 import RetryErrorState from '../components/RetryErrorState';
+import FilterDrawer from '../components/FilterDrawer';
 
 // Componentes de Input padronizados
 import SearchInput from '../components/SearchInput';
@@ -41,6 +42,7 @@ import VideogameAssetIcon from '@mui/icons-material/VideogameAsset';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DoneIcon from '@mui/icons-material/Done';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
@@ -291,6 +293,7 @@ function Home() {
   });
   const [completedDialogOpen, setCompletedDialogOpen] = useState(false);
   const [gameToMarkCompleted, setGameToMarkCompleted] = useState(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Funções de paginação (placeholders quando infinite scroll desabilitado)
   const goToPage = useCallback((page) => {
@@ -314,6 +317,19 @@ function Home() {
            selectedStatus !== 'all' || 
            minMetacritic !== '' ||
            isPsPlusFilter;
+  }, [searchInput, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic, isPsPlusFilter]);
+
+  // Calcular número de filtros ativos para o badge
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchInput !== '') count++;
+    if (platform !== 'all') count++;
+    if (selectedGenre !== 'all') count++;
+    if (selectedPublisher !== 'all') count++;
+    if (selectedStatus !== 'all') count++;
+    if (minMetacritic !== '') count++;
+    if (isPsPlusFilter) count++;
+    return count;
   }, [searchInput, platform, selectedGenre, selectedPublisher, selectedStatus, minMetacritic, isPsPlusFilter]);
 
   // Função para determinar o tipo de empty state
@@ -1131,136 +1147,209 @@ function Home() {
 
       {/* Barra de filtros - Mobile First */}
       <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: { xs: 2, sm: 3 } }} alignItems="center">
-        {/* Search - Prioridade máxima em mobile */}
-        <Grid size={{ xs: 12, sm: 4, md: 2.5 }}>
-          <SearchInput
-            value={searchInput}
-            onChange={handleSearch}
-            label="Buscar por nome"
-          />
-        </Grid>
+        {/* Mobile: Apenas busca + botão de filtros */}
+        {isMobile ? (
+          <>
+            {/* Botão de Filtros - Mobile - Alinhado à esquerda */}
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 1 }}>
+                <FilterButton
+                  variant="toggle"
+                  onClick={() => setFilterDrawerOpen(true)}
+                  startIcon={<FilterAltIcon />}
+                  sx={{
+                    height: '56px',
+                    position: 'relative',
+                    fontSize: '0.875rem',
+                    px: 2,
+                    bgcolor: 'transparent',
+                    color: '#0070f3',
+                    border: '2px solid #0070f3',
+                    '&:hover': {
+                      bgcolor: 'rgba(0, 112, 243, 0.04)',
+                      border: '2px solid #0056b3'
+                    }
+                  }}
+                >
+                  Filtros
+                  {activeFiltersCount > 0 && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: -6,
+                        right: -6,
+                        bgcolor: '#ff4444',
+                        color: 'white',
+                        borderRadius: '50%',
+                        width: 22,
+                        height: 22,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        border: '2px solid white',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                      }}
+                    >
+                      {activeFiltersCount}
+                    </Box>
+                  )}
+                </FilterButton>
 
-        {/* Platform - Segunda prioridade */}
-        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-          <FilterSelect
-            value={platform}
-            onChange={handlePlatformChange}
-            label="Plataforma"
-            options={dropdownOptions.platforms}
-            disabled={optionsLoading}
-          />
-        </Grid>
-        
-        {/* Genre - Terceira prioridade */}
-        <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-          <FilterSelect
-            value={selectedGenre}
-            onChange={handleGenreChange}
-            label="Gênero"
-            options={dropdownOptions.genres}
-            disabled={optionsLoading}
-          />
-        </Grid>
+                {/* Botão Limpar - Mobile */}
+                <FilterButton 
+                  variant="filter"
+                  onClick={handleClearFilters}
+                  startIcon={<FilterAltOffIcon />}
+                  disabled={!hasActiveFilters}
+                  sx={{
+                    height: '56px',
+                    fontSize: '0.875rem',
+                    px: 2,
+                    opacity: hasActiveFilters ? 1 : 0.5
+                  }}
+                >
+                  Limpar
+                </FilterButton>
+              </Box>
+            </Grid>
+          </>
+        ) : (
+          /* Desktop: Barra completa de filtros */
+          <>
+            {/* Search - Prioridade máxima em mobile */}
+            <Grid size={{ xs: 12, sm: 4, md: 2.5 }}>
+              <SearchInput
+                value={searchInput}
+                onChange={handleSearch}
+                label="Buscar por nome"
+              />
+            </Grid>
 
-        {/* Status - Quarta prioridade */}
-        <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-          <FilterSelect
-            value={selectedStatus}
-            onChange={handleStatusChange}
-            label="Status"
-            options={dropdownOptions.statuses}
-            allOptionLabel="Todos"
-            disabled={optionsLoading}
-          />
-        </Grid>
-        
-        {/* PS Plus Filter - Botão toggle estilizado */}
-        <Grid size={{ xs: 4, sm: 3, md: 1 }}>
-          <FilterButton
-            variant={isPsPlusFilter ? "primary" : "filter"}
-            fullWidth
-            onClick={handlePsPlusFilterChange}
-            startIcon={<PsPlusIcon fontSize="small" />}
-            tooltip={isPsPlusFilter ? "Remover filtro PS Plus" : "Filtrar apenas jogos PS Plus"}
-            sx={{
-              height: '56px', // Mesma altura dos outros filtros
-              color: 'white', // Força texto branco sempre
-              border: 'none', // Remove qualquer borda
-              minWidth: 'auto', // Remove largura mínima
-              px: 1, // Padding horizontal reduzido
-              ...(isPsPlusFilter && {
-                bgcolor: '#0070f3',
-                color: 'white',
-                border: '1px solid #0070f3',
-                '&:hover': {
-                  bgcolor: '#0056b3',
-                  border: '1px solid #0056b3',
-                }
-              }),
-              ...(!isPsPlusFilter && {
-                bgcolor: 'rgba(255, 255, 255, 0.1)',
-                color: 'white',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.15)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                }
-              })
-            }}
-          >
-            PS+
-          </FilterButton>
-        </Grid>
-        
-        {/* Metacritic - Menos usado, mas importante */}
-        <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
-          <SearchInput
-            value={minMetacritic}
-            onChange={handleMinMetacriticChange}
-            label="Metacritic ≥"
-            type="number"
-            inputProps={{ min: 0, max: 100 }}
-            startAdornment={null}
-          />
-        </Grid>
-        
-        {/* Publisher - Aumentado para ter mais espaço */}
-        <Grid size={{ xs: 6, sm: 6, md: 1.5 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
-          <FilterSelect
-            value={selectedPublisher}
-            onChange={handlePublisherChange}
-            label="Publisher"
-            options={dropdownOptions.publishers}
-            disabled={optionsLoading}
-          />
-        </Grid>
+            {/* Platform - Segunda prioridade */}
+            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+              <FilterSelect
+                value={platform}
+                onChange={handlePlatformChange}
+                label="Plataforma"
+                options={dropdownOptions.platforms}
+                disabled={optionsLoading}
+              />
+            </Grid>
+            
+            {/* Genre - Terceira prioridade */}
+            <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
+              <FilterSelect
+                value={selectedGenre}
+                onChange={handleGenreChange}
+                label="Gênero"
+                options={dropdownOptions.genres}
+                disabled={optionsLoading}
+              />
+            </Grid>
 
-        {/* Botões de ação */}
-        <Grid size={{ xs: 6, sm: 3, md: 1 }}>
-          <FilterButton 
-            variant="filter"
-            fullWidth
-            onClick={handleClearFilters}
-            startIcon={<FilterAltOffIcon fontSize="small" />}
-            tooltip="Limpar todos os filtros"
-          >
-            Limpar
-          </FilterButton>
-        </Grid>
+            {/* Status - Quarta prioridade */}
+            <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
+              <FilterSelect
+                value={selectedStatus}
+                onChange={handleStatusChange}
+                label="Status"
+                options={dropdownOptions.statuses}
+                allOptionLabel="Todos"
+                disabled={optionsLoading}
+              />
+            </Grid>
 
-        {/* Export - Hidden em mobile muito pequeno */}
-        <Grid size={{ xs: 6, sm: 3, md: 1 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
-          <FilterButton 
-            variant="export"
-            fullWidth
-            onClick={handleExportCsv}
-            startIcon={<FileDownloadIcon fontSize="small" />}
-            tooltip="Exportar jogos para CSV"
-            disabled={filteredGames.length === 0}
-          >
-            CSV
-          </FilterButton>
-        </Grid>
+            {/* PS Plus Filter - Botão toggle estilizado */}
+            <Grid size={{ xs: 4, sm: 3, md: 1 }}>
+              <FilterButton
+                variant={isPsPlusFilter ? "primary" : "filter"}
+                fullWidth
+                onClick={handlePsPlusFilterChange}
+                startIcon={<PsPlusIcon fontSize="small" />}
+                tooltip={isPsPlusFilter ? "Remover filtro PS Plus" : "Filtrar apenas jogos PS Plus"}
+                sx={{
+                  height: '56px',
+                  color: 'white',
+                  border: 'none',
+                  minWidth: 'auto',
+                  px: 1,
+                  ...(isPsPlusFilter && {
+                    bgcolor: '#0070f3',
+                    color: 'white',
+                    border: '1px solid #0070f3',
+                    '&:hover': {
+                      bgcolor: '#0056b3',
+                      border: '1px solid #0056b3',
+                    }
+                  }),
+                  ...(!isPsPlusFilter && {
+                    bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'white',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.15)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                    }
+                  })
+                }}
+              >
+                PS+
+              </FilterButton>
+            </Grid>
+            
+            {/* Metacritic - Menos usado, mas importante */}
+            <Grid size={{ xs: 6, sm: 4, md: 1.5 }}>
+              <SearchInput
+                value={minMetacritic}
+                onChange={handleMinMetacriticChange}
+                label="Metacritic ≥"
+                type="number"
+                inputProps={{ min: 0, max: 100 }}
+                startAdornment={null}
+              />
+            </Grid>
+            
+            {/* Publisher - Aumentado para ter mais espaço */}
+            <Grid size={{ xs: 6, sm: 6, md: 1.5 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <FilterSelect
+                value={selectedPublisher}
+                onChange={handlePublisherChange}
+                label="Publisher"
+                options={dropdownOptions.publishers}
+                disabled={optionsLoading}
+              />
+            </Grid>
+
+            {/* Botões de ação */}
+            <Grid size={{ xs: 6, sm: 3, md: 1 }}>
+              <FilterButton 
+                variant="filter"
+                fullWidth
+                onClick={handleClearFilters}
+                startIcon={<FilterAltOffIcon fontSize="small" />}
+                tooltip="Limpar todos os filtros"
+              >
+                Limpar
+              </FilterButton>
+            </Grid>
+
+            {/* Export - Hidden em mobile muito pequeno */}
+            <Grid size={{ xs: 6, sm: 3, md: 1 }} sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <FilterButton 
+                variant="export"
+                fullWidth
+                onClick={handleExportCsv}
+                startIcon={<FileDownloadIcon fontSize="small" />}
+                tooltip="Exportar jogos para CSV"
+                disabled={filteredGames.length === 0}
+              >
+                CSV
+              </FilterButton>
+            </Grid>
+          </>
+        )}
       </Grid>
 
       {/* Loading sutil quando infinite scroll desligado e carregando dados iniciais */}
@@ -1356,6 +1445,34 @@ function Home() {
           null
         )}
       </Box>
+      
+      {/* FilterDrawer para Mobile */}
+      <FilterDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        // Estados dos filtros
+        searchInput={searchInput}
+        platform={platform}
+        selectedGenre={selectedGenre}
+        selectedStatus={selectedStatus}
+        isPsPlusFilter={isPsPlusFilter}
+        minMetacritic={minMetacritic}
+        selectedPublisher={selectedPublisher}
+        // Handlers dos filtros
+        onSearchChange={handleSearch}
+        onPlatformChange={handlePlatformChange}
+        onGenreChange={handleGenreChange}
+        onStatusChange={handleStatusChange}
+        onPsPlusFilterChange={handlePsPlusFilterChange}
+        onMinMetacriticChange={handleMinMetacriticChange}
+        onPublisherChange={handlePublisherChange}
+        onClearFilters={handleClearFilters}
+        // Opções dos dropdowns
+        dropdownOptions={dropdownOptions}
+        optionsLoading={optionsLoading}
+        // Contador de filtros ativos
+        activeFiltersCount={activeFiltersCount}
+      />
       
       {/* Diálogo de confirmação de exclusão */}
       <ConfirmDialog
