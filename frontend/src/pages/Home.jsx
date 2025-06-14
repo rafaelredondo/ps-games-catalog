@@ -42,6 +42,7 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import FilterAltOffIcon from '@mui/icons-material/FilterAltOff';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import DoneIcon from '@mui/icons-material/Done';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import { useGames } from '../contexts/GamesContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
@@ -324,9 +325,9 @@ function Home() {
       id: 'actions',
       label: 'Ações',
       align: 'center',
-      width: '120px',
+      width: '160px',
       render: (game) => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
           {(!game.status || game.status !== 'Concluído') && !game.completed && (
             <Tooltip title="Marcar como concluído">
               <IconButton
@@ -345,6 +346,26 @@ function Home() {
                 aria-label="marcar como concluído"
               >
                 <DoneIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {game.status !== 'Na fila' && (
+            <Tooltip title="Adicionar à fila">
+              <IconButton
+                color="warning"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddToQueue(game);
+                }}
+                sx={{ 
+                  '&:hover': { 
+                    bgcolor: 'rgba(156, 39, 176, 0.1)' 
+                  }
+                }}
+                aria-label="adicionar à fila"
+              >
+                <PlaylistAddIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
@@ -611,8 +632,8 @@ function Home() {
         setCompletedDialogOpen(false);
         setGameToMarkCompleted(null);
         
-        // Recarregar a lista de jogos para garantir sincronização com o backend
-        refresh();
+        // ✅ Otimização: updateGame já atualiza o item específico no contexto
+        // Removido refresh() para evitar recarregamento desnecessário da lista
       } catch (err) {
         console.error('Erro ao marcar jogo como concluído:', err);
         
@@ -633,7 +654,50 @@ function Home() {
         setGameToMarkCompleted(null);
       }
     }
-  }, [gameToMarkCompleted, updateGame, refresh, notify]);
+  }, [gameToMarkCompleted, updateGame, notify]);
+
+  // Função para adicionar jogo à fila
+  const handleAddToQueue = useCallback(async (game) => {
+    try {
+      // Importante: garantir que todos os campos obrigatórios estejam presentes
+      // O backend espera name, platforms e mediaTypes como obrigatórios
+      const updatedGame = { 
+        ...game, 
+        completed: false,
+        status: 'Na fila' // Campo status usado pelo backend
+      };
+      
+      // Verificar campos obrigatórios
+      if (!updatedGame.platforms) updatedGame.platforms = [];
+      if (!updatedGame.mediaTypes) updatedGame.mediaTypes = [];
+      
+      // Usar await para garantir que a operação seja concluída
+      const result = await updateGame(game.id, updatedGame);
+      
+      // Notificação de sucesso
+      notify.success(
+        `"${game.name}" adicionado à fila!`,
+        {
+          title: 'Jogo na Fila ⏱️',
+          duration: 3000
+        }
+      );
+      
+      // ✅ Otimização: updateGame já atualiza o item específico no contexto
+      // Removido refresh() para evitar recarregamento desnecessário da lista
+    } catch (err) {
+      console.error('Erro ao adicionar jogo à fila:', err);
+      
+      // Notificação de erro
+      notify.error(
+        'Não foi possível adicionar o jogo à fila.',
+        {
+          title: 'Erro ao Atualizar',
+          duration: 4000
+        }
+      );
+    }
+  }, [updateGame, notify]);
 
   // Renderização dos cards
   const renderCardView = () => {

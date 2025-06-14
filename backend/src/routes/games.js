@@ -1,6 +1,7 @@
 import express from 'express';
 import { gamesDb } from '../db/database.js';
 import Game from '../models/Game.js';
+import { HowLongToBeatCrawler } from '../services/howlongtobeat-crawler.js';
 
 const router = express.Router();
 
@@ -73,6 +74,37 @@ async function checkDuplicate(gameName, platforms, mediaTypes) {
   return games.some(game => 
     game.name.toLowerCase() === gameName.toLowerCase()
   );
+}
+
+/**
+ * Busca tempo de jogo de forma assíncrona após criação do jogo
+ * REUTILIZA crawler existente sem duplicação de código
+ * @param {string} gameId - ID do jogo
+ * @param {string} gameName - Nome do jogo
+ */
+async function searchGamePlayTimeAsync(gameId, gameName) {
+  try {
+    console.log(`🚀 Iniciando busca assíncrona para: "${gameName}" (ID: ${gameId})`);
+    
+    // REUTILIZAR classe existente sem modificações
+    const crawler = new HowLongToBeatCrawler();
+    
+    // REUTILIZAR método novo que usa 98% do código existente
+    const playTime = await crawler.searchSingleGamePlayTime(gameName, {
+      useOwnBrowser: true,    // Browser próprio (não interfere com crawling batch)
+      quickSearch: true       // Mais rápido (3 variações vs 5+)
+    });
+    
+    if (playTime !== null) {
+      console.log(`✅ Tempo encontrado para "${gameName}": ${playTime}h`);
+      await gamesDb.update(gameId, { playTime });
+      console.log(`💾 Jogo "${gameName}" atualizado com tempo: ${playTime}h`);
+    } else {
+      console.log(`❌ Tempo não encontrado para "${gameName}"`);
+    }
+  } catch (error) {
+    console.error(`❌ Erro na busca assíncrona para "${gameName}":`, error.message);
+  }
 }
 
 // Buscar opções para dropdowns/combos (otimizado)
@@ -316,7 +348,21 @@ router.post('/', async (req, res) => {
     );
 
     const createdGame = await gamesDb.create(newGame);
-    res.status(201).json(createdGame);
+    
+    // Se não tem playTime, buscar automaticamente de forma assíncrona
+    if (!playTime) {
+      console.log(`🔍 Buscando tempo automaticamente para: "${name}"`);
+      searchGamePlayTimeAsync(createdGame.id, name).catch(error => {
+        console.error(`❌ Erro na busca automática para "${name}":`, error.message);
+      });
+      
+      res.status(201).json({
+        ...createdGame,
+        message: 'Jogo criado com sucesso! Buscando tempo de jogo automaticamente...'
+      });
+    } else {
+      res.status(201).json(createdGame);
+    }
   } catch (error) {
     console.error('Erro ao criar jogo:', error);
     res.status(500).json({ error: 'Erro ao criar jogo' });
@@ -390,6 +436,32 @@ router.put('/:id', async (req, res) => {
     res.json(game);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao atualizar jogo' });
+  }
+});
+
+// Buscar tempo de jogo manualmente para um jogo específico
+router.post('/:id/search-playtime', async (req, res) => {
+  try {
+    const game = await gamesDb.getById(req.params.id);
+    if (!game) {
+      return res.status(404).json({ error: 'Jogo não encontrado' });
+    }
+    
+    console.log(`🔍 Busca manual solicitada para: "${game.name}"`);
+    
+    // Buscar de forma assíncrona (não bloqueia a resposta)
+    searchGamePlayTimeAsync(game.id, game.name).catch(error => {
+      console.error(`❌ Erro na busca manual para "${game.name}":`, error.message);
+    });
+    
+    res.json({ 
+      message: 'Busca de tempo de jogo iniciada',
+      status: 'searching',
+      gameName: game.name
+    });
+  } catch (error) {
+    console.error('Erro ao iniciar busca de tempo de jogo:', error);
+    res.status(500).json({ error: 'Erro ao iniciar busca de tempo de jogo' });
   }
 });
 

@@ -4,6 +4,42 @@ Este diretório contém scripts utilitários para o projeto.
 
 ## 📁 Scripts Disponíveis
 
+### 🚀 Desenvolvimento
+
+#### `start-dev.sh`
+**NOVO!** Script completo para iniciar ambiente de desenvolvimento.
+
+```bash
+# Iniciar backend e frontend com logs em arquivos
+./scripts/start-dev.sh
+```
+
+**Características:**
+- ✅ Verifica e libera portas ocupadas automaticamente
+- 🔄 Mata processos antigos se necessário
+- 📋 Instala dependências se não existirem
+- 📝 Logs salvos em arquivos separados (backend.log e frontend.log)
+- 🛡️ Cleanup automático ao sair (Ctrl+C)
+- ⏳ Validação de inicialização dos serviços
+
+#### `start-dev-interactive.sh`
+**NOVO!** Versão interativa para ver logs na tela.
+
+```bash
+# Iniciar com logs na tela
+./scripts/start-dev-interactive.sh
+```
+
+**Características:**
+- ✅ Mesmo controle de portas que a versão completa
+- 👀 Logs do frontend visíveis na tela
+- 🏃‍♂️ Backend roda em background
+- 🧹 Cleanup automático dos processos
+
+**Portas utilizadas:**
+- Backend: `3000`
+- Frontend: `5173` (Vite)
+
 ### 🚀 Deploy Scripts
 
 #### `deploy-direct.sh`

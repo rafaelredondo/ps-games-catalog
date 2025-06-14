@@ -134,26 +134,7 @@ async function main() {
     // Inicializar crawler
     const crawler = new HowLongToBeatCrawler();
     
-    // Buscar jogos sem tempo primeiro
-    console.log('🔍 Verificando jogos sem tempo de jogo...');
-    const gamesWithoutPlayTime = await crawler.findGamesWithoutPlayTime();
-    
-    if (gamesWithoutPlayTime.length === 0) {
-      console.log('✅ Parabéns! Todos os jogos já possuem tempo de jogo.');
-      process.exit(0);
-    }
-
-    console.log(`📋 Encontrados ${gamesWithoutPlayTime.length} jogos sem tempo:`);
-    gamesWithoutPlayTime.slice(0, options.maxGames).forEach((game, index) => {
-      console.log(`   ${index + 1}. ${game.name}`);
-    });
-
-    if (gamesWithoutPlayTime.length > options.maxGames) {
-      console.log(`   ... e mais ${gamesWithoutPlayTime.length - options.maxGames} jogos`);
-    }
-    console.log('');
-
-    // Confirmar execução se não for dry run
+    // Confirmação se não for dry run
     if (!options.dryRun) {
       console.log('⚠️  O crawler irá fazer requisições reais ao HowLongToBeat e atualizar o banco de dados.');
       console.log('💡 Dica: Use --dry-run primeiro para testar sem fazer alterações.\n');
@@ -161,7 +142,7 @@ async function main() {
 
     // Executar crawler
     const result = await crawler.crawlAndUpdatePlayTimes({
-      maxGames: options.maxGames,
+      limit: options.maxGames,  // Corrigir: usar 'limit' em vez de 'maxGames'
       dryRun: options.dryRun,
       clearCooldown: options.clearCooldown
     });

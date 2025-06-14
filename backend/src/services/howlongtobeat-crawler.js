@@ -257,10 +257,11 @@ export class HowLongToBeatCrawler {
                 title: gameData.title,
                 year: foundYear,
                 playTime: gameData.mainStoryTime,
-                isPreferredYear: preferredYear && foundYear === preferredYear
+                isPreferredYear: preferredYear && foundYear === preferredYear,
+                timeType: gameData.timeType
               });
               
-              console.log(`⏱️ Tempo encontrado: ${gameData.mainStoryTime}h para "${gameData.title}" (${foundYear || 'ano não identificado'})`);
+              console.log(`⏱️ Tempo encontrado: ${gameData.mainStoryTime}h (${gameData.timeType || 'Main Story'}) para "${gameData.title}" (${foundYear || 'ano não identificado'})`);
               
               // Se é o ano preferido, retornar imediatamente
               if (preferredYear && foundYear === preferredYear) {
@@ -316,6 +317,25 @@ export class HowLongToBeatCrawler {
   }
 
   /**
+   * Converte texto de tempo para número de horas
+   * @param {string} timeText - Texto com tempo (ex: "8½ Hours", "12 Hours") 
+   * @returns {number|null} Número de horas ou null se inválido
+   */
+  parseTimeText(timeText) {
+    if (!timeText || timeText === '--') return null;
+    
+    const timeMatch = timeText.match(/(\d+(?:\.\d+)?(?:½)?)\s*Hours?/i);
+    if (timeMatch) {
+      let hours = parseFloat(timeMatch[1]);
+      if (timeText.includes('½')) {
+        hours += 0.5;
+      }
+      return hours;
+    }
+    return null;
+  }
+
+  /**
    * Extrai jogos diretamente da página de resultados
    * @returns {Promise<Array>} Array de objetos com dados dos jogos
    */
@@ -356,10 +376,47 @@ export class HowLongToBeatCrawler {
             const yearElement = gameElement.querySelector('h2');
             const fullTitle = yearElement ? yearElement.textContent.trim() : title;
             
-            // Extrair tempo de "Main Story"
-            let mainStoryTime = null;
-            const tidbits = gameElement.querySelectorAll('.GameCard_search_list_tidbit__0r_OP');
+            // Extrair tempo de jogo com fallback: Main Story → Solo
+            let playTime = null;
+            let timeType = null;
+            const tidbits = gameElement.querySelectorAll('[class*="tidbit"]');
             
+            // DEBUG: Capturar todos os tidbits para análise
+            const allTidbits = [];
+            for (let i = 0; i < tidbits.length; i++) {
+              const tidbit = tidbits[i];
+              allTidbits.push(tidbit ? tidbit.textContent.trim() : 'null');
+            }
+            
+            // DEBUG: Investigar estrutura HTML do elemento do jogo
+            const gameElementHTML = gameElement.innerHTML;
+            const allTextContent = gameElement.textContent;
+            
+            // DEBUG: Tentar outros seletores de tidbits
+            const alternativeSelectors = [
+              '.GameCard_search_list_tidbit__0r_OP',
+              '.search_list_tidbit',
+              '.tidbit',
+              '[class*="tidbit"]',
+              '[class*="time"]',
+              '[class*="Time"]',
+              '.time_100', // Possível seletor antigo
+              'li' // Elementos li dentro do card
+            ];
+            
+            let foundAlternativeElements = [];
+            for (const selector of alternativeSelectors) {
+              const elements = gameElement.querySelectorAll(selector);
+              if (elements.length > 0) {
+                foundAlternativeElements.push({
+                  selector: selector,
+                  count: elements.length,
+                  texts: Array.from(elements).map(el => el.textContent.trim()).slice(0, 5) // Limitar a 5
+                });
+              }
+            }
+            
+            // Primeiro, tentar encontrar "Main Story"
             for (let i = 0; i < tidbits.length - 1; i++) {
               const labelElement = tidbits[i];
               const valueElement = tidbits[i + 1];
@@ -367,17 +424,44 @@ export class HowLongToBeatCrawler {
               if (labelElement && labelElement.textContent.includes('Main Story')) {
                 const timeText = valueElement ? valueElement.textContent.trim() : '';
                 if (timeText && timeText !== '--') {
-                  // Converter tempo para número
+                  // Usar a função parseTimeText que não existe no contexto do browser
                   const timeMatch = timeText.match(/(\d+(?:\.\d+)?(?:½)?)\s*Hours?/i);
                   if (timeMatch) {
                     let hours = parseFloat(timeMatch[1]);
                     if (timeText.includes('½')) {
                       hours += 0.5;
                     }
-                    mainStoryTime = hours;
+                    playTime = hours;
+                    timeType = 'Main Story';
+                    console.log(`✅ Encontrado Main Story: ${playTime}h`);
                   }
                 }
                 break;
+              }
+            }
+            
+            // Se não encontrou Main Story, tentar "Solo" como fallback
+            if (playTime === null) {
+              for (let i = 0; i < tidbits.length - 1; i++) {
+                const labelElement = tidbits[i];
+                const valueElement = tidbits[i + 1];
+                
+                if (labelElement && labelElement.textContent.includes('Solo')) {
+                  const timeText = valueElement ? valueElement.textContent.trim() : '';
+                  if (timeText && timeText !== '--') {
+                    const timeMatch = timeText.match(/(\d+(?:\.\d+)?(?:½)?)\s*Hours?/i);
+                    if (timeMatch) {
+                      let hours = parseFloat(timeMatch[1]);
+                      if (timeText.includes('½')) {
+                        hours += 0.5;
+                      }
+                      playTime = hours;
+                      timeType = 'Solo';
+                      console.log(`🎯 Fallback para Solo: ${playTime}h`);
+                    }
+                  }
+                  break;
+                }
               }
             }
             
@@ -385,7 +469,8 @@ export class HowLongToBeatCrawler {
               games.push({
                 title: fullTitle,
                 href: href,
-                mainStoryTime: mainStoryTime
+                mainStoryTime: playTime,
+                timeType: timeType
               });
             }
           } catch (error) {
@@ -398,11 +483,38 @@ export class HowLongToBeatCrawler {
       
       console.log(`📊 Extraídos ${gamesData.length} jogos da página de resultados`);
       
+      // DEBUG: mostrar tidbits de todos os jogos encontrados
+      if (gamesData.length > 0) {
+        console.log('🔍 DEBUG - Tidbits capturados por jogo:');
+        gamesData.forEach((game, i) => {
+          console.log(`  ${i + 1}. "${game.title}"`);
+          console.log(`     Tidbits: [${game.debugTidbits ? game.debugTidbits.join(', ') : 'null'}]`);
+          console.log(`     Tempo: ${game.mainStoryTime || 'null'}h (${game.timeType || 'nenhum'})`);
+          
+          // DEBUG: Mostrar seletores alternativos encontrados
+          if (game.debugAlternativeElements && game.debugAlternativeElements.length > 0) {
+            console.log(`     🔧 Seletores alternativos encontrados:`);
+            game.debugAlternativeElements.forEach(alt => {
+              console.log(`        ${alt.selector}: ${alt.count} elementos - [${alt.texts.join(', ')}]`);
+            });
+          }
+          
+          // DEBUG: Mostrar todo o texto do elemento (resumido)
+          if (game.debugTextContent) {
+            const shortText = game.debugTextContent.replace(/\s+/g, ' ').trim().substring(0, 200);
+            console.log(`     📝 Texto: "${shortText}${shortText.length >= 200 ? '...' : ''}"`);
+          }
+        });
+      }
+      
       // Debug: mostrar os primeiros jogos encontrados
       if (gamesData.length > 0) {
         console.log('🎮 Primeiros jogos encontrados:');
         gamesData.slice(0, 3).forEach((game, i) => {
-          console.log(`  ${i + 1}. "${game.title}" - ${game.mainStoryTime || 'sem tempo'}h`);
+          const timeInfo = game.mainStoryTime 
+            ? `${game.mainStoryTime}h (${game.timeType || 'Main Story'})` 
+            : 'sem tempo';
+          console.log(`  ${i + 1}. "${game.title}" - ${timeInfo}`);
         });
       }
       
@@ -800,15 +912,16 @@ export class HowLongToBeatCrawler {
       console.log(`🧪 Modo: ${dryRun ? 'DRY RUN' : 'PRODUÇÃO'}`);
       console.log(`⏸️ Sistema de cooldown: 1 tentativa → 7 dias de pausa`);
       
-      // Limpar cooldown se solicitado
+      // Limpar cooldown se solicitado (ANTES de buscar jogos)
       if (clearCooldown && !dryRun) {
         console.log(`🧹 Limpando cooldown de todos os jogos...`);
         stats.clearedCooldowns = await this.clearAllCooldowns();
       }
       
-      await this.initBrowser();
-      
+      // Buscar jogos SEM tempo APÓS limpar cooldown
       const gamesWithoutPlayTime = await this.findGamesWithoutPlayTime();
+      
+      await this.initBrowser();
       console.log(`🎮 Encontrados ${gamesWithoutPlayTime.length} jogos disponíveis para processar`);
       
       const gamesToProcess = gamesWithoutPlayTime.slice(0, limit);
@@ -884,7 +997,86 @@ export class HowLongToBeatCrawler {
       console.log(`   Para reprocessar todos os jogos: adicione --clear-cooldown`);
     }
 
-    return stats;
+    return {
+      processed: stats.processed,
+      updated: stats.updated,
+      failed: stats.errors,
+      errors: [] // Simplified for compatibility
+    };
+  }
+
+  /**
+   * Busca tempo de jogo para um jogo específico - REUTILIZA código existente
+   * Usado durante a criação de jogos para busca automática
+   * @param {string} gameName - Nome do jogo
+   * @param {Object} options - Opções de configuração
+   * @param {boolean} options.useOwnBrowser - Se true, cria browser próprio (padrão: true)
+   * @param {boolean} options.quickSearch - Se true, testa menos variações (padrão: true)
+   * @returns {Promise<number|null>} Tempo em horas ou null
+   */
+  async searchSingleGamePlayTime(gameName, options = {}) {
+    const { useOwnBrowser = true, quickSearch = true } = options;
+    
+    let browserInstance = null;
+    let originalBrowser = null;
+    let originalPage = null;
+    
+    try {
+      console.log(`🔍 [SINGLE] Buscando "${gameName}"`);
+      
+      if (useOwnBrowser) {
+        // Salvar instâncias atuais e criar browser temporário
+        originalBrowser = this.browser;
+        originalPage = this.page;
+        this.browser = null;
+        this.page = null;
+        
+        await this.initBrowser();
+        browserInstance = this.browser;
+        console.log(`🚀 [SINGLE] Browser temporário criado`);
+      } else {
+        // Usar browser existente (se houver)
+        await this.initBrowser();
+      }
+      
+      // REUTILIZAR métodos existentes com adaptações mínimas
+      const originalYear = this.extractYearFromGameName(gameName);
+      let searchVariations = this.generateSearchVariations(gameName, originalYear);
+      
+      // Se quickSearch, limitar variações para ser mais rápido
+      if (quickSearch) {
+        searchVariations = searchVariations.slice(0, 3); // Top 3 variações mais prováveis
+        console.log(`⚡ [SINGLE] Modo rápido - ${searchVariations.length} variações`);
+      }
+      
+      for (const searchTerm of searchVariations) {
+        console.log(`🎯 [SINGLE] Testando: "${searchTerm}"`);
+        
+        // REUTILIZAR método searchWithPuppeteer existente
+        const playTime = await this.searchWithPuppeteer(searchTerm, originalYear);
+        if (playTime !== null) {
+          console.log(`✅ [SINGLE] Encontrado! ${playTime}h`);
+          return playTime;
+        }
+      }
+
+      console.log(`❌ [SINGLE] Não encontrado para "${gameName}"`);
+      return null;
+      
+    } catch (error) {
+      console.error(`❌ [SINGLE] Erro ao buscar "${gameName}":`, error.message);
+      return null;
+    } finally {
+      // Limpar browser temporário se foi criado
+      if (useOwnBrowser && browserInstance) {
+        console.log(`🔒 [SINGLE] Fechando browser temporário`);
+        await browserInstance.close();
+        
+        // Restaurar instâncias originais
+        this.browser = originalBrowser;
+        this.page = originalPage;
+      }
+    }
   }
 
   /**
