@@ -340,8 +340,8 @@ export default function GameWrapped() {
 
     setStats({
       genres: count(gamesData, 'genres').slice(0, 4),
-      longestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => b.playTime - a.playTime).slice(0, 4),
-      shortestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => a.playTime - b.playTime).slice(0, 4),
+      longestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => b.playTime - a.playTime).slice(0, 8),
+      shortestGames: [...gamesData].filter(g => g.playTime > 0).sort((a, b) => a.playTime - b.playTime).slice(0, 8),
       topRatedGames: [...gamesData].filter(g => g.metacritic != null).sort((a, b) => b.metacritic - a.metacritic).slice(0, 16),
       publishers: count(gamesData, 'publishers').slice(0, 4),
       platforms: count(gamesData, 'platforms'),
