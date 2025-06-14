@@ -14,7 +14,8 @@ import {
   ToggleButton,
   Tooltip,
   useMediaQuery,
-  useTheme
+  useTheme,
+  LinearProgress
 } from '@mui/material';
 
 // Componentes padronizados
@@ -106,7 +107,7 @@ function Home() {
   
   // Hook de infinite scroll com todos os filtros e configuração enabled
   const {
-    games: filteredGames,
+    games: allGames,
     loading,
     hasMore,
     error,
@@ -118,19 +119,149 @@ function Home() {
     pagination
   } = useInfiniteScroll(gamesService.getPaginated, {
     limit: settings.itemsPerPage || 20,
-    search: searchTerm,
-    platform: platform === 'all' ? '' : platform,
-    orderBy,
-    order,
-    // Filtros avançados passados para o backend
-    minMetacritic: minMetacritic !== '' ? minMetacritic : '',
-    genre: selectedGenre === 'all' ? '' : selectedGenre,
-    publisher: selectedPublisher === 'all' ? '' : selectedPublisher,
-    status: selectedStatus === 'all' ? '' : selectedStatus,
+    // Quando infinite scroll desligado, não enviar filtros para o backend
+    // Vamos aplicar filtros localmente para melhor performance
+    search: settings.infiniteScrollEnabled ? searchTerm : '',
+    platform: settings.infiniteScrollEnabled ? (platform === 'all' ? '' : platform) : '',
+    orderBy: settings.infiniteScrollEnabled ? orderBy : 'name',
+    order: settings.infiniteScrollEnabled ? order : 'asc',
+    // Filtros avançados passados para o backend apenas se infinite scroll habilitado
+    minMetacritic: settings.infiniteScrollEnabled ? (minMetacritic !== '' ? minMetacritic : '') : '',
+    genre: settings.infiniteScrollEnabled ? (selectedGenre === 'all' ? '' : selectedGenre) : '',
+    publisher: settings.infiniteScrollEnabled ? (selectedPublisher === 'all' ? '' : selectedPublisher) : '',
+    status: settings.infiniteScrollEnabled ? (selectedStatus === 'all' ? '' : selectedStatus) : '',
     // Configuração do infinite scroll
     infiniteScrollEnabled: settings.infiniteScrollEnabled,
     enabled: settings.infiniteScrollEnabled
   });
+  
+  // Filtros locais quando infinite scroll está desligado
+  const filteredGames = useMemo(() => {
+    // Se infinite scroll habilitado, usar dados do backend (já filtrados)
+    if (settings.infiniteScrollEnabled) {
+      return allGames;
+    }
+
+    // Se infinite scroll desabilitado, aplicar filtros localmente
+    if (!allGames || allGames.length === 0) {
+      return [];
+    }
+
+    let filtered = [...allGames];
+
+    // Aplicar filtro de busca
+    if (searchTerm && searchTerm.trim() !== '') {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(game => 
+        game.name.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Aplicar filtro de plataforma
+    if (platform && platform !== 'all') {
+      filtered = filtered.filter(game => 
+        game.platforms && game.platforms.includes(platform)
+      );
+    }
+
+    // Aplicar filtro de gênero
+    if (selectedGenre && selectedGenre !== 'all') {
+      filtered = filtered.filter(game => 
+        game.genres && Array.isArray(game.genres) && game.genres.includes(selectedGenre)
+      );
+    }
+
+    // Aplicar filtro de publisher
+    if (selectedPublisher && selectedPublisher !== 'all') {
+      filtered = filtered.filter(game => 
+        game.publishers && Array.isArray(game.publishers) && 
+        game.publishers.some(pub => pub.includes(selectedPublisher))
+      );
+    }
+
+    // Aplicar filtro de status
+    if (selectedStatus && selectedStatus !== 'all') {
+      filtered = filtered.filter(game => 
+        game.status === selectedStatus
+      );
+    }
+
+    // Aplicar filtro de Metacritic
+    if (minMetacritic && minMetacritic !== '') {
+      const minScore = parseInt(minMetacritic);
+      if (!isNaN(minScore)) {
+        filtered = filtered.filter(game => 
+          game.metacritic && game.metacritic >= minScore
+        );
+      }
+    }
+
+    // Aplicar ordenação local
+    filtered.sort((a, b) => {
+      let valueA, valueB;
+      
+      switch (orderBy) {
+        case 'name':
+          valueA = a.name.toLowerCase();
+          valueB = b.name.toLowerCase();
+          break;
+          
+        case 'metacritic':
+          valueA = a.metacritic || 0;
+          valueB = b.metacritic || 0;
+          break;
+          
+        case 'year':
+          valueA = a.released ? new Date(a.released).getFullYear() : 0;
+          valueB = b.released ? new Date(b.released).getFullYear() : 0;
+          break;
+          
+        case 'platforms':
+          valueA = a.platforms ? a.platforms.join(', ').toLowerCase() : '';
+          valueB = b.platforms ? b.platforms.join(', ').toLowerCase() : '';
+          break;
+          
+        case 'genres':
+          valueA = a.genres ? a.genres.join(', ').toLowerCase() : '';
+          valueB = b.genres ? b.genres.join(', ').toLowerCase() : '';
+          break;
+          
+        case 'playTime':
+          valueA = a.playTime || 0;
+          valueB = b.playTime || 0;
+          break;
+          
+        default:
+          valueA = a.name.toLowerCase();
+          valueB = b.name.toLowerCase();
+          break;
+      }
+      
+      // Comparação baseada no tipo de valor
+      let comparison = 0;
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        comparison = valueA.localeCompare(valueB);
+      } else {
+        comparison = valueA - valueB;
+      }
+      
+      // Aplicar ordem (asc/desc)
+      return order === 'desc' ? -comparison : comparison;
+    });
+
+    return filtered;
+  }, [
+    allGames, 
+    settings.infiniteScrollEnabled, 
+    searchTerm, 
+    platform, 
+    selectedGenre, 
+    selectedPublisher, 
+    selectedStatus, 
+    minMetacritic, 
+    orderBy, 
+    order
+  ]);
   
   // Contexto para operações de CRUD
   const { deleteGame, updateGame } = useGames();
@@ -780,32 +911,40 @@ function Home() {
   };
 
   if (loading && filteredGames.length === 0) {
-    return (
-      <Container>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            Catálogo de Jogos PlayStation
-          </Typography>
+    // Mostrar loading completo apenas se:
+    // 1. Infinite scroll habilitado (comportamento normal)
+    // 2. OU infinite scroll desabilitado mas ainda não carregou dados iniciais
+    const shouldShowFullLoading = settings.infiniteScrollEnabled || 
+                                  (!settings.infiniteScrollEnabled && allGames.length === 0);
+    
+    if (shouldShowFullLoading) {
+      return (
+        <Container>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+              Catálogo de Jogos PlayStation
+            </Typography>
+            
+            {/* Skeleton para filtros */}
+            <SkeletonLoader 
+              variant="custom" 
+              customConfig={{
+                elements: [
+                  { variant: 'rounded', width: '100%', height: 56, marginBottom: 2 },
+                  { variant: 'rounded', width: '100%', height: 200, marginBottom: 2 }
+                ]
+              }}
+            />
+          </Box>
           
-          {/* Skeleton para filtros */}
+          {/* Skeleton para conteúdo baseado no modo de visualização */}
           <SkeletonLoader 
-            variant="custom" 
-            customConfig={{
-              elements: [
-                { variant: 'rounded', width: '100%', height: 56, marginBottom: 2 },
-                { variant: 'rounded', width: '100%', height: 200, marginBottom: 2 }
-              ]
-            }}
+            variant={viewMode === 'card' ? 'card' : 'table'}
+            count={viewMode === 'card' ? 6 : 8}
           />
-        </Box>
-        
-        {/* Skeleton para conteúdo baseado no modo de visualização */}
-        <SkeletonLoader 
-          variant={viewMode === 'card' ? 'card' : 'table'}
-          count={viewMode === 'card' ? 6 : 8}
-        />
-      </Container>
-    );
+        </Container>
+      );
+    }
   }
 
   if (error) {
@@ -981,6 +1120,21 @@ function Home() {
           </FilterButton>
         </Grid>
       </Grid>
+
+      {/* Loading sutil quando infinite scroll desligado e carregando dados iniciais */}
+      {loading && !settings.infiniteScrollEnabled && allGames.length === 0 && (
+        <LinearProgress 
+          sx={{ 
+            mb: 2,
+            borderRadius: 1,
+            height: 3,
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: '#0096FF'
+            }
+          }} 
+        />
+      )}
 
       {/* Navegação Alfabética */}
       <AlphabetNavigation 
