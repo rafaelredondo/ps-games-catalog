@@ -210,17 +210,18 @@ export default function GameWrapped() {
   };
 
   // Animated number component
-  const AnimatedNumber = ({ value, suffix = '', prefix = '', delay = 0 }) => {
+  const AnimatedNumber = ({ value, suffix = '', prefix = '', delay = 0, variant = 'h4', sx = {} }) => {
     const animatedValue = useCountUp(value, 3000, delay);
     return (
       <Typography 
-        variant="h4" 
+        variant={variant}
         sx={{ 
           fontWeight: 900, 
           color: 'inherit',
           transform: isVisible ? 'scale(1)' : 'scale(0.5)',
           opacity: isVisible ? 1 : 0,
-          transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${delay + 600}ms`
+          transition: `all 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${delay + 600}ms`,
+          ...sx
         }}
       >
         {prefix}{animatedValue}{suffix}
@@ -664,36 +665,80 @@ export default function GameWrapped() {
                       const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
                       const percentage = ((platform.value / totalGames) * 100).toFixed(1);
                       
+                      // Definir emoji/ícone para cada plataforma
+                      const getPlatformEmoji = (platformName) => {
+                        const name = platformName.toLowerCase();
+                        if (name.includes('playstation 4') || name.includes('ps4')) return '🎮';
+                        if (name.includes('playstation 5') || name.includes('ps5')) return '🎯';
+                        if (name.includes('nintendo switch') || name.includes('switch')) return '🕹️';
+                        if (name.includes('xbox')) return '🎲';
+                        if (name.includes('pc') || name.includes('steam')) return '💻';
+                        if (name.includes('mobile') || name.includes('android') || name.includes('ios')) return '📱';
+                        return '🎮'; // default
+                      };
+                      
                       return (
                         <ListItem key={platform.name} divider={index < stats.platforms.length - 1} disablePadding sx={{ py: 2 }}>
-                          <ListItemText 
-                            primary={
-                              <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                                {platform.name}
-                              </Typography>
-                            }
-                            secondary={`${platform.value} jogos • ${percentage}%`}
-                            secondaryTypographyProps={{
-                              sx: { mt: 0.5, color: 'text.secondary', fontWeight: 'medium' }
-                            }}
-                          />
-                          {/* Barra de progresso separada para evitar aninhamento HTML inválido */}
-                          <Box sx={{ mt: 1, ml: 0 }}>
-                            <Box 
-                              sx={{ 
-                                height: 8, 
-                                width: '100%',
-                                bgcolor: 'rgba(0,0,0,0.1)',
-                                borderRadius: 2,
-                                overflow: 'hidden'
-                              }}
-                            >
+                          <Box sx={{ width: '100%' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography sx={{ fontSize: '1.5rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}>
+                                  {getPlatformEmoji(platform.name)}
+                                </Typography>
+                                <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                                  {platform.name}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <AnimatedNumber 
+                                  value={platform.value} 
+                                  suffix=" jogos" 
+                                  delay={index * 100}
+                                  variant="body1"
+                                  sx={{ 
+                                    fontWeight: 700,
+                                    fontSize: '0.95rem',
+                                    color: 'text.primary'
+                                  }}
+                                />
+                                <Typography variant="body2" sx={{ 
+                                  fontWeight: 700, 
+                                  color: COLORS[index % COLORS.length],
+                                  fontSize: '0.9rem',
+                                  minWidth: '48px',
+                                  textAlign: 'right'
+                                }}>
+                                  {percentage}%
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Box sx={{ 
+                              height: 12, 
+                              width: '100%',
+                              bgcolor: 'rgba(0,0,0,0.08)',
+                              borderRadius: 6,
+                              overflow: 'hidden',
+                              position: 'relative'
+                            }}>
                               <Box 
                                 sx={{ 
                                   height: '100%', 
                                   width: `${percentage}%`, 
-                                  bgcolor: COLORS[index % COLORS.length],
-                                  transition: 'width 0.5s ease'
+                                  background: `linear-gradient(90deg, ${COLORS[index % COLORS.length]} 0%, ${COLORS[index % COLORS.length]}dd 100%)`,
+                                  borderRadius: 6,
+                                  transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                                  position: 'relative',
+                                  '&::after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: '-100%',
+                                    width: '100%',
+                                    height: '100%',
+                                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                                    animation: isVisible ? 'shimmer 1.5s ease-in-out' : 'none',
+                                    animationDelay: `${index * 200}ms`
+                                  }
                                 }} 
                               />
                             </Box>
@@ -754,253 +799,185 @@ export default function GameWrapped() {
             </Box>
 
             {/* Section 5: Físico vs Digital */}
-            <Box ref={el => sectionRefs.current[5] = el} sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-              <Card sx={{ 
-                maxWidth: 1000, 
-                width: '100%', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                borderRadius: 4,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-                transform: visibleCards.has(5) ? 'scale(1)' : 'scale(0.8)',
-                opacity: visibleCards.has(5) ? 1 : 0,
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}>
-                <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, justifyContent: 'center' }}>
-                    <PhysicalIcon sx={{ fontSize: 48, mr: 2 }} />
-                    <Typography variant="h3" component="h2" fontWeight="bold">
-                      Físico vs Digital
-                    </Typography>
-                  </Box>
-                  
-                  <Grid container spacing={4} justifyContent="center">
-                    <Grid item xs={12} sm={6} md={5}>
-                      <Card sx={{ 
-                        background: 'rgba(255,255,255,0.15)', 
-                        backdropFilter: 'blur(15px)',
-                        border: '2px solid rgba(255,215,0,0.3)',
-                        borderRadius: 4,
-                        p: 4,
-                        textAlign: 'center',
-                        height: '100%',
-                        minHeight: 200,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        <PhysicalIcon sx={{ fontSize: 64, mb: 3, color: '#FFD700' }} />
-                        <Typography variant="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                          <CountUp 
-                            end={stats.format.physical} 
-                            duration={2} 
-                            preserveValue 
-                            start={visibleCards.has(5) ? 0 : stats.format.physical}
-                          />
-                        </Typography>
-                        <Typography variant="h5" sx={{ opacity: 0.95, fontWeight: 600 }}>
-                          Jogos Físicos
-                        </Typography>
-                      </Card>
-                    </Grid>
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <StatsCard icon={<PhysicalIcon />} title="Físico vs Digital" color={COLORS[5]} cardIndex={5} isVisible={visibleCards.has(5)}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Paper elevation={2} sx={{ 
+                      flex: 1,
+                      p: 3, 
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, ${COLORS[0]}15 0%, ${COLORS[0]}25 100%)`,
+                      border: `2px solid ${COLORS[0]}40`,
+                      borderRadius: 3
+                    }}>
+                      <PhysicalIcon sx={{ fontSize: 40, mb: 1, color: COLORS[0] }} />
+                      <AnimatedNumber value={stats.format.physical} delay={0} />
+                      <Typography variant="body1" fontWeight="600">
+                        Físicos
+                      </Typography>
+                    </Paper>
                     
-                    <Grid item xs={12} sm={6} md={5}>
-                      <Card sx={{ 
-                        background: 'rgba(255,255,255,0.15)', 
-                        backdropFilter: 'blur(15px)',
-                        border: '2px solid rgba(33,150,243,0.3)',
-                        borderRadius: 4,
-                        p: 4,
-                        textAlign: 'center',
-                        height: '100%',
-                        minHeight: 200,
+                    <Paper elevation={2} sx={{ 
+                      flex: 1,
+                      p: 3, 
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, ${COLORS[1]}15 0%, ${COLORS[1]}25 100%)`,
+                      border: `2px solid ${COLORS[1]}40`,
+                      borderRadius: 3
+                    }}>
+                      <Box sx={{ 
+                        width: 40, 
+                        height: 40, 
+                        borderRadius: '50%', 
+                        background: `linear-gradient(45deg, ${COLORS[1]}, ${COLORS[1]}cc)`,
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mx: 'auto',
+                        mb: 1
                       }}>
-                        <Box sx={{ 
-                          width: 64, 
-                          height: 64, 
-                          borderRadius: '50%', 
-                          background: 'linear-gradient(45deg, #2196F3, #21CBF3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mx: 'auto',
-                          mb: 3
-                        }}>
-                          <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>
-                            D
-                          </Typography>
-                        </Box>
-                        <Typography variant="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                          <CountUp 
-                            end={stats.format.digital} 
-                            duration={2} 
-                            preserveValue 
-                            start={visibleCards.has(5) ? 0 : stats.format.digital}
-                          />
+                        <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
+                          D
                         </Typography>
-                        <Typography variant="h5" sx={{ opacity: 0.95, fontWeight: 600 }}>
-                          Jogos Digitais
-                        </Typography>
-                      </Card>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
+                      </Box>
+                      <AnimatedNumber value={stats.format.digital} delay={200} />
+                      <Typography variant="body1" fontWeight="600">
+                        Digitais
+                      </Typography>
+                    </Paper>
+                  </Box>
+                </Box>
+              </StatsCard>
             </Box>
 
-            {/* PlayStation Plus Section */}
-            <Box ref={el => sectionRefs.current[6] = el} sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
-              <Card sx={{ 
-                maxWidth: 1000, 
-                width: '100%', 
-                background: 'linear-gradient(135deg, #003087 0%, #0070f3 100%)',
-                color: 'white',
-                borderRadius: 4,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-                transform: visibleCards.has(6) ? 'scale(1)' : 'scale(0.8)',
-                opacity: visibleCards.has(6) ? 1 : 0,
-                transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}>
-                <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, justifyContent: 'center' }}>
-                    <PsPlusIcon sx={{ fontSize: 48, mr: 2 }} />
-                    <Typography variant="h3" component="h2" fontWeight="bold">
-                      PlayStation Plus
-                    </Typography>
-                  </Box>
-                  
-                  <Grid container spacing={4} justifyContent="center">
-                    <Grid item xs={12} sm={6} md={5}>
-                      <Card sx={{ 
-                        background: 'rgba(255,255,255,0.15)', 
-                        backdropFilter: 'blur(15px)',
-                        border: '2px solid rgba(255,215,0,0.3)',
-                        borderRadius: 4,
-                        p: 4,
-                        textAlign: 'center',
-                        height: '100%',
-                        minHeight: 200,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
-                      }}>
-                        <PsPlusIcon sx={{ fontSize: 64, mb: 3, color: '#FFD700' }} />
-                        <Typography variant="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                          <CountUp 
-                            end={stats.psplus.psplus} 
-                            duration={2} 
-                            preserveValue 
-                            start={visibleCards.has(6) ? 0 : stats.psplus.psplus}
-                          />
-                        </Typography>
-                        <Typography variant="h5" sx={{ opacity: 0.95, fontWeight: 600 }}>
-                          Jogos PS Plus
-                        </Typography>
-                      </Card>
-                    </Grid>
+            {/* Section 6: PlayStation Plus */}
+            <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
+              <StatsCard icon={<PsPlusIcon />} title="PlayStation Plus" color={COLORS[6]} cardIndex={6} isVisible={visibleCards.has(6)}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Paper elevation={2} sx={{ 
+                      flex: 1,
+                      p: 3, 
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, #003087 15%, #0070f3 25%)`,
+                      border: `2px solid rgba(255,215,0,0.4)`,
+                      borderRadius: 3,
+                      color: 'white'
+                    }}>
+                      <PsPlusIcon sx={{ fontSize: 40, mb: 1, color: '#FFD700' }} />
+                      <AnimatedNumber value={stats.psplus.psplus} delay={0} />
+                      <Typography variant="body1" fontWeight="600">
+                        PS Plus
+                      </Typography>
+                    </Paper>
                     
-                    <Grid item xs={12} sm={6} md={5}>
-                      <Card sx={{ 
-                        background: 'rgba(255,255,255,0.15)', 
-                        backdropFilter: 'blur(15px)',
-                        border: '2px solid rgba(255,255,255,0.2)',
-                        borderRadius: 4,
-                        p: 4,
-                        textAlign: 'center',
-                        height: '100%',
-                        minHeight: 200,
+                    <Paper elevation={2} sx={{ 
+                      flex: 1,
+                      p: 3, 
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, ${COLORS[7]}15 0%, ${COLORS[7]}25 100%)`,
+                      border: `2px solid ${COLORS[7]}40`,
+                      borderRadius: 3
+                    }}>
+                      <Box sx={{ 
+                        width: 40, 
+                        height: 40, 
+                        borderRadius: '50%', 
+                        background: `linear-gradient(45deg, #666, #999)`,
                         display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center'
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mx: 'auto',
+                        mb: 1
                       }}>
-                        <Box sx={{ 
-                          width: 64, 
-                          height: 64, 
-                          borderRadius: '50%', 
-                          background: 'linear-gradient(45deg, #666, #999)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mx: 'auto',
-                          mb: 3
-                        }}>
-                          <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>
-                            O
-                          </Typography>
-                        </Box>
-                        <Typography variant="h2" fontWeight="bold" sx={{ mb: 2 }}>
-                          <CountUp 
-                            end={stats.psplus.others} 
-                            duration={2} 
-                            preserveValue 
-                            start={visibleCards.has(6) ? 0 : stats.psplus.others}
-                          />
+                        <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
+                          O
                         </Typography>
-                        <Typography variant="h5" sx={{ opacity: 0.95, fontWeight: 600 }}>
-                          Outros Jogos
-                        </Typography>
-                      </Card>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
+                      </Box>
+                      <AnimatedNumber value={stats.psplus.others} delay={200} />
+                      <Typography variant="body1" fontWeight="600">
+                        Outros
+                      </Typography>
+                    </Paper>
+                  </Box>
+                </Box>
+              </StatsCard>
             </Box>
 
             {/* Section 7: Status dos Jogos */}
             <Box sx={{ width: `${100 / sections.length}%`, px: 1 }}>
-              <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={7}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <StatsCard icon={<StatusIcon />} title="Status dos Jogos" color={COLORS[7]} cardIndex={7} isVisible={visibleCards.has(7)}>
+                <List disablePadding>
                   {stats.status.map((status, index) => (
-                    <Paper key={status.name} elevation={3} sx={{ 
-                      p: 3, 
-                      borderRadius: 3,
-                      textAlign: 'center',
-                      background: `linear-gradient(135deg, ${COLORS[index % COLORS.length]}15 0%, ${COLORS[index % COLORS.length]}25 100%)`,
-                      border: `2px solid ${COLORS[index % COLORS.length]}40`,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: `0 8px 25px ${COLORS[index % COLORS.length]}30`
-                      }
-                    }}>
-                      <Typography sx={{ fontSize: '2rem', mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>
-                        {status.emoji}
-                      </Typography>
-                      <AnimatedNumber value={status.value} delay={index * 100} />
-                      <Typography variant="h6" sx={{ 
-                        fontWeight: 700, 
-                        mb: 2, 
-                        color: '#1a1a1a',
-                        fontSize: '1.1rem',
-                        textShadow: '0 1px 2px rgba(255,255,255,0.8)'
-                      }}>
-                        {status.name}
-                      </Typography>
-                      <Box sx={{ 
-                        width: '100%', 
-                        height: 8, 
-                        bgcolor: 'rgba(0,0,0,0.1)', 
-                        borderRadius: 4,
-                        overflow: 'hidden',
-                        mb: 1
-                      }}>
+                    <ListItem key={status.name} divider={index < stats.status.length - 1} disablePadding sx={{ py: 2 }}>
+                      <Box sx={{ width: '100%' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ fontSize: '1.5rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}>
+                              {status.emoji}
+                            </Typography>
+                            <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                              {status.name}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <AnimatedNumber 
+                              value={status.value} 
+                              suffix=" jogos" 
+                              delay={index * 100}
+                              variant="body1"
+                              sx={{ 
+                                fontWeight: 700,
+                                fontSize: '0.95rem',
+                                color: 'text.primary'
+                              }}
+                            />
+                            <Typography variant="body2" sx={{ 
+                              fontWeight: 700, 
+                              color: status.color,
+                              fontSize: '0.9rem',
+                              minWidth: '48px',
+                              textAlign: 'right'
+                            }}>
+                              {status.percentage}%
+                            </Typography>
+                          </Box>
+                        </Box>
                         <Box sx={{ 
-                          width: `${status.percentage}%`, 
-                          height: '100%', 
-                          background: `linear-gradient(90deg, ${COLORS[index % COLORS.length]} 0%, ${COLORS[index % COLORS.length]}cc 100%)`,
-                          transition: 'width 0.8s ease',
-                          borderRadius: 4
-                        }} />
+                          height: 12, 
+                          width: '100%',
+                          bgcolor: 'rgba(0,0,0,0.08)',
+                          borderRadius: 6,
+                          overflow: 'hidden',
+                          position: 'relative'
+                        }}>
+                          <Box 
+                            sx={{ 
+                              height: '100%', 
+                              width: `${status.percentage}%`, 
+                              background: `linear-gradient(90deg, ${status.color} 0%, ${status.color}dd 100%)`,
+                              borderRadius: 6,
+                              transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                              position: 'relative',
+                              '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: '-100%',
+                                width: '100%',
+                                height: '100%',
+                                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                                animation: isVisible ? 'shimmer 1.5s ease-in-out' : 'none',
+                                animationDelay: `${index * 200}ms`
+                              }
+                            }} 
+                          />
+                        </Box>
                       </Box>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: COLORS[index % COLORS.length], fontSize: '1.1rem' }}>
-                        {status.percentage}%
-                      </Typography>
-                    </Paper>
+                    </ListItem>
                   ))}
-                </Box>
+                </List>
               </StatsCard>
             </Box>
           </Box>
@@ -1322,36 +1299,80 @@ export default function GameWrapped() {
                     const totalGames = stats.platforms.reduce((sum, p) => sum + p.value, 0);
                     const percentage = ((platform.value / totalGames) * 100).toFixed(1);
                     
+                    // Definir emoji/ícone para cada plataforma
+                    const getPlatformEmoji = (platformName) => {
+                      const name = platformName.toLowerCase();
+                      if (name.includes('playstation 4') || name.includes('ps4')) return '🎮';
+                      if (name.includes('playstation 5') || name.includes('ps5')) return '🎯';
+                      if (name.includes('nintendo switch') || name.includes('switch')) return '🕹️';
+                      if (name.includes('xbox')) return '🎲';
+                      if (name.includes('pc') || name.includes('steam')) return '💻';
+                      if (name.includes('mobile') || name.includes('android') || name.includes('ios')) return '📱';
+                      return '🎮'; // default
+                    };
+                    
                     return (
                       <ListItem key={platform.name} divider={index < stats.platforms.length - 1} disablePadding sx={{ py: 2 }}>
-                        <ListItemText 
-                          primary={
-                            <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                              {platform.name}
-                            </Typography>
-                          }
-                          secondary={`${platform.value} jogos • ${percentage}%`}
-                          secondaryTypographyProps={{
-                            sx: { mt: 0.5, color: 'text.secondary', fontWeight: 'medium' }
-                          }}
-                        />
-                        {/* Barra de progresso separada para evitar aninhamento HTML inválido */}
-                        <Box sx={{ mt: 1, ml: 0 }}>
-                          <Box 
-                            sx={{ 
-                              height: 8, 
-                              width: '100%',
-                              bgcolor: 'rgba(0,0,0,0.1)',
-                              borderRadius: 2,
-                              overflow: 'hidden'
-                            }}
-                          >
+                        <Box sx={{ width: '100%' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography sx={{ fontSize: '1.5rem', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}>
+                                {getPlatformEmoji(platform.name)}
+                              </Typography>
+                              <Typography sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                                {platform.name}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <AnimatedNumber 
+                                value={platform.value} 
+                                suffix=" jogos" 
+                                delay={index * 100}
+                                variant="body1"
+                                sx={{ 
+                                  fontWeight: 700,
+                                  fontSize: '0.95rem',
+                                  color: 'text.primary'
+                                }}
+                              />
+                              <Typography variant="body2" sx={{ 
+                                fontWeight: 700, 
+                                color: COLORS[index % COLORS.length],
+                                fontSize: '0.9rem',
+                                minWidth: '48px',
+                                textAlign: 'right'
+                              }}>
+                                {percentage}%
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ 
+                            height: 12, 
+                            width: '100%',
+                            bgcolor: 'rgba(0,0,0,0.08)',
+                            borderRadius: 6,
+                            overflow: 'hidden',
+                            position: 'relative'
+                          }}>
                             <Box 
                               sx={{ 
                                 height: '100%', 
                                 width: `${percentage}%`, 
-                                bgcolor: COLORS[index % COLORS.length],
-                                transition: 'width 0.5s ease'
+                                background: `linear-gradient(90deg, ${COLORS[index % COLORS.length]} 0%, ${COLORS[index % COLORS.length]}dd 100%)`,
+                                borderRadius: 6,
+                                transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                                position: 'relative',
+                                '&::after': {
+                                  content: '""',
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: '-100%',
+                                  width: '100%',
+                                  height: '100%',
+                                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                                  animation: isVisible ? 'shimmer 1.5s ease-in-out' : 'none',
+                                  animationDelay: `${index * 200}ms`
+                                }
                               }} 
                             />
                           </Box>
