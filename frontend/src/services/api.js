@@ -14,6 +14,34 @@ const api = axios.create({
 api.interceptors.response.use(
   response => response,
   error => {
+    // Tratar erros de autenticação (401)
+    if (error.response?.status === 401) {
+      console.warn('🔐 Erro de autenticação detectado');
+      
+      // Verificar se havia credenciais (usuário estava logado)
+      const hadCredentials = localStorage.getItem('ps-games-auth');
+      
+      // Limpar credenciais do localStorage
+      localStorage.removeItem('ps-games-auth');
+      
+      // Remover header de autorização
+      delete api.defaults.headers.common['Authorization'];
+      
+      // Só fazer reload se o usuário estava logado (evita loop para usuários deslogados)
+      if (hadCredentials) {
+        console.warn('🔄 Usuário estava logado - recarregando página para forçar login');
+        // Usamos setTimeout para evitar loops infinitos
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+        
+        return Promise.reject(new Error('Sessão expirada. Faça login novamente.'));
+      } else {
+        console.warn('👤 Usuário não estava logado - deixando AuthContext lidar');
+        return Promise.reject(new Error('Autenticação necessária.'));
+      }
+    }
+    
     // Tratar erros específicos de conexão
     if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
       console.error('Erro de conexão com o servidor:', error);
