@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { gamesService } from '../services/gamesService';
 import { useDropdownCache } from './DropdownCacheContext';
+import { useAuth } from './AuthContext';
 
 const GamesContext = createContext();
 
 export function GamesProvider({ children }) {
   const { invalidateAllCaches } = useDropdownCache();
+  const { isAuthenticated } = useAuth();
   
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -127,10 +129,17 @@ export function GamesProvider({ children }) {
     }
   };
 
-  // Carregar jogos ao iniciar
+  // Carregar jogos ao iniciar (só se estiver autenticado)
   useEffect(() => {
-    loadGames();
-  }, []);
+    if (isAuthenticated) {
+      loadGames();
+    } else {
+      // Se não está autenticado, resetar estado para o inicial
+      setGames([]);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   return (
     <GamesContext.Provider value={{
