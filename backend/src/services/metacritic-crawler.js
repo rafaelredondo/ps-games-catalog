@@ -67,6 +67,7 @@ export class MetacriticCrawler {
       const cleanedName = this.cleanGameName(gameName);
       const urlName = cleanedName
         .toLowerCase()
+        .replace(/'/g, '')          // Remove apóstrofos (dragon's → dragons)
         .replace(/[^a-z0-9]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
@@ -148,6 +149,7 @@ export class MetacriticCrawler {
       const cleanedName = this.cleanGameName(gameName);
       const urlName = cleanedName
         .toLowerCase()
+        .replace(/'/g, '')          // Remove apóstrofos (dragon's → dragons)
         .replace(/[^a-z0-9]/g, '-')
         .replace(/-+/g, '-')
         .replace(/^-|-$/g, '');
@@ -196,19 +198,29 @@ export class MetacriticCrawler {
    */
   async searchByAlternativeURL(gameName) {
     try {
-      // Limpar nome primeiro, depois tentar com plataforma específica
+      // Tentar variações comuns do slug sem plataforma (formato atual do Metacritic)
       const cleanedName = this.cleanGameName(gameName);
-      const urlName = cleanedName
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
-      
-      const platforms = ['playstation-5', 'playstation-4', 'nintendo-switch', 'pc'];
-      
-      for (const platform of platforms) {
-        const altUrl = `https://www.metacritic.com/game/${platform}/${urlName}/`;
-        
+
+      // Variações de slug para tentar
+      const slugVariants = [
+        // Sem "the" no início
+        cleanedName.replace(/^the\s+/i, ''),
+        // Sem subtítulo após ":"
+        cleanedName.replace(/\s*:.*$/, '').trim(),
+        // Sem subtítulo após "-"
+        cleanedName.replace(/\s*-.*$/, '').trim(),
+      ].filter(v => v && v !== cleanedName);
+
+      for (const variant of slugVariants) {
+        const urlName = variant
+          .toLowerCase()
+          .replace(/'/g, '')
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '');
+
+        const altUrl = `https://www.metacritic.com/game/${urlName}/`;
+
         try {
           const config = {
             headers: { 'User-Agent': this.userAgent },
@@ -218,16 +230,15 @@ export class MetacriticCrawler {
           console.log(`🔍 Tentando URL alternativa: ${altUrl}`);
           const response = await axios.get(altUrl, config);
           const result = this.extractScoreFromHTML(response.data, gameName);
-          
+
           if (result !== null) {
             return result.score;
           }
         } catch (error) {
-          // Continuar para próxima plataforma
           continue;
         }
       }
-      
+
       return null;
     } catch (error) {
       return null;
@@ -271,12 +282,14 @@ export class MetacriticCrawler {
       /^(.+?)\s*-\s*(Collector's\s+Edition)$/i,
       /^(.+?)\s*-\s*(Gold\s+Edition)$/i,
       /^(.+?)\s*-\s*(Platinum\s+Edition)$/i,
-      
+      /^(.+?)\s*-\s*(Challenger\s+Edition)$/i,
+
       // Padrões mais genéricos com hífen (múltiplas palavras)
       /^(.+?)\s*-\s*(.+\s+Edition)$/i,
       /^(.+?)\s*-\s*(.+\s+Cut)$/i,
-      
+
       // Padrões com dois pontos
+      /^(.+?):\s*(The\s+.+\s+Edition)$/i,    // "Game: The Complete Edition"
       /^(.+?):\s*(Complete\s+Edition)$/i,
       /^(.+?):\s*(Ultimate\s+Edition)$/i,
       /^(.+?):\s*(Deluxe\s+Edition)$/i,
@@ -289,10 +302,12 @@ export class MetacriticCrawler {
       /^(.+?):\s*(Collector's\s+Edition)$/i,
       /^(.+?):\s*(Gold\s+Edition)$/i,
       /^(.+?):\s*(Platinum\s+Edition)$/i,
-      
+      /^(.+?):\s*(Challenger\s+Edition)$/i,
+
       // Padrões de sufixos simples
       /^(.+?)\s+(Remastered)$/i,
       /^(.+?)\s+(Enhanced\s+Edition)$/i,
+      /^(.+?)\s+(The\s+.+\s+Edition)$/i,     // "Game The Complete Edition"
       /^(.+?)\s+(Complete\s+Edition)$/i,
       /^(.+?)\s+(Ultimate\s+Edition)$/i,
       /^(.+?)\s+(Deluxe\s+Edition)$/i,
@@ -303,7 +318,9 @@ export class MetacriticCrawler {
       /^(.+?)\s+(Collector's\s+Edition)$/i,
       /^(.+?)\s+(Gold\s+Edition)$/i,
       /^(.+?)\s+(Platinum\s+Edition)$/i,
-      /^(.+?)\s+(GOTY)$/i
+      /^(.+?)\s+(Challenger\s+Edition)$/i,
+      /^(.+?)\s+(GOTY)$/i,
+      /^(.+?)\s+(Pro)$/i,                    // "Dragon's Crown Pro"
     ];
 
     for (const pattern of editionPatterns) {
