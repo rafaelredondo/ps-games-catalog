@@ -44,7 +44,7 @@ Na sua **Hosted Zone**, você verá registros NS e SOA. Adicione:
 ```
 Record name: (deixe vazio ou @)
 Record type: A
-Value: 3.85.160.104  # SEU IP DA EC2
+Value: 54.156.182.127  # SEU IP DA EC2
 TTL: 300
 ```
 
@@ -52,7 +52,7 @@ TTL: 300
 ```
 Record name: www
 Record type: A  
-Value: 3.85.160.104  # SEU IP DA EC2
+Value: 54.156.182.127  # SEU IP DA EC2
 TTL: 300
 ```
 
@@ -77,7 +77,7 @@ Se comprou domínio fora da AWS:
 
 ```bash
 # SSH na sua EC2
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # Instalar Certbot
 sudo yum install -y python3-pip
@@ -189,7 +189,7 @@ Acesse: [SSL Labs Test](https://www.ssllabs.com/ssltest/)
 nano deployment/deploy.sh
 
 # Trocar:
-EC2_HOST="3.85.160.104"
+EC2_HOST="54.156.182.127"
 
 # Por:
 EC2_HOST="meusgames.com"

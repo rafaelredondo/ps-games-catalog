@@ -45,7 +45,7 @@ tail -f /home/ec2-user/backups/cron.log
 ### Fazer Backup Manualmente
 ```bash
 # Conectar ao servidor
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # Executar backup
 ./backup.sh
@@ -54,7 +54,7 @@ ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
 ### Restaurar Backup
 ```bash
 # Conectar ao servidor
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # Executar restauração (interativo)
 ./restore.sh
@@ -101,7 +101,7 @@ Se precisar restaurar rapidamente:
 
 ```bash
 # 1. Conectar ao servidor
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # 2. Restaurar último backup
 cp /home/ec2-user/backups/ps-games/latest_backup.json \

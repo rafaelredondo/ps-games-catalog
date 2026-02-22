@@ -100,7 +100,7 @@ Na Hosted Zone `meusgames.com`:
 ```
 Record name: (deixe vazio)
 Record type: A
-Value: 3.85.160.104  # SEU IP EC2
+Value: 54.156.182.127  # SEU IP EC2
 TTL: 300
 ```
 
@@ -108,7 +108,7 @@ TTL: 300
 ```
 Record name: www
 Record type: A
-Value: 3.85.160.104  # SEU IP EC2  
+Value: 54.156.182.127  # SEU IP EC2  
 TTL: 300
 ```
 
@@ -123,7 +123,7 @@ TTL: 300
 
 ### **3.1 SSH na EC2**
 ```bash
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 ```
 
 ### **3.2 Aguardar Propagação DNS (15-60 min)**
@@ -132,7 +132,7 @@ ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
 nslookup meusgames.com
 ```
 
-**Deve retornar:** `3.85.160.104`
+**Deve retornar:** `54.156.182.127`
 
 ### **3.3 Instalar Certbot**
 ```bash
@@ -191,7 +191,7 @@ sudo cat /etc/nginx/conf.d/ps-games.conf
 nano deployment/deploy.sh
 
 # Trocar:
-EC2_HOST="3.85.160.104"
+EC2_HOST="54.156.182.127"
 
 # Por:
 EC2_HOST="meusgames.com"
@@ -303,5 +303,5 @@ sudo certbot --nginx -d meusgames.com -d www.meusgames.com
 
 **🎯 Parabéns! Sua aplicação agora tem domínio profissional com HTTPS!**
 
-**De:** `http://3.85.160.104`  
+**De:** `http://54.156.182.127`  
 **Para:** `https://meusgames.com` 🌟 

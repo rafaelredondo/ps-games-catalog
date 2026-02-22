@@ -11,7 +11,7 @@ echo "===================================="
 # Verificar se temos as variáveis necessárias
 if [ -z "$EC2_HOST" ] || [ -z "$EC2_USER" ] || [ -z "$EC2_KEY" ]; then
     echo "❌ Configurando variáveis..."
-    export EC2_HOST="54.84.52.202"
+    export EC2_HOST="54.156.182.127"
     export EC2_USER="ec2-user"
     export EC2_KEY="~/.ssh/ps-games-deploy.pub"  # Ajuste se necessário
 fi

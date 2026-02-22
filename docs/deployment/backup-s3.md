@@ -26,7 +26,7 @@ Sistema de backup redundante que combina backup local com AWS S3, garantindo pro
 
 ```bash
 # Conectar ao servidor
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # Configurar AWS CLI
 aws configure
@@ -85,7 +85,7 @@ s3://ps-games-backup-[timestamp]/
 ### Backup Manual com S3
 ```bash
 # Conectar ao servidor
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # Executar backup com S3
 ./backup-s3.sh
@@ -94,7 +94,7 @@ ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
 ### Restaurar Backup (Local ou S3)
 ```bash
 # Conectar ao servidor
-ssh -i ~/.ssh/ps-games-key.pem ec2-user@3.85.160.104
+ssh -i ~/.ssh/ps-games-key.pem ec2-user@54.156.182.127
 
 # Executar restauração interativa
 ./restore-s3.sh
