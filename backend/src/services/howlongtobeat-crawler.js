@@ -179,111 +179,100 @@ export class HowLongToBeatCrawler {
   }
 
   /**
-   * Busca usando Puppeteer - simula digitação real
+   * Busca usando Puppeteer com interceptação da API /api/finder
    * @param {string} searchTerm - Termo de busca
    * @param {string|null} preferredYear - Ano preferido para priorizar
    * @returns {Promise<number|null>} Tempo em horas ou null
    */
   async searchWithPuppeteer(searchTerm, preferredYear = null) {
     try {
+      // Interceptar a resposta da API /api/finder antes de navegar
+      let apiData = null;
+      const responseHandler = async (response) => {
+        const url = response.url();
+        if (url.includes('howlongtobeat.com/api/finder') && !url.includes('init')) {
+          try {
+            const json = await response.json();
+            if (json && json.data) {
+              apiData = json;
+              console.log(`📡 API interceptada: ${json.data.length} resultado(s)`);
+            }
+          } catch (e) { /* ignorar respostas não-JSON */ }
+        }
+      };
+      this.page.on('response', responseHandler);
+
       console.log(`🌐 Navegando para ${this.baseUrl}...`);
       await this.page.goto(this.baseUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-      
-      // Fechar pop-up de privacidade se aparecer
-      await this.closePivacyPopup();
-      
-      // Encontrar caixa de busca
+
       const searchSelector = 'input[placeholder*="Search"], input[name*="search"], input[type="search"], .search_box input';
       await this.page.waitForSelector(searchSelector, { timeout: 10000 });
-      
+
       console.log(`⌨️ Digitando "${searchTerm}" na caixa de busca...`);
-      
-      // Limpar e digitar na caixa de busca
       await this.page.click(searchSelector);
       await this.page.keyboard.down('Control');
       await this.page.keyboard.press('KeyA');
       await this.page.keyboard.up('Control');
       await this.page.type(searchSelector, searchTerm);
-      
-      // PRESSIONAR ENTER para submeter a busca
-      console.log('🔍 Pressionando Enter para submeter a busca...');
+
       await this.page.keyboard.press('Enter');
-      
-      // Aguardar navegação para página de resultados
-      await this.page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 });
-      console.log('✅ Navegação para página de resultados concluída');
-      
-      // Aguardar resultados aparecerem
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Garantir que estamos na aba "Games"
-      await this.ensureGamesTab();
-      
-      // Aguardar mais um pouco para carregar os resultados da aba Games
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      
-      // Extrair jogos diretamente da página de resultados (não precisamos navegar)
-      const gamesData = await this.extractGamesFromSearchResults();
-      
-      if (gamesData.length === 0) {
-        console.log(`❌ Nenhum resultado encontrado para "${searchTerm}"`);
+
+      // Aguardar ativamente a resposta da API (até 12s) em vez de depender de waitForNavigation
+      await Promise.race([
+        new Promise(resolve => {
+          const check = setInterval(() => { if (apiData !== null) { clearInterval(check); resolve(); } }, 100);
+        }),
+        new Promise(resolve => setTimeout(resolve, 12000))
+      ]);
+      this.page.off('response', responseHandler);
+
+      if (!apiData || apiData.data.length === 0) {
+        console.log(`❌ Nenhum resultado da API para "${searchTerm}"`);
         return null;
       }
-      
-      console.log(`🔗 Encontrados ${gamesData.length} resultados, testando até 5...`);
-      
-      // Testar até 5 resultados
-      const maxTests = Math.min(gamesData.length, 5);
+
+      console.log(`🔗 ${apiData.data.length} resultado(s) encontrado(s), testando até 5...`);
+
       const candidateGames = [];
-      
-      for (let i = 0; i < maxTests; i++) {
-        const gameData = gamesData[i];
-        console.log(`🎮 Testando jogo ${i + 1}/${maxTests}: "${gameData.title}"`);
-        
-        try {
-          console.log(`📖 Título encontrado: "${gameData.title}"`);
-          
-          // Verificar se é um match válido
-          if (this.isGameNameMatch(searchTerm, gameData.title)) {
-            console.log(`✅ Match confirmado!`);
-            
-            // Extrair ano do título encontrado
-            const foundYearMatch = gameData.title.match(/\((\d{4})\)/);
-            const foundYear = foundYearMatch ? foundYearMatch[1] : null;
-            
-            if (gameData.mainStoryTime !== null) {
-              candidateGames.push({
-                title: gameData.title,
-                year: foundYear,
-                playTime: gameData.mainStoryTime,
-                isPreferredYear: preferredYear && foundYear === preferredYear,
-                timeType: gameData.timeType
-              });
-              
-              console.log(`⏱️ Tempo encontrado: ${gameData.mainStoryTime}h (${gameData.timeType || 'Main Story'}) para "${gameData.title}" (${foundYear || 'ano não identificado'})`);
-              
-              // Se é o ano preferido, retornar imediatamente
-              if (preferredYear && foundYear === preferredYear) {
-                console.log(`🎯 Encontrado jogo do ano preferido ${preferredYear}!`);
-                return gameData.mainStoryTime;
-              }
-            }
-          } else {
-            console.log(`❌ Não é o jogo procurado. Buscando: "${searchTerm}" vs Encontrado: "${gameData.title}"`);
-          }
-        } catch (error) {
-          console.log(`❌ Erro ao processar jogo:`, error.message);
+
+      for (const game of apiData.data.slice(0, 5)) {
+        const gameName = game.game_name;
+        console.log(`🎮 Testando: "${gameName}"`);
+
+        if (!this.isGameNameMatch(searchTerm, gameName)) {
+          console.log(`❌ Não é o jogo procurado: "${searchTerm}" vs "${gameName}"`);
+          continue;
+        }
+
+        console.log(`✅ Match confirmado!`);
+
+        // comp_main, comp_plus, comp_all estão em segundos
+        const seconds = game.comp_main || game.comp_plus || game.comp_all || 0;
+        if (seconds <= 0) {
+          console.log(`⚠️ Sem tempo registrado para "${gameName}"`);
+          continue;
+        }
+
+        const hours = Math.round((seconds / 3600) * 10) / 10;
+        const timeType = game.comp_main > 0 ? 'Main Story' : (game.comp_plus > 0 ? 'Main+Extras' : 'Completionist');
+        const foundYear = game.game_name_date ? String(game.game_name_date) : null;
+
+        console.log(`⏱️ Tempo: ${hours}h (${timeType}) para "${gameName}" (${foundYear || 'sem ano'})`);
+
+        candidateGames.push({ title: gameName, year: foundYear, playTime: hours, timeType });
+
+        if (preferredYear && foundYear === preferredYear) {
+          console.log(`🎯 Encontrado jogo do ano preferido ${preferredYear}!`);
+          return hours;
         }
       }
-      
-      // Se encontrou candidatos mas nenhum do ano preferido, retornar o primeiro
+
       if (candidateGames.length > 0) {
-        const bestCandidate = candidateGames[0];
-        console.log(`🏆 Melhor candidato: "${bestCandidate.title}" - ${bestCandidate.playTime}h`);
-        return bestCandidate.playTime;
+        const best = candidateGames[0];
+        console.log(`🏆 Melhor candidato: "${best.title}" - ${best.playTime}h`);
+        return best.playTime;
       }
-      
+
       return null;
     } catch (error) {
       console.error(`❌ Erro na busca com Puppeteer:`, error.message);
@@ -722,15 +711,32 @@ export class HowLongToBeatCrawler {
     
     // 4. Remove edições conhecidas
     const editionPatterns = [
-      /\s*-?\s*(definitive|complete|goty|game\s+of\s+the\s+year|deluxe|ultimate|special|collector's?|limited|enhanced|remastered|director's?\s+cut|anniversary|\d+th\s+anniversary)\s+edition\s*/gi,
-      /\s*-?\s*(definitive|complete|goty|deluxe|ultimate|special|enhanced|remastered|anniversary|\d+th\s+anniversary)\s*/gi
+      /\s*[:\-]?\s*(definitive|complete|goty|game\s+of\s+the\s+year|deluxe|ultimate|special|collector's?|limited|enhanced|remastered|director's?\s+cut|anniversary|\d+th\s+anniversary|legendary|console)\s+edition\s*/gi,
+      /\s*[:\-]?\s*(definitive|complete|goty|deluxe|ultimate|special|enhanced|remastered|anniversary|\d+th\s+anniversary|legendary|console)\s*/gi
     ];
-    
+
+    // 3b. Substituir ": " por espaço (tenta antes de remover edição, pois o HLTB pode ter o título com a edição)
+    const withColonAsSpace = cleanName.replace(/:\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    if (withColonAsSpace !== cleanName && withColonAsSpace.length > 3) {
+      variations.push(withColonAsSpace);
+      console.log(`🔤 Colon→espaço: "${withColonAsSpace}"`);
+    }
+
+    // 4. Remove edições conhecidas (fallback mais genérico)
     for (const pattern of editionPatterns) {
       const withoutEdition = cleanName.replace(pattern, ' ').replace(/\s+/g, ' ').trim();
       if (withoutEdition !== cleanName && withoutEdition.length > 3) {
         variations.push(withoutEdition);
         console.log(`📦 Removendo edição: "${withoutEdition}"`);
+      }
+
+      // Aplicar edition removal sobre a variação sem colon
+      if (withColonAsSpace !== cleanName) {
+        const colonNoEdition = withColonAsSpace.replace(pattern, ' ').replace(/\s+/g, ' ').trim();
+        if (colonNoEdition !== withColonAsSpace && colonNoEdition !== withoutEdition && colonNoEdition.length > 3) {
+          variations.push(colonNoEdition);
+          console.log(`📦 Colon→espaço sem edição: "${colonNoEdition}"`);
+        }
       }
     }
     
@@ -761,8 +767,17 @@ export class HowLongToBeatCrawler {
   isGameNameMatch(searchedName, foundName) {
     if (!searchedName || !foundName) return false;
     
+    // Converte numerais romanos para arábicos para comparação uniforme
+    const romanToArabic = (name) => name
+      .replace(/\bviii\b/gi, '8').replace(/\bvii\b/gi, '7').replace(/\bvi\b/gi, '6')
+      .replace(/\bxii\b/gi, '12').replace(/\bxi\b/gi, '11').replace(/\bix\b/gi, '9')
+      .replace(/\biv\b/gi, '4').replace(/\biii\b/gi, '3').replace(/\bii\b/gi, '2')
+      .replace(/\bxix\b/gi, '19').replace(/\bxviii\b/gi, '18').replace(/\bxvii\b/gi, '17')
+      .replace(/\bxvi\b/gi, '16').replace(/\bxv\b/gi, '15').replace(/\bxiv\b/gi, '14')
+      .replace(/\bxiii\b/gi, '13').replace(/\bxx\b/gi, '20');
+
     const normalizeGameName = (name) => {
-      return name
+      return romanToArabic(name
         .toLowerCase()
         // Remover prefixos do HowLongToBeat
         .replace(/^how\s+long\s+is\s+/i, '')
@@ -771,7 +786,7 @@ export class HowLongToBeatCrawler {
         .replace(/[™®©]/g, '')
         .replace(/[:\-–—]/g, ' ')
         .replace(/['"]/g, '')
-        .replace(/[\.!]/g, '')
+        .replace(/[\.!]/g, ''))
         // Remover stop words (artigos, preposições, conectivos)
         .replace(/\b(the|a|an|of|in|on|at|to|for|with|by|from|into|onto|upon|over|under|above|below|between|among|through|during|before|after|while|since|until|and|or|but|nor|so|yet)\b/g, '')
         // Remover anos entre parênteses APENAS
@@ -792,6 +807,13 @@ export class HowLongToBeatCrawler {
     // REGRA 1: Match exato (após normalização) - prioridade máxima
     if (normalizedSearched === normalizedFound) {
       console.log(`✅ Match EXATO encontrado`);
+      return true;
+    }
+
+    // REGRA 1b: Nome buscado curto (≤5 chars) contido no início do nome encontrado
+    // Ex: "WRC" → "EA Sports WRC" ou "WRC Generations"
+    if (normalizedSearched.length <= 5 && normalizedFound.includes(normalizedSearched)) {
+      console.log(`✅ Match por prefixo curto encontrado`);
       return true;
     }
     
